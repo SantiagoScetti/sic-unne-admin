@@ -23,7 +23,7 @@ Sigue estos pasos para levantar el entorno de desarrollo local:
 
 1. **Clonar el repositorio:**
    ```bash
-   git clone [URL_DEL_REPOSITORIO]
+   git clone https://github.com/SantiagoScetti/sic-unne-admin.git
    cd sic-unne-admin
 
 Instalar dependencias:
