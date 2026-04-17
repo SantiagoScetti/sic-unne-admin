@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { fetchPeriodos, fetchEdificios, fetchFacultades, fetchCarreras, fetchAsignaturas, fetchProfesores, fetchComisiones, fetchEstadisticas } from '../services/estructuraService';
 import AddEdificioModal from '../components/features/modals/addEdificioModal';
 import AddFacultadModal from '../components/features/modals/addFacultadModal';
 import AddCarreraModal from '../components/features/modals/addCarreraModal';
@@ -11,6 +12,47 @@ import AddComisionModal from '../components/features/modals/addComisionModal';
 const EstructuraPage = () => {
   const [entidadActiva, setEntidadActiva] = useState('Comisiones');
   const [editingTipo, setEditingTipo] = useState(null);
+
+  const [comisionesList, setComisionesList] = useState([]);
+  const [estadisticasReales, setEstadisticasReales] = useState({});
+  const [profesoresList, setProfesoresList] = useState([]);
+  const [periodosList, setPeriodosList] = useState([]);
+  const [edificiosList, setEdificiosList] = useState([]);
+  const [facultadesList, setFacultadesList] = useState([]);
+  const [carrerasList, setCarrerasList] = useState([]);
+  const [asignaturasList, setAsignaturasList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState(null);
+
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      setErrorMessage(null);
+      const [
+        periodosRes, edificiosRes, facultadesRes, carrerasRes, asignaturasRes, profRes, comisionesRes, statsRes
+      ] = await Promise.all([
+        fetchPeriodos(), fetchEdificios(), fetchFacultades(), fetchCarreras(), fetchAsignaturas(), fetchProfesores(), fetchComisiones(), fetchEstadisticas()
+      ]);
+      
+      const errors = [periodosRes, edificiosRes, facultadesRes, carrerasRes, asignaturasRes, profRes, comisionesRes, statsRes].map(r => r.error).filter(Boolean);
+      if (errors.length > 0) {
+        setErrorMessage(errors.join(', '));
+      }
+      
+      if (periodosRes.data) setPeriodosList(periodosRes.data);
+      if (edificiosRes.data) setEdificiosList(edificiosRes.data);
+      if (facultadesRes.data) setFacultadesList(facultadesRes.data);
+      if (carrerasRes.data) setCarrerasList(carrerasRes.data);
+      if (asignaturasRes.data) setAsignaturasList(asignaturasRes.data);
+      if (profRes.data) setProfesoresList(profRes.data);
+      if (comisionesRes.data) setComisionesList(comisionesRes.data);
+      if (statsRes.data) setEstadisticasReales(statsRes.data);
+      
+      setIsLoading(false);
+    };
+    
+    loadData();
+  }, []);
   
   // ESTADOS PARA MODALES
   const [isPeriodoModalOpen, setIsPeriodoModalOpen] = useState(false);
@@ -24,28 +66,20 @@ const EstructuraPage = () => {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [mensajeExito, setMensajeExito] = useState('');
 
-  const [periodoData, setPeriodoData] = useState({ nombre: 'Primer Cuatrimestre', fecha_inicio: '2026-03-01', fecha_fin: '2026-06-30' });
-  const [edificioData, setEdificioData] = useState({ nombre: 'Edificio 9 de Julio', direccion: '9 de Julio 1443' });
-  const [facultadData, setFacultadData] = useState({ nombre: 'FaCENA', ciudad: 'Corrientes', id_edificio: '1' });
-  const [carreraData, setCarreraData] = useState({ nombre: 'Lic. en Sistemas', id_facultad: '1' });
-  const [asignaturaData, setAsignaturaData] = useState({ nombre: 'Ing. del Software II', año: 'Cuarto Año', id_periodo: '2do Cuatrimestre', id_carrera: '1', profesores_ids: [1] });
-  const [profesorData, setProfesorData] = useState({ nombre: 'María de los Angeles', apellido: 'Ferraro', documento: '30000000', correo: 'ma.ferraro@unne.edu.ar', telefono: '3794607080' });
-  const [comisionData, setComisionData] = useState({ nombre: 'Comisión 1', letraDesde: 'A', letraHasta: 'Z', id_asignatura: '1', profesores_ids: [1] });
+  const [periodoData, setPeriodoData] = useState(null);
+  const [edificioData, setEdificioData] = useState(null);
+  const [facultadData, setFacultadData] = useState(null);
+  const [carreraData, setCarreraData] = useState(null);
+  const [asignaturaData, setAsignaturaData] = useState(null);
+  const [profesorData, setProfesorData] = useState(null);
+  const [comisionData, setComisionData] = useState(null);
 
-  // DATOS ESTÁTICOS
-  const edificiosDisponibles = [{ id: 1, nombre: 'Edificio 9 de Julio' }];
-  const facultadesDisponibles = [{ id: 1, nombre: 'FaCENA' }];
-  const carrerasDisponibles = [{ id: 1, nombre: 'Lic. en Sistemas de Información' }];
-  const profesoresDisponibles = [
-    { id: 1, nombre: 'María de los Angeles', apellido: 'Ferraro' },
-    { id: 2, nombre: 'Santiago', apellido: 'Scetti' },
-    { id: 3, nombre: 'Erika', apellido: 'Sánchez' }
-  ];
-  // MODIFICACIÓN: Lista de asignaturas disponibles para la comisión
-  const asignaturasDisponibles = [
-    { id: 1, nombre: 'Ing. del Software II', facultad: 'FaCENA' },
-    { id: 2, nombre: 'Análisis Matemático I', facultad: 'FaCENA' }
-  ];
+  // DATOS ESTÁTICOS LIMPIOS
+  const edificiosDisponibles = [];
+  const facultadesDisponibles = [];
+  const carrerasDisponibles = [];
+  const profesoresDisponibles = [];
+  const asignaturasDisponibles = [];
 
   const colores = {
     Periodo: '#ed64a6', 
@@ -121,13 +155,13 @@ const EstructuraPage = () => {
   
   const renderHeaders = () => {
     switch (entidadActiva) {
-      case 'Periodos': return (<> <th style={headerStyle}>ID</th> <th style={headerStyle}>Nombre</th> <th style={headerStyle}>Fecha Inicio</th> <th style={headerStyle}>Fecha Fin</th> </>);
-      case 'Edificios': return (<> <th style={headerStyle}>ID</th> <th style={headerStyle}>Nombre</th> <th style={headerStyle}>Dirección</th> <th style={headerStyle}>Ciudad</th> </>);
-      case 'Facultades': return (<> <th style={headerStyle}>ID</th> <th style={headerStyle}>Nombre</th> <th style={headerStyle}>Edificios</th> <th style={headerStyle}>Carreras</th> </>);
-      case 'Carreras': return (<> <th style={headerStyle}>ID</th> <th style={headerStyle}>Nombre</th> <th style={headerStyle}>Facultad</th> <th style={headerStyle}>Asignaturas</th> </>);
-      case 'Asignaturas': return (<> <th style={headerStyle}>ID</th> <th style={headerStyle}>Nombre</th> <th style={headerStyle}>Año</th> <th style={headerStyle}>Periodo</th> <th style={headerStyle}>Facultad</th> </>);
-      case 'Profesores': return (<> <th style={headerStyle}>ID</th> <th style={headerStyle}>Nombre</th> <th style={headerStyle}>Apellido</th> <th style={headerStyle}>Documento</th> <th style={headerStyle}>Correo</th> <th style={headerStyle}>Telefono</th> <th style={headerStyle}>Estado</th> <th style={headerStyle}>Asignaturas</th> </>);
-      case 'Comisiones': return (<> <th style={headerStyle}>ID</th> <th style={headerStyle}>Nombre</th> <th style={headerStyle}>Letras</th> <th style={headerStyle}>Asignatura</th> <th style={headerStyle}>Facultad</th> <th style={headerStyle}>Profesores</th> <th style={headerStyle}>Inscriptos</th> </>);
+      case 'Periodos': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Fecha Inicio</th><th style={headerStyle}>Fecha Fin</th></>);
+      case 'Edificios': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Dirección</th><th style={headerStyle}>Ciudad</th></>);
+      case 'Facultades': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Edificios</th><th style={headerStyle}>Carreras</th></>);
+      case 'Carreras': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Facultad</th><th style={headerStyle}>Asignaturas</th></>);
+      case 'Asignaturas': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Año</th><th style={headerStyle}>Periodo</th><th style={headerStyle}>Facultad</th></>);
+      case 'Profesores': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Apellido</th><th style={headerStyle}>Documento</th><th style={headerStyle}>Correo</th><th style={headerStyle}>Telefono</th><th style={headerStyle}>Estado</th><th style={headerStyle}>Asignaturas</th></>);
+      case 'Comisiones': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Letras</th><th style={headerStyle}>Asignatura</th><th style={headerStyle}>Facultad</th><th style={headerStyle}>Profesores</th><th style={headerStyle}>Inscriptos</th></>);
       default: return null;
     }
   };
@@ -145,29 +179,100 @@ const EstructuraPage = () => {
   );
 
   const renderRows = () => {
+    if (isLoading) {
+      return <tr><td colSpan={7} style={{textAlign:'center', padding:'20px'}}>Cargando datos reales...</td></tr>;
+    }
+
     const rowStyle = { borderBottom: '1px solid #e2e8f0' };
     switch (entidadActiva) {
       case 'Periodos':
-        if (!periodoData) return (<tr style={rowStyle}><td colSpan={5} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
-        return ( <tr style={rowStyle}><td style={cellStyle}>01</td><td style={{...cellStyle, fontWeight:'600'}}>{periodoData.nombre}</td><td style={cellStyle}>{periodoData.fecha_inicio}</td><td style={cellStyle}>{periodoData.fecha_fin}</td><ActionsCell tipo="Periodos" /></tr> );
+        if (periodosList.length === 0) return (<tr style={rowStyle}><td colSpan={5} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
+        return periodosList.map(p => (
+          <tr key={p.id_periodo} style={rowStyle}>
+            <td style={cellStyle}>{p.id_periodo}</td>
+            <td style={{...cellStyle, fontWeight:'600'}}>{p.nombre}</td>
+            <td style={cellStyle}>{p.fecha_inicio}</td>
+            <td style={cellStyle}>{p.fecha_fin}</td>
+            <ActionsCell tipo="Periodos" />
+          </tr>
+        ));
       case 'Edificios':
-        if (!edificioData) return (<tr style={rowStyle}><td colSpan={5} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
-        return ( <tr style={rowStyle}><td style={cellStyle}>01</td><td style={{...cellStyle, fontWeight:'600'}}>{edificioData.nombre}</td><td style={cellStyle}>{edificioData.direccion}</td><td style={cellStyle}>Corrientes</td><ActionsCell tipo="Edificios" /></tr> );
+        if (edificiosList.length === 0) return (<tr style={rowStyle}><td colSpan={5} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
+        return edificiosList.map(e => (
+          <tr key={e.id_edificio} style={rowStyle}>
+            <td style={cellStyle}>{e.id_edificio}</td>
+            <td style={{...cellStyle, fontWeight:'600'}}>{e.nombre}</td>
+            <td style={cellStyle}>{e.direccion}</td>
+            <td style={cellStyle}>-</td>
+            <ActionsCell tipo="Edificios" />
+          </tr>
+        ));
       case 'Facultades':
-        if (!facultadData) return (<tr style={rowStyle}><td colSpan={5} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
-        return ( <tr style={rowStyle}><td style={cellStyle}>01</td><td style={{...cellStyle, fontWeight:'600'}}>{facultadData.nombre}</td><td style={cellStyle}>Edificio 9 de Julio</td><td style={cellStyle}>12</td><ActionsCell tipo="Facultades" /></tr> );
+        if (facultadesList.length === 0) return (<tr style={rowStyle}><td colSpan={5} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
+        return facultadesList.map(f => (
+          <tr key={f.id_facultad} style={rowStyle}>
+            <td style={cellStyle}>{f.id_facultad}</td>
+            <td style={{...cellStyle, fontWeight:'600'}}>{f.nombre}</td>
+            <td style={cellStyle}>{f.ciudad}</td>
+            <td style={cellStyle}>{f.nombreEdificio}</td>
+            <ActionsCell tipo="Facultades" />
+          </tr>
+        ));
       case 'Carreras':
-        if (!carreraData) return (<tr style={rowStyle}><td colSpan={5} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
-        return ( <tr style={rowStyle}><td style={cellStyle}>05</td><td style={{...cellStyle, fontWeight:'600'}}>{carreraData.nombre}</td><td style={cellStyle}>FaCENA</td><td style={cellStyle}>42</td><ActionsCell tipo="Carreras" /></tr> );
+        if (carrerasList.length === 0) return (<tr style={rowStyle}><td colSpan={5} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
+        return carrerasList.map(c => (
+          <tr key={c.id_carrera} style={rowStyle}>
+            <td style={cellStyle}>{c.id_carrera}</td>
+            <td style={{...cellStyle, fontWeight:'600'}}>{c.nombre}</td>
+            <td style={cellStyle}>{c.nombreFacultad}</td>
+            <td style={cellStyle}>-</td>
+            <ActionsCell tipo="Carreras" />
+          </tr>
+        ));
       case 'Asignaturas': 
-        if (!asignaturaData) return (<tr style={rowStyle}><td colSpan={6} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
-        return ( <tr style={rowStyle}><td style={cellStyle}>102</td><td style={{...cellStyle, fontWeight:'600'}}>{asignaturaData.nombre}</td><td style={cellStyle}>{asignaturaData.año}</td><td style={cellStyle}>{asignaturaData.id_periodo}</td><td style={cellStyle}>FaCENA</td><ActionsCell tipo="Asignaturas" /></tr> );
+        if (asignaturasList.length === 0) return (<tr style={rowStyle}><td colSpan={6} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
+        return asignaturasList.map(a => (
+          <tr key={a.id_asignatura} style={rowStyle}>
+            <td style={cellStyle}>{a.id_asignatura}</td>
+            <td style={{...cellStyle, fontWeight:'600'}}>{a.nombre}</td>
+            <td style={cellStyle}>{a.anio_dictado}</td>
+            <td style={cellStyle}>{a.nombrePeriodo}</td>
+            <td style={cellStyle}>{a.nombreFacultad}</td>
+            <ActionsCell tipo="Asignaturas" />
+          </tr>
+        ));
       case 'Profesores':
-        if (!profesorData) return (<tr style={rowStyle}><td colSpan={9} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
-        return ( <tr style={rowStyle}><td style={cellStyle}>1</td><td style={cellStyle}>{profesorData.nombre}</td><td style={{...cellStyle, fontWeight:'600'}}>{profesorData.apellido}</td><td style={cellStyle}>{profesorData.documento}</td><td style={cellStyle}>{profesorData.correo}</td><td style={cellStyle}>{profesorData.telefono}</td><td style={cellStyle}><span style={{padding:'2px 8px', backgroundColor:'#c6f6d5', color:'#22543d', borderRadius:'10px', fontSize:'0.75rem', fontWeight:'700'}}>Activo</span></td><td style={cellStyle}>3</td><ActionsCell tipo="Profesores" /></tr> );
+        if (profesoresList.length === 0) return (<tr style={rowStyle}><td colSpan={9} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
+        return profesoresList.map(prof => (
+          <tr key={prof.id_profesor} style={rowStyle}>
+            <td style={cellStyle}>{prof.id_profesor}</td>
+            <td style={cellStyle}>{prof.nombre}</td>
+            <td style={{...cellStyle, fontWeight:'600'}}>{prof.apellido}</td>
+            <td style={cellStyle}>{prof.documento}</td>
+            <td style={cellStyle}>{prof.correo}</td>
+            <td style={cellStyle}>-</td>
+            <td style={cellStyle}><span style={{padding:'2px 8px', backgroundColor: prof.estado ? '#c6f6d5' : '#fed7d7', color: prof.estado ? '#22543d' : '#9b2c2c', borderRadius:'10px', fontSize:'0.75rem', fontWeight:'700'}}>{prof.estado ? 'Activo' : 'Inactivo'}</span></td>
+            <td style={cellStyle}>0</td>
+            <ActionsCell tipo="Profesores" />
+          </tr>
+        ));
       case 'Comisiones':
-        if (!comisionData) return (<tr style={rowStyle}><td colSpan={8} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
-        return ( <tr style={rowStyle}><td style={cellStyle}>204</td><td style={{...cellStyle, fontWeight:'600'}}>{comisionData.nombre}</td><td style={cellStyle}>{comisionData.letraDesde} - {comisionData.letraHasta}</td><td style={cellStyle}>Ing. del Software II</td><td style={cellStyle}>FaCENA</td><td style={cellStyle}>María de los Angeles Ferraro</td><td style={{...cellStyle, fontWeight:'700', color:'#2b6cb0'}}>45</td><ActionsCell tipo="Comisiones" /></tr> );
+        if (comisionesList.length === 0) return (<tr style={rowStyle}><td colSpan={8} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
+        return comisionesList.map(com => {
+          const profesoresStr = Array.isArray(com.profesoresNombresArray) ? com.profesoresNombresArray.join(', ') : (com.profesoresNombresArray || 'Sin Asignar');
+          return (
+            <tr key={com.id_comision} style={rowStyle}>
+              <td style={cellStyle}>{com.id_comision}</td>
+              <td style={{...cellStyle, fontWeight:'600'}}>{com.nombreComision}</td>
+              <td style={cellStyle}>{com.letraDesde} - {com.letraHasta}</td>
+              <td style={cellStyle}>{com.nombreAsignatura}</td>
+              <td style={cellStyle}>{com.nombreFacultad}</td>
+              <td style={cellStyle}>{profesoresStr}</td>
+              <td style={{...cellStyle, fontWeight:'700', color:'#2b6cb0'}}>0</td>
+              <ActionsCell tipo="Comisiones" />
+            </tr>
+          );
+        });
       default: return (<tr><td colSpan={7} style={{textAlign:'center', padding:'20px'}}>Seleccione una entidad para ver datos.</td></tr>);
     }
   };
@@ -182,14 +287,20 @@ const EstructuraPage = () => {
 
       <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '20px', color: '#2d3748' }}>Gestión de Estructura Académica</h1>
 
+      {errorMessage && (
+        <div style={{ backgroundColor: '#fed7d7', color: '#c53030', padding: '15px', borderRadius: '8px', marginBottom: '20px', borderLeft: '4px solid #e53e3e' }}>
+          <strong>Error cargando los datos: </strong>{errorMessage}
+        </div>
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-        <StatCard titulo="Periodo" cantidad="2" color={colores.Periodo} onAdd={() => { setEditingTipo(null); setIsPeriodoModalOpen(true); }} />
-        <StatCard titulo="Edificios" cantidad="3" color={colores.Edificios} onAdd={() => { setEditingTipo(null); setIsEdificioModalOpen(true); }} />
-        <StatCard titulo="Facultades" cantidad="1" color={colores.Facultades} onAdd={() => { setEditingTipo(null); setIsFacultadModalOpen(true); }} />
-        <StatCard titulo="Carreras" cantidad="12" color={colores.Carreras} onAdd={() => { setEditingTipo(null); setIsCarreraModalOpen(true); }} />
-        <StatCard titulo="Asignaturas" cantidad="48" color={colores.Asignaturas} onAdd={() => { setEditingTipo(null); setIsAsignaturaModalOpen(true); }} />
-        <StatCard titulo="Profesores" cantidad="86" color={colores.Profesores} onAdd={() => { setEditingTipo(null); setIsProfesorModalOpen(true); }} />
-        <StatCard titulo="Comisiones" cantidad="145" color={colores.Comisiones} onAdd={() => { setEditingTipo(null); setIsComisionModalOpen(true); }} />
+        <StatCard titulo="Periodo" cantidad={estadisticasReales.Periodos ?? '0'} color={colores.Periodo} onAdd={() => { setEditingTipo(null); setIsPeriodoModalOpen(true); }} />
+        <StatCard titulo="Edificios" cantidad={estadisticasReales.Edificios ?? '0'} color={colores.Edificios} onAdd={() => { setEditingTipo(null); setIsEdificioModalOpen(true); }} />
+        <StatCard titulo="Facultades" cantidad={estadisticasReales.Facultades ?? '0'} color={colores.Facultades} onAdd={() => { setEditingTipo(null); setIsFacultadModalOpen(true); }} />
+        <StatCard titulo="Carreras" cantidad={estadisticasReales.Carreras ?? '0'} color={colores.Carreras} onAdd={() => { setEditingTipo(null); setIsCarreraModalOpen(true); }} />
+        <StatCard titulo="Asignaturas" cantidad={estadisticasReales.Asignaturas ?? '0'} color={colores.Asignaturas} onAdd={() => { setEditingTipo(null); setIsAsignaturaModalOpen(true); }} />
+        <StatCard titulo="Profesores" cantidad={estadisticasReales.Profesores ?? '0'} color={colores.Profesores} onAdd={() => { setEditingTipo(null); setIsProfesorModalOpen(true); }} />
+        <StatCard titulo="Comisiones" cantidad={estadisticasReales.Comisiones ?? '0'} color={colores.Comisiones} onAdd={() => { setEditingTipo(null); setIsComisionModalOpen(true); }} />
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', backgroundColor: '#ffffff', padding: '15px', borderRadius: '8px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
