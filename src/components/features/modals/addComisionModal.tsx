@@ -41,7 +41,10 @@ const AddComisionModal = ({ isOpen, onClose, onSave, profesoresDisponibles, asig
   useEffect(() => {
     if (!isOpen) return;
     if (isEditMode && initialData) {
-      setNuevaComision(initialData);
+      setNuevaComision({
+        ...initialData,
+        profesores_ids: initialData.profesores_ids || []
+      });
     } else {
       setNuevaComision({ nombre: '', letraDesde: '', letraHasta: '', id_asignatura: '', profesores_ids: [] });
     }
@@ -89,10 +92,11 @@ const AddComisionModal = ({ isOpen, onClose, onSave, profesoresDisponibles, asig
 
   const toggleProfesor = (profesorId: number) => {
     setNuevaComision((prev) => {
-      const yaSeleccionado = prev.profesores_ids.includes(profesorId);
+      const currentIds = prev.profesores_ids || [];
+      const yaSeleccionado = currentIds.includes(profesorId);
       const profesores_ids = yaSeleccionado
-        ? prev.profesores_ids.filter((id) => id !== profesorId)
-        : [...prev.profesores_ids, profesorId];
+        ? currentIds.filter((id) => id !== profesorId)
+        : [...currentIds, profesorId];
 
       return { ...prev, profesores_ids };
     });
@@ -175,7 +179,7 @@ const AddComisionModal = ({ isOpen, onClose, onSave, profesoresDisponibles, asig
             <div style={{ border: `1px solid ${errores.profesores ? '#e53e3e' : '#e2e8f0'}`, borderRadius: '6px', maxHeight: '120px', overflowY: 'auto', padding: '10px', backgroundColor: '#ffffff' }}>
               {profesoresFiltrados.map(p => (
                 <div key={p.id} style={{ display: 'flex', alignItems: 'center', padding: '5px 0', borderBottom: '1px solid #f7fafc' }}>
-                  <input type="checkbox" className="checkbox-custom" checked={nuevaComision.profesores_ids.includes(p.id)} onChange={() => toggleProfesor(p.id)} />
+                  <input type="checkbox" className="checkbox-custom" checked={(nuevaComision.profesores_ids || []).includes(p.id)} onChange={() => toggleProfesor(p.id)} />
                   <span style={{ fontSize: '0.9rem', marginLeft: '10px', color: '#1a202c' }}>{p.apellido}, {p.nombre}</span>
                 </div>
               ))}

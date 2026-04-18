@@ -62,16 +62,20 @@ export const fetchCarreras = async (filtroEstado = 'Activos') => {
 export const fetchAsignaturas = async (filtroEstado = 'Activos') => {
   try {
     const { data, error } = await applyEstadoFilter(
-      supabase.from('asignatura').select('*, periodo(nombre), carrera(nombre, facultad(nombre))'),
+      supabase.from('asignatura').select('*, periodo(nombre), carrera(nombre, facultad(nombre)), asignatura_profesor(profesor(nombre, apellido))'),
       filtroEstado
     );
     if (error) throw error;
-    const planas = data.map(a => ({
-      ...a,
-      nombrePeriodo:  a.periodo?.nombre || 'Sin Asignar',
-      nombreCarrera:  a.carrera?.nombre || 'Sin Asignar',
-      nombreFacultad: a.carrera?.facultad?.nombre || 'Sin Asignar'
-    }));
+    const planas = data.map(a => {
+      const profs = a.asignatura_profesor?.map(ap => `${ap.profesor?.apellido}, ${ap.profesor?.nombre}`).join(' | ') || 'Sin Asignar';
+      return {
+        ...a,
+        nombrePeriodo:  a.periodo?.nombre || 'Sin Asignar',
+        nombreCarrera:  a.carrera?.nombre || 'Sin Asignar',
+        nombreFacultad: a.carrera?.facultad?.nombre || 'Sin Asignar',
+        nombreProfesor: profs
+      };
+    });
     return { data: planas, error: null };
   } catch (error) {
     console.error('Error fetching asignaturas:', error.message);
@@ -81,9 +85,25 @@ export const fetchAsignaturas = async (filtroEstado = 'Activos') => {
 
 export const fetchProfesores = async (filtroEstado = 'Activos') => {
   try {
-    const { data, error } = await applyEstadoFilter(supabase.from('profesor').select('*'), filtroEstado);
+    const { data, error } = await applyEstadoFilter(
+      supabase.from('profesor').select('*, comision_profesor(count), asignatura_profesor(count)'), 
+      filtroEstado
+    );
     if (error) throw error;
-    return { data, error: null };
+    
+    // Sumar ambos counts para la UI
+    const planas = data.map(p => {
+      const countComisiones = p.comision_profesor?.[0]?.count || 0;
+      const countAsignaturas = p.asignatura_profesor?.[0]?.count || 0;
+      const totalAsignaciones = countComisiones + countAsignaturas;
+      
+      return {
+        ...p,
+        totalAsignaciones
+      };
+    });
+    
+    return { data: planas, error: null };
   } catch (error) {
     console.error('Error fetching profesores:', error.message);
     return { data: null, error: error.message };
@@ -349,6 +369,8 @@ export const actualizarComision = async (id, comisionData) => {
       letra_hasta: comisionData.letraHasta || comisionData.letra_hasta,
       id_asignatura: Number(comisionData.id_asignatura),
     };
+
+    // 1. Actualizar datos base
     const { data, error } = await supabase
       .from('comision')
       .update(row)
@@ -356,6 +378,25 @@ export const actualizarComision = async (id, comisionData) => {
       .select();
 
     if (error) throw error;
+
+    // 2. Eliminar relaciones viejas en N:M
+    const { error: delError } = await supabase
+      .from('comision_profesor')
+      .delete()
+      .eq('id_comision', id);
+    
+    if (delError) throw delError;
+
+    // 3. Insertar nuevas relaciones
+    if (comisionData.profesores_ids && comisionData.profesores_ids.length > 0) {
+      const relaciones = comisionData.profesores_ids.map(id_profesor => ({
+        id_comision: id,
+        id_profesor,
+      }));
+      const { error: relError } = await supabase.from('comision_profesor').insert(relaciones);
+      if (relError) throw relError;
+    }
+
     return { data: data ? data[0] : null, error: null };
   } catch (error) {
     console.error('Error actualizando comisión:', error.message);
@@ -411,14 +452,48 @@ export const actualizarCarrera = (id, data) =>
     id_facultad: Number(data.id_facultad),
   });
 
-/** Actualiza una Asignatura. Payload: { nombre, año, id_periodo, id_carrera } */
-export const actualizarAsignatura = (id, data) =>
-  softUpdate('asignatura', 'id_asignatura', id, {
-    nombre:       data.nombre,
-    anio_dictado: data.año || data.anio_dictado,
-    id_periodo:   Number(data.id_periodo),
-    id_carrera:   Number(data.id_carrera),
-  });
+/** Actualiza una Asignatura y recarga sus relaciones N:M. Payload: { nombre, año, id_periodo, id_carrera, profesores_ids[] } */
+export const actualizarAsignatura = async (id, data) => {
+  try {
+    const row = {
+      nombre:       data.nombre,
+      anio_dictado: data.año || data.anio_dictado,
+      id_periodo:   Number(data.id_periodo),
+      id_carrera:   Number(data.id_carrera),
+    };
+
+    const { data: result, error } = await supabase
+      .from('asignatura')
+      .update(row)
+      .eq('id_asignatura', id)
+      .select();
+
+    if (error) throw error;
+
+    // 2. Eliminar relaciones viejas en asignatura_profesor
+    const { error: delError } = await supabase
+      .from('asignatura_profesor')
+      .delete()
+      .eq('id_asignatura', id);
+    
+    if (delError) throw delError;
+
+    // 3. Insertar la nueva lista de profesores (usamos array para asegurar flexibilidad a futuro si lo desean, aunque limiten desde el front)
+    if (data.profesores_ids && data.profesores_ids.length > 0) {
+      const relaciones = data.profesores_ids.map(id_profesor => ({
+        id_asignatura: id,
+        id_profesor,
+      }));
+      const { error: relError } = await supabase.from('asignatura_profesor').insert(relaciones);
+      if (relError) throw relError;
+    }
+
+    return { data: result ? result[0] : null, error: null };
+  } catch (error) {
+    console.error('Error actualizando asignatura:', error.message);
+    return { data: null, error: error.message };
+  }
+};
 
 /** Actualiza un Profesor. Payload: { nombre, apellido, documento, correo } */
 export const actualizarProfesor = (id, data) =>

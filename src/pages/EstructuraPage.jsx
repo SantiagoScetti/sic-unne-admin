@@ -383,8 +383,8 @@ const EstructuraPage = () => {
       case 'Edificios': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Dirección</th><th style={headerStyle}>Ciudad</th></>);
       case 'Facultades': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Edificios</th><th style={headerStyle}>Carreras</th></>);
       case 'Carreras': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Facultad</th><th style={headerStyle}>Asignaturas</th></>);
-      case 'Asignaturas': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Año</th><th style={headerStyle}>Periodo</th><th style={headerStyle}>Facultad</th></>);
-      case 'Profesores': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Apellido</th><th style={headerStyle}>Documento</th><th style={headerStyle}>Correo</th><th style={headerStyle}>Telefono</th><th style={headerStyle}>Estado</th><th style={headerStyle}>Asignaturas</th></>);
+      case 'Asignaturas': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Año</th><th style={headerStyle}>Periodo</th><th style={headerStyle}>Facultad</th><th style={headerStyle}>Profesor a cargo</th></>);
+      case 'Profesores': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Apellido</th><th style={headerStyle}>Documento</th><th style={headerStyle}>Correo</th><th style={headerStyle}>Telefono</th><th style={headerStyle}>Estado</th><th style={headerStyle}>Asignaciones</th></>);
       case 'Comisiones': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Letras</th><th style={headerStyle}>Asignatura</th><th style={headerStyle}>Facultad</th><th style={headerStyle}>Profesores</th><th style={headerStyle}>Inscriptos</th></>);
       default: return null;
     }
@@ -431,47 +431,59 @@ const EstructuraPage = () => {
       case 'Periodos': {
         const lista = aplicarFiltro(periodosList);
         if (lista.length === 0) return (<tr style={rowStyle}><td colSpan={5} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
-        return lista.map(p => (<tr key={p.id_periodo} style={rowStyle}><td style={cellStyle}>{p.id_periodo}</td><td style={{...cellStyle, fontWeight:'600'}}>{p.nombre}</td><td style={cellStyle}>{p.fecha_inicio}</td><td style={cellStyle}>{p.fecha_fin}</td><ActionsCell tipo="Periodos" item={p} estadoRegistro={p.estado} /></tr>));
+        return lista.map(p => (<tr className="table-row-hover" key={p.id_periodo} style={rowStyle}><td style={cellStyle}>{p.id_periodo}</td><td style={{...cellStyle, fontWeight:'600'}}>{p.nombre}</td><td style={cellStyle}>{p.fecha_inicio}</td><td style={cellStyle}>{p.fecha_fin}</td><ActionsCell tipo="Periodos" item={p} estadoRegistro={p.estado} /></tr>));
       }
       case 'Edificios': {
         const lista = aplicarFiltro(edificiosList);
         if (lista.length === 0) return (<tr style={rowStyle}><td colSpan={5} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
-        return lista.map(e => (<tr key={e.id_edificio} style={rowStyle}><td style={cellStyle}>{e.id_edificio}</td><td style={{...cellStyle, fontWeight:'600'}}>{e.nombre}</td><td style={cellStyle}>{e.direccion}</td><td style={cellStyle}>-</td><ActionsCell tipo="Edificios" item={e} estadoRegistro={e.estado} /></tr>));
+        return lista.map(e => (<tr className="table-row-hover" key={e.id_edificio} style={rowStyle}><td style={cellStyle}>{e.id_edificio}</td><td style={{...cellStyle, fontWeight:'600'}}>{e.nombre}</td><td style={cellStyle}>{e.direccion}</td><td style={cellStyle}>-</td><ActionsCell tipo="Edificios" item={e} estadoRegistro={e.estado} /></tr>));
       }
       case 'Facultades': {
         const lista = aplicarFiltro(facultadesList);
         if (lista.length === 0) return (<tr style={rowStyle}><td colSpan={5} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
-        return lista.map(f => (<tr key={f.id_facultad} style={rowStyle}><td style={cellStyle}>{f.id_facultad}</td><td style={{...cellStyle, fontWeight:'600'}}>{f.nombre}</td><td style={cellStyle}>{f.ciudad}</td><td style={cellStyle}>{f.nombreEdificio}</td><ActionsCell tipo="Facultades" item={f} estadoRegistro={f.estado} /></tr>));
+        return lista.map(f => (<tr className="table-row-hover" key={f.id_facultad} style={rowStyle}><td style={cellStyle}>{f.id_facultad}</td><td style={{...cellStyle, fontWeight:'600'}}>{f.nombre}</td><td style={cellStyle}>{f.ciudad}</td><td style={cellStyle}>{f.nombreEdificio}</td><ActionsCell tipo="Facultades" item={f} estadoRegistro={f.estado} /></tr>));
       }
       case 'Carreras': {
         const lista = aplicarFiltro(carrerasList);
         if (lista.length === 0) return (<tr style={rowStyle}><td colSpan={5} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
-        return lista.map(c => (<tr key={c.id_carrera} style={rowStyle}><td style={cellStyle}>{c.id_carrera}</td><td style={{...cellStyle, fontWeight:'600'}}>{c.nombre}</td><td style={cellStyle}>{c.nombreFacultad}</td><td style={cellStyle}>-</td><ActionsCell tipo="Carreras" item={c} estadoRegistro={c.estado} /></tr>));
+        return lista.map(c => (<tr className="table-row-hover" key={c.id_carrera} style={rowStyle}><td style={cellStyle}>{c.id_carrera}</td><td style={{...cellStyle, fontWeight:'600'}}>{c.nombre}</td><td style={cellStyle}>{c.nombreFacultad}</td><td style={cellStyle}>-</td><ActionsCell tipo="Carreras" item={c} estadoRegistro={c.estado} /></tr>));
       }
       case 'Asignaturas': {
         const lista = aplicarFiltro(asignaturasList);
-        if (lista.length === 0) return (<tr style={rowStyle}><td colSpan={6} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
-        return lista.map(a => (<tr key={a.id_asignatura} style={rowStyle}><td style={cellStyle}>{a.id_asignatura}</td><td style={{...cellStyle, fontWeight:'600'}}>{a.nombre}</td><td style={cellStyle}>{a.anio_dictado}</td><td style={cellStyle}>{a.nombrePeriodo}</td><td style={cellStyle}>{a.nombreFacultad}</td><ActionsCell tipo="Asignaturas" item={a} estadoRegistro={a.estado} /></tr>));
+        if (lista.length === 0) return (<tr style={rowStyle}><td colSpan={7} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
+        return lista.map(a => (<tr className="table-row-hover" key={a.id_asignatura} style={rowStyle}><td style={cellStyle}>{a.id_asignatura}</td><td style={{...cellStyle, fontWeight:'600'}}>{a.nombre}</td><td style={cellStyle}>{a.anio_dictado}</td><td style={cellStyle}>{a.nombrePeriodo}</td><td style={cellStyle}>{a.nombreFacultad}</td><td style={cellStyle}>{a.nombreProfesor}</td><ActionsCell tipo="Asignaturas" item={a} estadoRegistro={a.estado} /></tr>));
       }
       case 'Profesores': {
         const lista = aplicarFiltro(profesoresList);
         if (lista.length === 0) return (<tr style={rowStyle}><td colSpan={9} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
-        return lista.map(prof => (<tr key={prof.id_profesor} style={rowStyle}><td style={cellStyle}>{prof.id_profesor}</td><td style={cellStyle}>{prof.nombre}</td><td style={{...cellStyle, fontWeight:'600'}}>{prof.apellido}</td><td style={cellStyle}>{prof.documento}</td><td style={cellStyle}>{prof.correo}</td><td style={cellStyle}>-</td><td style={cellStyle}><span style={{padding:'2px 8px', backgroundColor: prof.estado ? '#c6f6d5' : '#fed7d7', color: prof.estado ? '#22543d' : '#9b2c2c', borderRadius:'10px', fontSize:'0.75rem', fontWeight:'700'}}>{prof.estado ? 'Activo' : 'Inactivo'}</span></td><td style={cellStyle}>0</td><ActionsCell tipo="Profesores" item={prof} estadoRegistro={prof.estado} /></tr>));
+        return lista.map(prof => (<tr className="table-row-hover" key={prof.id_profesor} style={rowStyle}><td style={cellStyle}>{prof.id_profesor}</td><td style={cellStyle}>{prof.nombre}</td><td style={{...cellStyle, fontWeight:'600'}}>{prof.apellido}</td><td style={cellStyle}>{prof.documento}</td><td style={cellStyle}>{prof.correo}</td><td style={cellStyle}>-</td><td style={cellStyle}><span style={{padding:'2px 8px', backgroundColor: prof.estado ? '#c6f6d5' : '#fed7d7', color: prof.estado ? '#22543d' : '#9b2c2c', borderRadius:'10px', fontSize:'0.75rem', fontWeight:'700'}}>{prof.estado ? 'Activo' : 'Inactivo'}</span></td><td style={{...cellStyle, fontWeight:'700', color:'#2b6cb0'}}>{prof.totalAsignaciones || 0}</td><ActionsCell tipo="Profesores" item={prof} estadoRegistro={prof.estado} /></tr>));
       }
       case 'Comisiones': {
         const lista = aplicarFiltro(comisionesList);
         if (lista.length === 0) return (<tr style={rowStyle}><td colSpan={8} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
         return lista.map(com => {
           const profesoresStr = Array.isArray(com.profesoresNombresArray) ? com.profesoresNombresArray.join(', ') : (com.profesoresNombresArray || 'Sin Asignar');
-          return (<tr key={com.id_comision} style={rowStyle}><td style={cellStyle}>{com.id_comision}</td><td style={{...cellStyle, fontWeight:'600'}}>{com.nombreComision}</td><td style={cellStyle}>{com.letraDesde} - {com.letraHasta}</td><td style={cellStyle}>{com.nombreAsignatura}</td><td style={cellStyle}>{com.nombreFacultad}</td><td style={cellStyle}>{profesoresStr}</td><td style={{...cellStyle, fontWeight:'700', color:'#2b6cb0'}}>0</td><ActionsCell tipo="Comisiones" item={com} estadoRegistro={com.estado} /></tr>);
+          return (<tr className="table-row-hover" key={com.id_comision} style={rowStyle}><td style={cellStyle}>{com.id_comision}</td><td style={{...cellStyle, fontWeight:'600'}}>{com.nombreComision}</td><td style={cellStyle}>{com.letraDesde} - {com.letraHasta}</td><td style={cellStyle}>{com.nombreAsignatura}</td><td style={cellStyle}>{com.nombreFacultad}</td><td style={cellStyle}>{profesoresStr}</td><td style={{...cellStyle, fontWeight:'700', color:'#2b6cb0'}}>0</td><ActionsCell tipo="Comisiones" item={com} estadoRegistro={com.estado} /></tr>);
         });
       }
       default: return (<tr><td colSpan={7} style={{textAlign:'center', padding:'20px'}}>Seleccione una entidad para ver datos.</td></tr>);
     }
   };
 
+  const currentActiveColor = entidadActiva === 'Periodos' ? colores.Periodo : (colores[entidadActiva] || '#3182ce');
+
   return (
     <div style={{ position: 'relative' }}>
+      <style>{`
+        .table-row-hover {
+          transition: all 0.2s ease;
+        }
+        .table-row-hover:hover {
+          background-color: ${currentActiveColor}11;
+          box-shadow: inset 0 2px 4px ${currentActiveColor}1A, inset 0 -2px 4px ${currentActiveColor}1A;
+          transform: translateY(-1px);
+        }
+      `}</style>
       {showSuccessMessage && (
         <div style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#38a169', color: 'white', padding: '12px 24px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', gap: '10px', zIndex: 2000 }}>
           <span>✅</span><span style={{ fontWeight: '600' }}>{mensajeExito}</span>
@@ -534,9 +546,9 @@ const EstructuraPage = () => {
         </select>
       </div>
 
-      <div style={{ backgroundColor: '#ffffff', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
+      <div style={{ backgroundColor: '#ffffff', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', overflow: 'hidden', borderLeft: `4px solid ${currentActiveColor}`, transition: 'border-color 0.3s ease' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead><tr style={{ backgroundColor: '#f7fafc', borderBottom: '2px solid #e2e8f0' }}>{renderHeaders()}<th style={headerStyle}>Acciones</th></tr></thead>
+          <thead><tr style={{ backgroundColor: `${currentActiveColor}1A`, borderBottom: '2px solid #e2e8f0', transition: 'background-color 0.3s ease' }}>{renderHeaders()}<th style={headerStyle}>Acciones</th></tr></thead>
           <tbody>{renderRows()}</tbody>
         </table>
       </div>
