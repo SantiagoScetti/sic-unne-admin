@@ -1,5 +1,7 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import Papa from 'papaparse';
+import { supabase } from '../services/supabaseClient';
 import { fetchPeriodos, fetchEdificios, fetchFacultades, fetchCarreras, fetchAsignaturas, fetchProfesores, fetchComisiones, fetchEstadisticas, crearPeriodo, crearEdificio, crearFacultad, crearCarrera, crearAsignatura, crearProfesor, crearComision, actualizarPeriodo, actualizarEdificio, actualizarFacultad, actualizarCarrera, actualizarAsignatura, actualizarProfesor, actualizarComision, desactivarPeriodo, desactivarEdificio, desactivarFacultad, desactivarCarrera, desactivarAsignatura, desactivarProfesor, desactivarComision, restaurarPeriodo, restaurarEdificio, restaurarFacultad, restaurarCarrera, restaurarAsignatura, restaurarProfesor, restaurarComision } from '../services/estructuraService';
 import AddEdificioModal from '../components/features/modals/addEdificioModal';
 import AddFacultadModal from '../components/features/modals/addFacultadModal';
@@ -25,6 +27,8 @@ const EstructuraPage = () => {
   const [asignaturasList, setAsignaturasList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
+
+  const csvInputRef = useRef(null);
 
   // Re-fetcha todas las listas cuando cambia el filtro de estado
   useEffect(() => {
@@ -220,6 +224,125 @@ const EstructuraPage = () => {
     setIsLoading(false);
   };
 
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    setIsLoading(true);
+    setErrorMessage(null);
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (results) => {
+        try {
+          const datosMapeados = results.data.map(row => ({
+            edificio_nombre: row.edificio_nombre,
+            edificio_direccion: row.edificio_direccion,
+            facultad_nombre: row.facultad_nombre,
+            facultad_ciudad: row.facultad_ciudad,
+            carrera_nombre: row.carrera_nombre,
+            periodo_nombre: row.periodo_nombre,
+            periodo_fecha_inicio: row.periodo_fecha_inicio,
+            periodo_fecha_fin: row.periodo_fecha_fin,
+            asignatura_nombre: row.asignatura_nombre,
+            asignatura_anio: row.asignatura_anio,
+            profesor_nombre: row.profesor_nombre,
+            profesor_apellido: row.profesor_apellido,
+            profesor_documento: row.profesor_documento,
+            profesor_correo: row.profesor_correo,
+            comision_nombre: row.comision_nombre,
+            comision_letra_desde: row.comision_letra_desde,
+            comision_letra_hasta: row.comision_letra_hasta,
+          }));
+
+          const { data, error } = await supabase.rpc('importar_estructura_academica', {
+            payload: datosMapeados
+          });
+
+          if (error) throw error;
+
+          setMensajeExito(data || '¡Importación exitosa!');
+          setShowSuccessMessage(true);
+          setTimeout(() => setShowSuccessMessage(false), 5000);
+
+          // Refetch todas las listas
+          const [
+            periodosRes, edificiosRes, facultadesRes, carrerasRes, asignaturasRes, profRes, comisionesRes, statsRes
+          ] = await Promise.all([
+            fetchPeriodos(filtroEstado), fetchEdificios(filtroEstado), fetchFacultades(filtroEstado),
+            fetchCarreras(filtroEstado), fetchAsignaturas(filtroEstado), fetchProfesores(filtroEstado),
+            fetchComisiones(filtroEstado), fetchEstadisticas()
+          ]);
+          
+          if (periodosRes.data)    setPeriodosList(periodosRes.data);
+          if (edificiosRes.data)   setEdificiosList(edificiosRes.data);
+          if (facultadesRes.data)  setFacultadesList(facultadesRes.data);
+          if (carrerasRes.data)    setCarrerasList(carrerasRes.data);
+          if (asignaturasRes.data) setAsignaturasList(asignaturasRes.data);
+          if (profRes.data)        setProfesoresList(profRes.data);
+          if (comisionesRes.data)  setComisionesList(comisionesRes.data);
+          if (statsRes.data)       setEstadisticasReales(statsRes.data);
+          
+        } catch (err) {
+          setErrorMessage(`Error en importación: ${err.message}`);
+        } finally {
+          setIsLoading(false);
+          event.target.value = null; // resetear input
+        }
+      },
+      error: (err) => {
+        setErrorMessage(`Error leyendo el archivo CSV: ${err.message}`);
+        setIsLoading(false);
+        event.target.value = null;
+      }
+    });
+  };
+
+  const descargarPlantillaCSV = () => {
+    const cabeceras = "edificio_nombre,edificio_direccion,facultad_nombre,facultad_ciudad,carrera_nombre,periodo_nombre,periodo_fecha_inicio,periodo_fecha_fin,asignatura_nombre,asignatura_anio,profesor_nombre,profesor_apellido,profesor_documento,profesor_correo,comision_nombre,comision_letra_desde,comision_letra_hasta";
+    const ejemplo = "Campus Deodoro Roca,Av. Libertad 5470,FaCENA,Corrientes,Licenciatura en Sistemas,1er Cuatrimestre,2025-03-01,2025-07-31,Ingeniería de Software II,4to,Juan,Pérez,12345678,jperez@unne.edu.ar,COM-A,A,M";
+    const csvContent = `${cabeceras}\n${ejemplo}`;
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'plantilla_importacion_sic.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportarDatosCSV = () => {
+    let listaActual = [];
+    switch (entidadActiva) {
+      case 'Periodos': listaActual = periodosList; break;
+      case 'Edificios': listaActual = edificiosList; break;
+      case 'Facultades': listaActual = facultadesList; break;
+      case 'Carreras': listaActual = carrerasList; break;
+      case 'Asignaturas': listaActual = asignaturasList; break;
+      case 'Profesores': listaActual = profesoresList; break;
+      case 'Comisiones': listaActual = comisionesList; break;
+      default: break;
+    }
+    
+    if (listaActual.length === 0) {
+      alert(`No hay datos para exportar en ${entidadActiva}`);
+      return;
+    }
+
+    const csvContent = Papa.unparse(listaActual);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `exportacion_${entidadActiva.toLowerCase()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleEdit = (tipo, item) => {
     setItemSeleccionado(item);
     setEditingTipo(tipo);
@@ -375,8 +498,22 @@ const EstructuraPage = () => {
 
       <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '20px', backgroundColor: '#ffffff', padding: '15px', borderRadius: '8px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #3182ce', backgroundColor: 'transparent', color: '#3182ce', fontWeight: '600', cursor: 'pointer', fontSize: '0.85rem' }}>📥 Importar CSV</button>
-          <button style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #38a169', backgroundColor: 'transparent', color: '#38a169', fontWeight: '600', cursor: 'pointer', fontSize: '0.85rem' }}>📤 Exportar CSV</button>
+          <input
+            type="file"
+            accept=".csv"
+            hidden
+            id="csvFileInput"
+            ref={csvInputRef}
+            onChange={handleFileUpload}
+          />
+          <button 
+            onClick={() => csvInputRef.current?.click()}
+            style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #3182ce', backgroundColor: 'transparent', color: '#3182ce', fontWeight: '600', cursor: 'pointer', fontSize: '0.85rem' }}
+          >
+            📥 Importar CSV
+          </button>
+          <button onClick={exportarDatosCSV} style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #38a169', backgroundColor: 'transparent', color: '#38a169', fontWeight: '600', cursor: 'pointer', fontSize: '0.85rem' }}>📤 Exportar CSV</button>
+          <button onClick={descargarPlantillaCSV} style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #718096', backgroundColor: 'transparent', color: '#718096', fontWeight: '600', cursor: 'pointer', fontSize: '0.85rem' }}>📄 Descargar Plantilla</button>
         </div>
         <div style={{ flex: 1 }} />
         <input
