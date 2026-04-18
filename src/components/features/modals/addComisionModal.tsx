@@ -136,10 +136,6 @@ const AddComisionModal = ({ isOpen, onClose, onSave, profesoresDisponibles, asig
         <h2 style={titleStyle}>{isEditMode ? 'Editar Comisión' : 'Nueva Comisión'}</h2>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <div>
-            <label style={labelStyle}>ID Asignado</label>
-            <input type="text" value="AUTO-GEN" disabled style={inputDisabledStyle} />
-          </div>
 
           <div>
             <label style={labelStyle}>Nombre de Comisión *</label>

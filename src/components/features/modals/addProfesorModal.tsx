@@ -145,10 +145,6 @@ const AddProfesorModal = ({ isOpen, onClose, onSave, initialData = null, isEditM
         <h2 style={titleStyle}>{isEditMode ? 'Editar Profesor' : 'Nuevo Profesor'}</h2>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <div>
-            <label style={labelStyle}>ID Asignado</label>
-            <input type="text" value="AUTO-GEN" disabled style={inputDisabledStyle} />
-          </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
             <div>

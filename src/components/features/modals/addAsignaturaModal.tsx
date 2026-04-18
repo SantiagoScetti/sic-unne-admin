@@ -12,10 +12,15 @@ type Carrera = {
   nombre: string;
 };
 
+type Periodo = {
+  id_periodo: number;
+  nombre: string;
+};
+
 type NuevaAsignatura = {
   nombre: string;
   año: string;
-  id_periodo: string;
+  id_periodo: number | string;
   id_carrera: string;
   profesores_ids: number[];
 };
@@ -26,12 +31,13 @@ type AddAsignaturaModalProps = {
   onSave: (asignatura: NuevaAsignatura) => void;
   carrerasDisponibles: Carrera[];
   profesoresDisponibles: Profesor[];
+  periodosDisponibles: Periodo[];
   initialData?: NuevaAsignatura | null;
   isEditMode?: boolean;
   onDelete?: () => void;
 };
 
-const AddAsignaturaModal = ({ isOpen, onClose, onSave, carrerasDisponibles, profesoresDisponibles, initialData = null, isEditMode = false, onDelete }: AddAsignaturaModalProps) => {
+const AddAsignaturaModal = ({ isOpen, onClose, onSave, carrerasDisponibles, profesoresDisponibles, periodosDisponibles, initialData = null, isEditMode = false, onDelete }: AddAsignaturaModalProps) => {
   const [nuevaAsignatura, setNuevaAsignatura] = useState<NuevaAsignatura>({
     nombre: '', año: '', id_periodo: '', id_carrera: '', profesores_ids: [] as number[]
   });
@@ -52,7 +58,6 @@ const AddAsignaturaModal = ({ isOpen, onClose, onSave, carrerasDisponibles, prof
   if (!isOpen) return null;
 
   const añosDictado = ['Primer Año', 'Segundo Año', 'Tercer Año', 'Cuarto Año', 'Quinto Año', 'Sexto Año'];
-  const periodosEstaticos = ['1er Cuatrimestre', '2do Cuatrimestre', 'Anual', '1er Semestre', '2do Semestre'];
 
   const profesoresFiltrados = profesoresDisponibles.filter(p => 
     `${p.nombre} ${p.apellido}`.toLowerCase().includes(busquedaProfesor.toLowerCase())
@@ -138,10 +143,6 @@ const AddAsignaturaModal = ({ isOpen, onClose, onSave, carrerasDisponibles, prof
         <h2 style={titleStyle}>{isEditMode ? 'Editar Asignatura' : 'Nueva Asignatura'}</h2>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div>
-            <label style={labelStyle}>ID Asignado</label>
-            <input type="text" value="AUTO-GEN" disabled style={inputDisabledStyle} />
-          </div>
 
           <div>
             <label style={labelStyle}>Nombre de la Asignatura *</label>
@@ -160,9 +161,9 @@ const AddAsignaturaModal = ({ isOpen, onClose, onSave, carrerasDisponibles, prof
             </div>
             <div>
               <label style={labelStyle}>Periodo *</label>
-              <select className="modal-select" style={{ ...inputBaseStyle, border: `1px solid ${errores.periodo ? '#e53e3e' : '#e2e8f0'}` }} value={nuevaAsignatura.id_periodo} onChange={(e) => setNuevaAsignatura({ ...nuevaAsignatura, id_periodo: e.target.value })}>
+              <select className="modal-select" style={{ ...inputBaseStyle, border: `1px solid ${errores.periodo ? '#e53e3e' : '#e2e8f0'}` }} value={nuevaAsignatura.id_periodo} onChange={(e) => setNuevaAsignatura({ ...nuevaAsignatura, id_periodo: Number(e.target.value) })}>
                 <option value="">Seleccionar...</option>
-                {periodosEstaticos.map(p => <option key={p} value={p}>{p}</option>)}
+                {periodosDisponibles && periodosDisponibles.map(p => <option key={p.id_periodo} value={p.id_periodo}>{p.nombre}</option>)}
               </select>
               {errores.periodo && <p style={errorTextStyle}>{errores.periodo}</p>}
             </div>

@@ -1,8 +1,15 @@
 import { supabase } from './supabaseClient';
 
-export const fetchPeriodos = async () => {
+/** Aplica el filtro de estado a una query de Supabase */
+const applyEstadoFilter = (query, filtroEstado) => {
+  if (filtroEstado === 'Activos')   return query.eq('estado', true);
+  if (filtroEstado === 'Inactivos') return query.eq('estado', false);
+  return query; // 'Todos': sin filtro
+};
+
+export const fetchPeriodos = async (filtroEstado = 'Activos') => {
   try {
-    const { data, error } = await supabase.from('periodo').select('*');
+    const { data, error } = await applyEstadoFilter(supabase.from('periodo').select('*'), filtroEstado);
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
@@ -11,9 +18,9 @@ export const fetchPeriodos = async () => {
   }
 };
 
-export const fetchEdificios = async () => {
+export const fetchEdificios = async (filtroEstado = 'Activos') => {
   try {
-    const { data, error } = await supabase.from('edificio').select('*');
+    const { data, error } = await applyEstadoFilter(supabase.from('edificio').select('*'), filtroEstado);
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
@@ -22,18 +29,14 @@ export const fetchEdificios = async () => {
   }
 };
 
-export const fetchFacultades = async () => {
+export const fetchFacultades = async (filtroEstado = 'Activos') => {
   try {
-    const { data, error } = await supabase
-      .from('facultad')
-      .select('*, edificio(nombre)');
+    const { data, error } = await applyEstadoFilter(
+      supabase.from('facultad').select('*, edificio(nombre)'),
+      filtroEstado
+    );
     if (error) throw error;
-    
-    // Aplanar respuesta
-    const planas = data.map(f => ({
-      ...f,
-      nombreEdificio: f.edificio?.nombre || 'Sin Asignar'
-    }));
+    const planas = data.map(f => ({ ...f, nombreEdificio: f.edificio?.nombre || 'Sin Asignar' }));
     return { data: planas, error: null };
   } catch (error) {
     console.error('Error fetching facultades:', error.message);
@@ -41,18 +44,14 @@ export const fetchFacultades = async () => {
   }
 };
 
-export const fetchCarreras = async () => {
+export const fetchCarreras = async (filtroEstado = 'Activos') => {
   try {
-    const { data, error } = await supabase
-      .from('carrera')
-      .select('*, facultad(nombre)');
+    const { data, error } = await applyEstadoFilter(
+      supabase.from('carrera').select('*, facultad(nombre)'),
+      filtroEstado
+    );
     if (error) throw error;
-    
-    // Aplanar respuesta
-    const planas = data.map(c => ({
-      ...c,
-      nombreFacultad: c.facultad?.nombre || 'Sin Asignar'
-    }));
+    const planas = data.map(c => ({ ...c, nombreFacultad: c.facultad?.nombre || 'Sin Asignar' }));
     return { data: planas, error: null };
   } catch (error) {
     console.error('Error fetching carreras:', error.message);
@@ -60,18 +59,17 @@ export const fetchCarreras = async () => {
   }
 };
 
-export const fetchAsignaturas = async () => {
+export const fetchAsignaturas = async (filtroEstado = 'Activos') => {
   try {
-    const { data, error } = await supabase
-      .from('asignatura')
-      .select('*, periodo(nombre), carrera(nombre, facultad(nombre))');
+    const { data, error } = await applyEstadoFilter(
+      supabase.from('asignatura').select('*, periodo(nombre), carrera(nombre, facultad(nombre))'),
+      filtroEstado
+    );
     if (error) throw error;
-    
-    // Aplanar respuesta
     const planas = data.map(a => ({
       ...a,
-      nombrePeriodo: a.periodo?.nombre || 'Sin Asignar',
-      nombreCarrera: a.carrera?.nombre || 'Sin Asignar',
+      nombrePeriodo:  a.periodo?.nombre || 'Sin Asignar',
+      nombreCarrera:  a.carrera?.nombre || 'Sin Asignar',
       nombreFacultad: a.carrera?.facultad?.nombre || 'Sin Asignar'
     }));
     return { data: planas, error: null };
@@ -81,9 +79,9 @@ export const fetchAsignaturas = async () => {
   }
 };
 
-export const fetchProfesores = async () => {
+export const fetchProfesores = async (filtroEstado = 'Activos') => {
   try {
-    const { data, error } = await supabase.from('profesor').select('*');
+    const { data, error } = await applyEstadoFilter(supabase.from('profesor').select('*'), filtroEstado);
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
@@ -92,11 +90,10 @@ export const fetchProfesores = async () => {
   }
 };
 
-export const fetchComisiones = async () => {
+export const fetchComisiones = async (filtroEstado = 'Activos') => {
   try {
-    const { data, error } = await supabase
-      .from('comision')
-      .select(`
+    const { data, error } = await applyEstadoFilter(
+      supabase.from('comision').select(`
         *,
         asignatura (
           *,
@@ -108,11 +105,12 @@ export const fetchComisiones = async () => {
         comision_profesor (
           profesor (*)
         )
-      `);
-      
+      `),
+      filtroEstado
+    );
+
     if (error) throw error;
 
-    // Aplanamos la respuesta para que la UI no maneje anidamiento profundo
     const planas = data.map(com => ({
       ...com,
       id_comision: com.id_comision,
@@ -139,7 +137,8 @@ export const fetchEstadisticas = async () => {
     const getCount = async (table) => {
       const { count, error } = await supabase
         .from(table)
-        .select('*', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true })
+        .eq('estado', true);
       if (error) throw error;
       return count || 0;
     };
@@ -172,15 +171,170 @@ export const fetchEstadisticas = async () => {
   }
 };
 
+// ─── FUNCIONES DE INSERCIÓN ───────────────────────────────────────────────────
+
+/**
+ * Inserta un nuevo Periodo.
+ * Payload esperado: { nombre, fecha_inicio, fecha_fin }
+ */
+export const crearPeriodo = async (data) => {
+  try {
+    const { data: result, error } = await supabase
+      .from('periodo')
+      .insert([{ nombre: data.nombre, fecha_inicio: data.fecha_inicio, fecha_fin: data.fecha_fin }])
+      .select();
+    if (error) throw error;
+    return { data: result ? result[0] : null, error: null };
+  } catch (error) {
+    console.error('Error creando periodo:', error.message);
+    return { data: null, error: error.message };
+  }
+};
+
+/**
+ * Inserta un nuevo Edificio.
+ * Payload esperado: { nombre, direccion }
+ */
+export const crearEdificio = async (data) => {
+  try {
+    const { data: result, error } = await supabase
+      .from('edificio')
+      .insert([{ nombre: data.nombre, direccion: data.direccion }])
+      .select();
+    if (error) throw error;
+    return { data: result ? result[0] : null, error: null };
+  } catch (error) {
+    console.error('Error creando edificio:', error.message);
+    return { data: null, error: error.message };
+  }
+};
+
+/**
+ * Inserta una nueva Facultad.
+ * Payload esperado: { nombre, ciudad, id_edificio }
+ */
+export const crearFacultad = async (data) => {
+  try {
+    const { data: result, error } = await supabase
+      .from('facultad')
+      .insert([{ nombre: data.nombre, ciudad: data.ciudad, id_edificio: Number(data.id_edificio) }])
+      .select();
+    if (error) throw error;
+    return { data: result ? result[0] : null, error: null };
+  } catch (error) {
+    console.error('Error creando facultad:', error.message);
+    return { data: null, error: error.message };
+  }
+};
+
+/**
+ * Inserta una nueva Carrera.
+ * Payload esperado: { nombre, id_facultad }
+ */
+export const crearCarrera = async (data) => {
+  try {
+    const { data: result, error } = await supabase
+      .from('carrera')
+      .insert([{ nombre: data.nombre, id_facultad: Number(data.id_facultad) }])
+      .select();
+    if (error) throw error;
+    return { data: result ? result[0] : null, error: null };
+  } catch (error) {
+    console.error('Error creando carrera:', error.message);
+    return { data: null, error: error.message };
+  }
+};
+
+/**
+ * Inserta una nueva Asignatura y sus relaciones con Profesores (asignatura_profesor).
+ * Payload esperado: { nombre, año, id_periodo (integer), id_carrera, profesores_ids[] }
+ */
+export const crearAsignatura = async (data) => {
+  try {
+    const { data: result, error } = await supabase
+      .from('asignatura')
+      .insert([{
+        nombre: data.nombre,
+        anio_dictado: data.año || data.anio_dictado,
+        id_periodo: Number(data.id_periodo),
+        id_carrera: Number(data.id_carrera),
+      }])
+      .select();
+    if (error) throw error;
+
+    const nuevaAsignatura = result[0];
+
+    // Insertar relaciones N:M con profesores
+    if (data.profesores_ids && data.profesores_ids.length > 0) {
+      const relaciones = data.profesores_ids.map(id_profesor => ({
+        id_asignatura: nuevaAsignatura.id_asignatura,
+        id_profesor,
+      }));
+      const { error: relError } = await supabase.from('asignatura_profesor').insert(relaciones);
+      if (relError) throw relError;
+    }
+
+    return { data: nuevaAsignatura, error: null };
+  } catch (error) {
+    console.error('Error creando asignatura:', error.message);
+    return { data: null, error: error.message };
+  }
+};
+
+/**
+ * Inserta un nuevo Profesor.
+ * Payload esperado: { nombre, apellido, documento, correo, telefono }
+ * NOTA: 'telefono' no existe en el schema actual; se omite silenciosamente.
+ */
+export const crearProfesor = async (data) => {
+  try {
+    const { data: result, error } = await supabase
+      .from('profesor')
+      .insert([{
+        nombre: data.nombre,
+        apellido: data.apellido,
+        documento: Number(data.documento),
+        correo: data.correo,
+        estado: true, // Activo por defecto al crear
+      }])
+      .select();
+    if (error) throw error;
+    return { data: result ? result[0] : null, error: null };
+  } catch (error) {
+    console.error('Error creando profesor:', error.message);
+    return { data: null, error: error.message };
+  }
+};
+
 export const crearComision = async (comisionData) => {
   try {
+    // Mapear payload del modal a columnas reales del schema
+    const row = {
+      nombre: comisionData.nombre,
+      letra_desde: comisionData.letraDesde || comisionData.letra_desde,
+      letra_hasta: comisionData.letraHasta || comisionData.letra_hasta,
+      id_asignatura: Number(comisionData.id_asignatura),
+    };
+
     const { data, error } = await supabase
       .from('comision')
-      .insert([comisionData])
+      .insert([row])
       .select();
 
     if (error) throw error;
-    return { data: data ? data[0] : null, error: null };
+    const nuevaComision = data[0];
+
+    // Insertar relaciones N:M con profesores
+    if (comisionData.profesores_ids && comisionData.profesores_ids.length > 0) {
+      const relaciones = comisionData.profesores_ids.map(id_profesor => ({
+        id_comision: nuevaComision.id_comision,
+        id_profesor,
+      }));
+      const { error: relError } = await supabase.from('comision_profesor').insert(relaciones);
+      if (relError) throw relError;
+    }
+
+    return { data: nuevaComision, error: null };
   } catch (error) {
     console.error('Error creando comisión:', error.message);
     return { data: null, error: error.message };
@@ -189,11 +343,16 @@ export const crearComision = async (comisionData) => {
 
 export const actualizarComision = async (id, comisionData) => {
   try {
-    const idColumn = 'id_comision'; 
+    const row = {
+      nombre:      comisionData.nombre,
+      letra_desde: comisionData.letraDesde || comisionData.letra_desde,
+      letra_hasta: comisionData.letraHasta || comisionData.letra_hasta,
+      id_asignatura: Number(comisionData.id_asignatura),
+    };
     const { data, error } = await supabase
       .from('comision')
-      .update(comisionData)
-      .eq(idColumn, id)
+      .update(row)
+      .eq('id_comision', id)
       .select();
 
     if (error) throw error;
@@ -203,3 +362,104 @@ export const actualizarComision = async (id, comisionData) => {
     return { data: null, error: error.message };
   }
 };
+
+// ─── FUNCIONES DE ACTUALIZACIÓN (UPDATE) ────────────────────────────────────
+
+/** Helper interno: actualiza campos en cualquier tabla */
+const softUpdate = async (table, pkColumn, id, fields) => {
+  try {
+    const { data, error } = await supabase
+      .from(table)
+      .update(fields)
+      .eq(pkColumn, id)
+      .select();
+    if (error) throw error;
+    return { data: data ? data[0] : null, error: null };
+  } catch (error) {
+    console.error(`Error actualizando ${table} id=${id}:`, error.message);
+    return { data: null, error: error.message };
+  }
+};
+
+/** Actualiza un Periodo. Payload: { nombre, fecha_inicio, fecha_fin } */
+export const actualizarPeriodo = (id, data) =>
+  softUpdate('periodo', 'id_periodo', id, {
+    nombre:       data.nombre,
+    fecha_inicio: data.fecha_inicio,
+    fecha_fin:    data.fecha_fin,
+  });
+
+/** Actualiza un Edificio. Payload: { nombre, direccion } */
+export const actualizarEdificio = (id, data) =>
+  softUpdate('edificio', 'id_edificio', id, {
+    nombre:    data.nombre,
+    direccion: data.direccion,
+  });
+
+/** Actualiza una Facultad. Payload: { nombre, ciudad, id_edificio } */
+export const actualizarFacultad = (id, data) =>
+  softUpdate('facultad', 'id_facultad', id, {
+    nombre:      data.nombre,
+    ciudad:      data.ciudad,
+    id_edificio: Number(data.id_edificio),
+  });
+
+/** Actualiza una Carrera. Payload: { nombre, id_facultad } */
+export const actualizarCarrera = (id, data) =>
+  softUpdate('carrera', 'id_carrera', id, {
+    nombre:      data.nombre,
+    id_facultad: Number(data.id_facultad),
+  });
+
+/** Actualiza una Asignatura. Payload: { nombre, año, id_periodo, id_carrera } */
+export const actualizarAsignatura = (id, data) =>
+  softUpdate('asignatura', 'id_asignatura', id, {
+    nombre:       data.nombre,
+    anio_dictado: data.año || data.anio_dictado,
+    id_periodo:   Number(data.id_periodo),
+    id_carrera:   Number(data.id_carrera),
+  });
+
+/** Actualiza un Profesor. Payload: { nombre, apellido, documento, correo } */
+export const actualizarProfesor = (id, data) =>
+  softUpdate('profesor', 'id_profesor', id, {
+    nombre:    data.nombre,
+    apellido:  data.apellido,
+    documento: Number(data.documento),
+    correo:    data.correo,
+  });
+
+
+// ─── FUNCIONES DE BORRADO LÓGICO (SOFT DELETE) ───────────────────────────────
+
+const softDelete = async (table, pkColumn, id) => {
+  try {
+    const { error } = await supabase
+      .from(table)
+      .update({ estado: false })
+      .eq(pkColumn, id);
+    if (error) throw error;
+    return { error: null };
+  } catch (error) {
+    console.error(`Error desactivando ${table} id=${id}:`, error.message);
+    return { error: error.message };
+  }
+};
+
+export const desactivarPeriodo    = (id) => softDelete('periodo',    'id_periodo',    id);
+export const desactivarEdificio   = (id) => softDelete('edificio',   'id_edificio',   id);
+export const desactivarFacultad   = (id) => softDelete('facultad',   'id_facultad',   id);
+export const desactivarCarrera    = (id) => softDelete('carrera',    'id_carrera',    id);
+export const desactivarAsignatura = (id) => softDelete('asignatura', 'id_asignatura', id);
+export const desactivarProfesor   = (id) => softDelete('profesor',   'id_profesor',   id);
+export const desactivarComision   = (id) => softDelete('comision',   'id_comision',   id);
+
+// ─── FUNCIONES DE RESTAURACIÓN (SOFT RESTORE) ────────────────────────────────
+
+export const restaurarPeriodo    = (id) => softUpdate('periodo',    'id_periodo',    id, { estado: true });
+export const restaurarEdificio   = (id) => softUpdate('edificio',   'id_edificio',   id, { estado: true });
+export const restaurarFacultad   = (id) => softUpdate('facultad',   'id_facultad',   id, { estado: true });
+export const restaurarCarrera    = (id) => softUpdate('carrera',    'id_carrera',    id, { estado: true });
+export const restaurarAsignatura = (id) => softUpdate('asignatura', 'id_asignatura', id, { estado: true });
+export const restaurarProfesor   = (id) => softUpdate('profesor',   'id_profesor',   id, { estado: true });
+export const restaurarComision   = (id) => softUpdate('comision',   'id_comision',   id, { estado: true });

@@ -103,11 +103,6 @@ const AddFacultadModal = ({ isOpen, onClose, onSave, edificiosDisponibles, initi
         <h2 style={titleStyle}>{isEditMode ? 'Editar Facultad' : 'Nueva Facultad'}</h2>
         
         <div style={formStyle}>
-          {/* ID Asignado */}
-          <div>
-            <label style={labelStyle}>ID Asignado (Automático)</label>
-            <input type="text" value="AUTO-GEN" disabled style={inputDisabledStyle} />
-          </div>
 
           {/* Nombre */}
           <div>

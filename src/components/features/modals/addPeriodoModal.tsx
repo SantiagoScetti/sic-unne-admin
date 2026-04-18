@@ -37,13 +37,9 @@ const AddPeriodoModal = ({ isOpen, onClose, onSave, initialData = null, isEditMo
     let esValido = true;
     const hoy = new Date().toISOString().split('T')[0];
 
-    // Nombre: > 5 caracteres y SIN números
-    const tieneNumeros = /\d/;
-    if (nuevoPeriodo.nombre.trim().length <= 5) {
-      erroresTemp.nombre = "El nombre debe tener más de 5 caracteres.";
-      esValido = false;
-    } else if (tieneNumeros.test(nuevoPeriodo.nombre)) {
-      erroresTemp.nombre = "El nombre no puede contener números.";
+    // Nombre: debe ser uno de los valores permitidos
+    if (!nuevoPeriodo.nombre) {
+      erroresTemp.nombre = "Debe seleccionar un tipo de periodo.";
       esValido = false;
     }
 
@@ -105,20 +101,25 @@ const AddPeriodoModal = ({ isOpen, onClose, onSave, initialData = null, isEditMo
       <div style={modalStyle}>
         <h2 style={titleStyle}>{isEditMode ? 'Editar Periodo Académico' : 'Nuevo Periodo Académico'}</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <div>
-            <label style={labelStyle}>ID Asignado</label>
-            <input type="text" value="AUTO-GEN" disabled style={inputDisabledStyle} />
-          </div>
 
           <div>
-            <label style={labelStyle}>Nombre del Periodo *</label>
-            <input 
-              className="modal-input" 
-              style={{ ...inputBaseStyle, border: `1px solid ${errores.nombre ? '#e53e3e' : '#e2e8f0'}` }}
-              value={nuevoPeriodo.nombre} 
-              onChange={(e) => setNuevoPeriodo({ ...nuevoPeriodo, nombre: e.target.value })} 
-              placeholder="Ej: Primer Cuatrimestre"
-            />
+            <label style={labelStyle}>Tipo de Periodo *</label>
+            <select
+              className="modal-input"
+              style={{ ...inputBaseStyle, border: `1px solid ${errores.nombre ? '#e53e3e' : '#e2e8f0'}`, cursor: 'pointer' }}
+              value={nuevoPeriodo.nombre}
+              onChange={(e) => setNuevoPeriodo({ ...nuevoPeriodo, nombre: e.target.value })}
+            >
+              <option value="">Seleccionar...</option>
+              <option value="1er Cuatrimestre">1er Cuatrimestre</option>
+              <option value="2do Cuatrimestre">2do Cuatrimestre</option>
+              <option value="1er Trimestre">1er Trimestre</option>
+              <option value="2do Trimestre">2do Trimestre</option>
+              <option value="3er Trimestre">3er Trimestre</option>
+              <option value="Anual">Anual</option>
+              <option value="1er Semestre">1er Semestre</option>
+              <option value="2do Semestre">2do Semestre</option>
+            </select>
             {errores.nombre && <p style={errorTextStyle}>{errores.nombre}</p>}
           </div>
 

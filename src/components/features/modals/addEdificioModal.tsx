@@ -95,10 +95,6 @@ const AddEdificioModal = ({ isOpen, onClose, onSave, initialData = null, isEditM
         <h2 style={titleStyle}>{isEditMode ? 'Editar Edificio' : 'Nuevo Edificio'}</h2>
         
         <div style={formStyle}>
-          <div>
-            <label style={labelStyle}>ID Asignado (Automático)</label>
-            <input type="text" value="AUTO-GEN" disabled style={inputDisabledStyle} />
-          </div>
 
           <div>
             <label style={labelStyle}>Nombre del Edificio *</label>

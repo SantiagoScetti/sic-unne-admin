@@ -94,10 +94,6 @@ const AddCarreraModal = ({ isOpen, onClose, onSave, facultadesDisponibles, initi
         <h2 style={titleStyle}>{isEditMode ? 'Editar Carrera' : 'Nueva Carrera'}</h2>
         
         <div style={formStyle}>
-          <div>
-            <label style={labelStyle}>ID Asignado (Automático)</label>
-            <input type="text" value="AUTO-GEN" disabled style={inputDisabledStyle} />
-          </div>
 
           <div>
             <label style={labelStyle}>Nombre de la Carrera *</label>
