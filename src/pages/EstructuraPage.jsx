@@ -1,8 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import Papa from 'papaparse';
-import { supabase } from '../services/supabaseClient';
-import { fetchPeriodos, fetchEdificios, fetchFacultades, fetchCarreras, fetchAsignaturas, fetchProfesores, fetchComisiones, fetchEstadisticas, crearPeriodo, crearEdificio, crearFacultad, crearCarrera, crearAsignatura, crearProfesor, crearComision, actualizarPeriodo, actualizarEdificio, actualizarFacultad, actualizarCarrera, actualizarAsignatura, actualizarProfesor, actualizarComision, desactivarPeriodo, desactivarEdificio, desactivarFacultad, desactivarCarrera, desactivarAsignatura, desactivarProfesor, desactivarComision, restaurarPeriodo, restaurarEdificio, restaurarFacultad, restaurarCarrera, restaurarAsignatura, restaurarProfesor, restaurarComision } from '../services/estructuraService';
+import { fetchPeriodos, fetchEdificios, fetchFacultades, fetchCarreras, fetchAsignaturas, fetchProfesores, fetchComisiones, fetchEstadisticas, crearPeriodo, crearEdificio, crearFacultad, crearCarrera, crearAsignatura, crearProfesor, crearComision, actualizarPeriodo, actualizarEdificio, actualizarFacultad, actualizarCarrera, actualizarAsignatura, actualizarProfesor, actualizarComision, desactivarPeriodo, desactivarEdificio, desactivarFacultad, desactivarCarrera, desactivarAsignatura, desactivarProfesor, desactivarComision, restaurarPeriodo, restaurarEdificio, restaurarFacultad, restaurarCarrera, restaurarAsignatura, restaurarProfesor, restaurarComision, importarEstructuraCSV } from '../services/estructuraService';
 import AddEdificioModal from '../components/features/modals/addEdificioModal';
 import AddFacultadModal from '../components/features/modals/addFacultadModal';
 import AddCarreraModal from '../components/features/modals/addCarreraModal';
@@ -256,11 +255,9 @@ const EstructuraPage = () => {
             comision_letra_hasta: row.comision_letra_hasta,
           }));
 
-          const { data, error } = await supabase.rpc('importar_estructura_academica', {
-            payload: datosMapeados
-          });
+          const { data, error } = await importarEstructuraCSV(datosMapeados);
 
-          if (error) throw error;
+          if (error) throw new Error(error);
 
           setMensajeExito(data || '¡Importación exitosa!');
           setShowSuccessMessage(true);

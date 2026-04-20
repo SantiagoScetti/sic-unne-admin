@@ -144,7 +144,7 @@ const AddComisionModal = ({ isOpen, onClose, onSave, profesoresDisponibles, asig
           <div>
             <label style={labelStyle}>Nombre de Comisión *</label>
             <input className="modal-input" style={{ ...inputBaseStyle, border: `1px solid ${errores.nombre ? '#e53e3e' : '#e2e8f0'}` }} 
-              value={nuevaComision.nombre} onChange={(e) => setNuevaComision({...nuevaComision, nombre: e.target.value})} placeholder="Ej: Comisión A" />
+              value={nuevaComision.nombre} onChange={(e) => setNuevaComision({...nuevaComision, nombre: e.target.value.toUpperCase()})} placeholder="Ej: COMISIÓN A" />
             {errores.nombre && <p style={errorTextStyle}>{errores.nombre}</p>}
           </div>
 
@@ -163,12 +163,12 @@ const AddComisionModal = ({ isOpen, onClose, onSave, profesoresDisponibles, asig
             <div>
               <label style={labelStyle}>Letra Desde *</label>
               <input className="modal-input" style={{ ...inputBaseStyle, textAlign: 'center' }} maxLength={1}
-                value={nuevaComision.letraDesde} onChange={(e) => setNuevaComision({...nuevaComision, letraDesde: e.target.value})} placeholder="A" />
+                value={nuevaComision.letraDesde} onChange={(e) => setNuevaComision({...nuevaComision, letraDesde: e.target.value.toUpperCase()})} placeholder="A" />
             </div>
             <div>
               <label style={labelStyle}>Letra Hasta *</label>
               <input className="modal-input" style={{ ...inputBaseStyle, textAlign: 'center' }} maxLength={1}
-                value={nuevaComision.letraHasta} onChange={(e) => setNuevaComision({...nuevaComision, letraHasta: e.target.value})} placeholder="Z" />
+                value={nuevaComision.letraHasta} onChange={(e) => setNuevaComision({...nuevaComision, letraHasta: e.target.value.toUpperCase()})} placeholder="Z" />
             </div>
           </div>
           {errores.letras && <p style={errorTextStyle}>{errores.letras}</p>}

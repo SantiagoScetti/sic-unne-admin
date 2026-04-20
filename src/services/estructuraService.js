@@ -1,4 +1,6 @@
-import { supabase } from './supabaseClient';
+import { createClient } from '@/lib/supabase/client';
+
+const supabase = createClient();
 
 /** Aplica el filtro de estado a una query de Supabase */
 const applyEstadoFilter = (query, filtroEstado) => {
@@ -538,3 +540,21 @@ export const restaurarCarrera    = (id) => softUpdate('carrera',    'id_carrera'
 export const restaurarAsignatura = (id) => softUpdate('asignatura', 'id_asignatura', id, { estado: true });
 export const restaurarProfesor   = (id) => softUpdate('profesor',   'id_profesor',   id, { estado: true });
 export const restaurarComision   = (id) => softUpdate('comision',   'id_comision',   id, { estado: true });
+
+// ─── FUNCIONES RPC (OPERACIONES MASIVAS) ──────────────────────────────────────
+
+/**
+ * Llama a la función RPC `importar_estructura_academica` en Supabase.
+ * @param {Object[]} payload - Array de filas mapeadas desde el CSV.
+ * @returns {{ data: string|null, error: string|null }}
+ */
+export const importarEstructuraCSV = async (payload) => {
+  try {
+    const { data, error } = await supabase.rpc('importar_estructura_academica', { payload });
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error en importación masiva:', error.message);
+    return { data: null, error: error.message };
+  }
+};

@@ -39,7 +39,6 @@ const AdminLayout = ({ adminEmail, children }) => {
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <Link href="/admin/reportes" style={getLinkStyle('/admin/reportes')}>Reportes</Link>
             <Link href="/admin/estructura" style={getLinkStyle('/admin/estructura')}>Estructura Académica</Link>
-            <Link href="/admin/auditoria" style={getLinkStyle('/admin/auditoria')}>Auditoría</Link>
           </nav>
         </div>
 

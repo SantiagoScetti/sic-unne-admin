@@ -1,15 +1,20 @@
 import { redirect } from "next/navigation";
-import { getServerUser } from "@/src/services/authServerService";
+import { getServerUserWithRole } from "@/src/services/authServerService";
 import AdminLayout from "@/src/layouts/AdminLayout";
 import EstructuraPage from "@/src/pages/EstructuraPage";
 import { Suspense } from "react";
 
 async function AuthCheck({ children }: { children: React.ReactNode }) {
-  // Verify if the user is authenticated
-  const { user, error } = await getServerUser();
+  const { user, rol, error } = await getServerUserWithRole();
 
+  // 1. Not authenticated → login
   if (error || !user) {
     redirect("/auth/login");
+  }
+
+  // 2. Authenticated but not an admin → access denied
+  if (rol !== 'Administrador') {
+    redirect("/unauthorized");
   }
 
   return (
