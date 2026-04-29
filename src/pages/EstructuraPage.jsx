@@ -1,7 +1,8 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import Papa from 'papaparse';
-import { fetchPeriodos, fetchEdificios, fetchFacultades, fetchCarreras, fetchAsignaturas, fetchProfesores, fetchComisiones, fetchEstadisticas, crearPeriodo, crearEdificio, crearFacultad, crearCarrera, crearAsignatura, crearProfesor, crearComision, actualizarPeriodo, actualizarEdificio, actualizarFacultad, actualizarCarrera, actualizarAsignatura, actualizarProfesor, actualizarComision, desactivarPeriodo, desactivarEdificio, desactivarFacultad, desactivarCarrera, desactivarAsignatura, desactivarProfesor, desactivarComision, restaurarPeriodo, restaurarEdificio, restaurarFacultad, restaurarCarrera, restaurarAsignatura, restaurarProfesor, restaurarComision, importarEstructuraCSV } from '../services/estructuraService';
+import { fetchPeriodos, fetchEdificios, fetchFacultades, fetchCarreras, fetchAsignaturas, fetchProfesores, fetchComisiones, fetchEstadisticas, crearPeriodo, crearEdificio, crearFacultad, crearCarrera, crearAsignatura, crearProfesor, crearComision, actualizarPeriodo, actualizarEdificio, actualizarFacultad, actualizarCarrera, actualizarAsignatura, actualizarProfesor, actualizarComision, desactivarPeriodo, desactivarEdificio, desactivarFacultad, desactivarCarrera, desactivarAsignatura, desactivarProfesor, desactivarComision, restaurarPeriodo, restaurarEdificio, restaurarFacultad, restaurarCarrera, restaurarAsignatura, restaurarProfesor, restaurarComision, importarEstructuraAcademica } from '../services/estructuraService';
+import { validarFormatoArchivo, parsearCSV, validarEsquema, detectarDuplicados, detectarIncompletos, detectarFormatosInvalidos } from '../services/csvParser';
 import AddEdificioModal from '../components/features/modals/addEdificioModal';
 import AddFacultadModal from '../components/features/modals/addFacultadModal';
 import AddCarreraModal from '../components/features/modals/addCarreraModal';
@@ -223,77 +224,106 @@ const EstructuraPage = () => {
     setIsLoading(false);
   };
 
-  const handleFileUpload = (event) => {
+  // ── C-03: IMPORTAR DATOS MASIVAMENTE ─────────────────────────────────────────
+  // Cadena trazable con el diagrama de secuencia:
+  // validarFormatoArchivo → parsearCSV → validarEsquema → detectarDuplicados
+  // → detectarIncompletos → detectarFormatosInvalidos → importarEstructuraAcademica
+  const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
     setIsLoading(true);
     setErrorMessage(null);
 
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: async (results) => {
-        try {
-          const datosMapeados = results.data.map(row => ({
-            edificio_nombre: row.edificio_nombre,
-            edificio_direccion: row.edificio_direccion,
-            facultad_nombre: row.facultad_nombre,
-            facultad_ciudad: row.facultad_ciudad,
-            carrera_nombre: row.carrera_nombre,
-            periodo_nombre: row.periodo_nombre,
-            periodo_fecha_inicio: row.periodo_fecha_inicio,
-            periodo_fecha_fin: row.periodo_fecha_fin,
-            asignatura_nombre: row.asignatura_nombre,
-            asignatura_anio: row.asignatura_anio,
-            profesor_nombre: row.profesor_nombre,
-            profesor_apellido: row.profesor_apellido,
-            profesor_documento: row.profesor_documento,
-            profesor_correo: row.profesor_correo,
-            comision_nombre: row.comision_nombre,
-            comision_letra_desde: row.comision_letra_desde,
-            comision_letra_hasta: row.comision_letra_hasta,
-          }));
-
-          const { data, error } = await importarEstructuraCSV(datosMapeados);
-
-          if (error) throw new Error(error);
-
-          setMensajeExito(data || '¡Importación exitosa!');
-          setShowSuccessMessage(true);
-          setTimeout(() => setShowSuccessMessage(false), 5000);
-
-          // Refetch todas las listas
-          const [
-            periodosRes, edificiosRes, facultadesRes, carrerasRes, asignaturasRes, profRes, comisionesRes, statsRes
-          ] = await Promise.all([
-            fetchPeriodos(filtroEstado), fetchEdificios(filtroEstado), fetchFacultades(filtroEstado),
-            fetchCarreras(filtroEstado), fetchAsignaturas(filtroEstado), fetchProfesores(filtroEstado),
-            fetchComisiones(filtroEstado), fetchEstadisticas()
-          ]);
-          
-          if (periodosRes.data)    setPeriodosList(periodosRes.data);
-          if (edificiosRes.data)   setEdificiosList(edificiosRes.data);
-          if (facultadesRes.data)  setFacultadesList(facultadesRes.data);
-          if (carrerasRes.data)    setCarrerasList(carrerasRes.data);
-          if (asignaturasRes.data) setAsignaturasList(asignaturasRes.data);
-          if (profRes.data)        setProfesoresList(profRes.data);
-          if (comisionesRes.data)  setComisionesList(comisionesRes.data);
-          if (statsRes.data)       setEstadisticasReales(statsRes.data);
-          
-        } catch (err) {
-          setErrorMessage(`Error en importación: ${err.message}`);
-        } finally {
-          setIsLoading(false);
-          event.target.value = null; // resetear input
-        }
-      },
-      error: (err) => {
-        setErrorMessage(`Error leyendo el archivo CSV: ${err.message}`);
+    try {
+      // Paso 1 — Validar formato del archivo (extensión .csv)
+      if (!validarFormatoArchivo(file)) {
+        setErrorMessage('El archivo seleccionado es inválido');
         setIsLoading(false);
         event.target.value = null;
+        return;
       }
-    });
+
+      // Paso 2 — Parsear el CSV en un array de filas
+      const filas = await parsearCSV(file);
+
+      // Paso 3 — Validar esquema (columnas requeridas)
+      const erroresEsquema = validarEsquema(filas);
+      if (erroresEsquema.length > 0) {
+        setErrorMessage(erroresEsquema[0]);
+        setIsLoading(false);
+        event.target.value = null;
+        return;
+      }
+
+      // Paso 4 — Detectar duplicados dentro del CSV
+      const erroresDuplicados = detectarDuplicados(filas);
+      if (erroresDuplicados.length > 0) {
+        setErrorMessage(erroresDuplicados.join(' | '));
+        setIsLoading(false);
+        event.target.value = null;
+        return;
+      }
+
+      // Paso 5 — Detectar campos incompletos
+      const erroresIncompletos = detectarIncompletos(filas);
+      if (erroresIncompletos.length > 0) {
+        setErrorMessage(erroresIncompletos[0]);
+        setIsLoading(false);
+        event.target.value = null;
+        return;
+      }
+
+      // Paso 6 — Detectar formatos inválidos (fechas, documento, letras)
+      const erroresFormato = detectarFormatosInvalidos(filas);
+      if (erroresFormato.length > 0) {
+        setErrorMessage(erroresFormato[0]);
+        setIsLoading(false);
+        event.target.value = null;
+        return;
+      }
+
+      // Paso 7 — Importar estructura académica (orquestador en el servicio JS)
+      const { data, error } = await importarEstructuraAcademica(filas);
+
+      if (error) {
+        setErrorMessage('Error en la importación de datos');
+        setIsLoading(false);
+        event.target.value = null;
+        return;
+      }
+
+      // Éxito — mensaje exacto del caso de uso C-03
+      setMensajeExito('Archivo importado con éxito');
+      setShowSuccessMessage(true);
+      setTimeout(() => setShowSuccessMessage(false), 5000);
+
+      // Refrescar todas las listas después de la importación
+      const [
+        periodosRes, edificiosRes, facultadesRes, carrerasRes, asignaturasRes, profRes, comisionesRes, statsRes
+      ] = await Promise.all([
+        fetchPeriodos(filtroEstado), fetchEdificios(filtroEstado), fetchFacultades(filtroEstado),
+        fetchCarreras(filtroEstado), fetchAsignaturas(filtroEstado), fetchProfesores(filtroEstado),
+        fetchComisiones(filtroEstado), fetchEstadisticas()
+      ]);
+
+      if (periodosRes.data)    setPeriodosList(periodosRes.data);
+      if (edificiosRes.data)   setEdificiosList(edificiosRes.data);
+      if (facultadesRes.data)  setFacultadesList(facultadesRes.data);
+      if (carrerasRes.data)    setCarrerasList(carrerasRes.data);
+      if (asignaturasRes.data) setAsignaturasList(asignaturasRes.data);
+      if (profRes.data)        setProfesoresList(profRes.data);
+      if (comisionesRes.data)  setComisionesList(comisionesRes.data);
+      if (statsRes.data)       setEstadisticasReales(statsRes.data);
+
+    } catch (err) {
+      // Error inesperado (red, Supabase, etc.)
+      setErrorMessage('Error en la importación de datos');
+      console.error('Error inesperado en handleFileUpload:', err);
+    } finally {
+      setIsLoading(false);
+      event.target.value = null; // resetear el input para permitir re-selección
+    }
   };
 
   const descargarPlantillaCSV = () => {

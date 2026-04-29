@@ -328,33 +328,72 @@ export const crearProfesor = async (data) => {
   }
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// C-02: CREAR COMISIÓN — Helpers privados trazables con el diagrama de secuencia
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * verificarAsignaturaExiste — C-02, paso 1.
+ * Consulta si la asignatura con el ID dado existe en la base de datos.
+ * Lanza error si no existe para detener el flujo antes de insertar.
+ */
+const verificarAsignaturaExiste = async (id_asignatura) => {
+  const { data, error } = await supabase
+    .from('asignatura')
+    .select('id_asignatura')
+    .eq('id_asignatura', id_asignatura)
+    .single();
+  if (error || !data) throw new Error(`La asignatura con ID ${id_asignatura} no existe.`);
+  return data;
+};
+
+/**
+ * insertarComision — C-02, paso 2.
+ * Inserta la fila en la tabla comision y retorna el registro creado.
+ */
+const insertarComision = async (row) => {
+  const { data, error } = await supabase
+    .from('comision')
+    .insert([row])
+    .select();
+  if (error) throw error;
+  return data[0];
+};
+
+/**
+ * asignarProfesores — C-02, paso 3.
+ * Inserta las relaciones N:M en comision_profesor para la comisión recién creada.
+ */
+const asignarProfesores = async (id_comision, profesores_ids) => {
+  if (!profesores_ids || profesores_ids.length === 0) return;
+  const relaciones = profesores_ids.map((id_profesor) => ({ id_comision, id_profesor }));
+  const { error } = await supabase.from('comision_profesor').insert(relaciones);
+  if (error) throw error;
+};
+
+/**
+ * crearComision — C-02, orquestador principal.
+ * Llama en secuencia: verificarAsignaturaExiste → insertarComision → asignarProfesores.
+ * Mensaje de éxito/error según caso de uso: "Comisión creada con éxito" / "Error en crear comisión".
+ */
 export const crearComision = async (comisionData) => {
   try {
     // Mapear payload del modal a columnas reales del schema
     const row = {
-      nombre: comisionData.nombre,
-      letra_desde: comisionData.letraDesde || comisionData.letra_desde,
-      letra_hasta: comisionData.letraHasta || comisionData.letra_hasta,
+      nombre:        comisionData.nombre,
+      letra_desde:   comisionData.letraDesde || comisionData.letra_desde,
+      letra_hasta:   comisionData.letraHasta || comisionData.letra_hasta,
       id_asignatura: Number(comisionData.id_asignatura),
     };
 
-    const { data, error } = await supabase
-      .from('comision')
-      .insert([row])
-      .select();
+    // Paso 1 — verificar que la asignatura exista antes de insertar
+    await verificarAsignaturaExiste(row.id_asignatura);
 
-    if (error) throw error;
-    const nuevaComision = data[0];
+    // Paso 2 — insertar la comisión
+    const nuevaComision = await insertarComision(row);
 
-    // Insertar relaciones N:M con profesores
-    if (comisionData.profesores_ids && comisionData.profesores_ids.length > 0) {
-      const relaciones = comisionData.profesores_ids.map(id_profesor => ({
-        id_comision: nuevaComision.id_comision,
-        id_profesor,
-      }));
-      const { error: relError } = await supabase.from('comision_profesor').insert(relaciones);
-      if (relError) throw relError;
-    }
+    // Paso 3 — vincular profesores
+    await asignarProfesores(nuevaComision.id_comision, comisionData.profesores_ids);
 
     return { data: nuevaComision, error: null };
   } catch (error) {
@@ -558,3 +597,251 @@ export const importarEstructuraCSV = async (payload) => {
     return { data: null, error: error.message };
   }
 };
+
+// =============================================================================
+// C-03: IMPORTACIÓN MASIVA — Métodos individuales por entidad
+// Cada función hace un upsert de los registros únicos de esa entidad.
+// El orquestador `importarEstructuraAcademica` los encadena en el orden correcto.
+// =============================================================================
+
+/**
+ * insertarEdificios — C-03, paso 1.
+ * Extrae edificios únicos del CSV y hace upsert por nombre en la tabla edificio.
+ */
+export const insertarEdificios = async (filas) => {
+  // Deduplicar por nombre de edificio
+  const unicos = _deduplicar(filas, 'edificio_nombre');
+  const registros = unicos.map((f) => ({
+    nombre:    f.edificio_nombre,
+    direccion: f.edificio_direccion || 'Sin especificar',
+    estado:    true,
+  }));
+  const { data, error } = await supabase
+    .from('edificio')
+    .upsert(registros, { onConflict: 'nombre', ignoreDuplicates: false })
+    .select();
+  if (error) throw error;
+  return data;
+};
+
+/**
+ * insertarFacultades — C-03, paso 2.
+ * Extrae facultades únicas del CSV y hace upsert por nombre en la tabla facultad.
+ * Requiere que los edificios ya existan para resolver el id_edificio.
+ */
+export const insertarFacultades = async (filas) => {
+  const unicos = _deduplicar(filas, 'facultad_nombre');
+  const resultados = [];
+
+  for (const f of unicos) {
+    // Resolver id_edificio por nombre
+    const { data: edificio } = await supabase
+      .from('edificio').select('id_edificio').eq('nombre', f.edificio_nombre).single();
+    if (!edificio) throw new Error(`No se encontró el edificio "${f.edificio_nombre}".`);
+
+    const { data, error } = await supabase
+      .from('facultad')
+      .upsert({
+        nombre:      f.facultad_nombre,
+        ciudad:      f.facultad_ciudad || 'Sin especificar',
+        id_edificio: edificio.id_edificio,
+        estado:      true,
+      }, { onConflict: 'nombre', ignoreDuplicates: false })
+      .select();
+    if (error) throw error;
+    resultados.push(...(data || []));
+  }
+  return resultados;
+};
+
+/**
+ * insertarCarreras — C-03, paso 3.
+ * Extrae carreras únicas del CSV y hace upsert por nombre+facultad en la tabla carrera.
+ */
+export const insertarCarreras = async (filas) => {
+  const unicos = _deduplicar(filas, ['carrera_nombre', 'facultad_nombre']);
+  const resultados = [];
+
+  for (const f of unicos) {
+    const { data: facultad } = await supabase
+      .from('facultad').select('id_facultad').eq('nombre', f.facultad_nombre).single();
+    if (!facultad) throw new Error(`No se encontró la facultad "${f.facultad_nombre}".`);
+
+    const { data, error } = await supabase
+      .from('carrera')
+      .upsert({
+        nombre:      f.carrera_nombre,
+        id_facultad: facultad.id_facultad,
+        estado:      true,
+      }, { onConflict: 'nombre', ignoreDuplicates: false })
+      .select();
+    if (error) throw error;
+    resultados.push(...(data || []));
+  }
+  return resultados;
+};
+
+/**
+ * insertarPeriodos — C-03, paso 4.
+ * Extrae períodos únicos del CSV y hace upsert por nombre+fecha_inicio en la tabla periodo.
+ */
+export const insertarPeriodos = async (filas) => {
+  const unicos = _deduplicar(filas, ['periodo_nombre', 'periodo_fecha_inicio']);
+  const registros = unicos.map((f) => ({
+    nombre:       f.periodo_nombre,
+    fecha_inicio: f.periodo_fecha_inicio,
+    fecha_fin:    f.periodo_fecha_fin,
+    estado:       true,
+  }));
+  const { data, error } = await supabase
+    .from('periodo')
+    .upsert(registros, { onConflict: 'nombre', ignoreDuplicates: false })
+    .select();
+  if (error) throw error;
+  return data;
+};
+
+/**
+ * insertarAsignaturas — C-03, paso 5.
+ * Extrae asignaturas únicas del CSV y hace upsert en la tabla asignatura.
+ * Resuelve id_carrera e id_periodo por nombre.
+ */
+export const insertarAsignaturas = async (filas) => {
+  const unicos = _deduplicar(filas, ['asignatura_nombre', 'carrera_nombre', 'periodo_nombre']);
+  const resultados = [];
+
+  for (const f of unicos) {
+    const { data: carrera } = await supabase
+      .from('carrera').select('id_carrera').eq('nombre', f.carrera_nombre).single();
+    if (!carrera) throw new Error(`No se encontró la carrera "${f.carrera_nombre}".`);
+
+    const { data: periodo } = await supabase
+      .from('periodo').select('id_periodo').eq('nombre', f.periodo_nombre).single();
+    if (!periodo) throw new Error(`No se encontró el período "${f.periodo_nombre}".`);
+
+    const { data, error } = await supabase
+      .from('asignatura')
+      .upsert({
+        nombre:       f.asignatura_nombre,
+        anio_dictado: f.asignatura_anio || '',
+        id_carrera:   carrera.id_carrera,
+        id_periodo:   periodo.id_periodo,
+        estado:       true,
+      }, { onConflict: 'nombre', ignoreDuplicates: false })
+      .select();
+    if (error) throw error;
+    resultados.push(...(data || []));
+  }
+  return resultados;
+};
+
+/**
+ * insertarProfesores — C-03, paso 6.
+ * Extrae profesores únicos del CSV y hace upsert por documento en la tabla profesor.
+ */
+export const insertarProfesores = async (filas) => {
+  const unicos = _deduplicar(filas, 'profesor_documento');
+  const registros = unicos.map((f) => ({
+    nombre:    f.profesor_nombre,
+    apellido:  f.profesor_apellido,
+    documento: Number(f.profesor_documento),
+    correo:    f.profesor_correo || '',
+    estado:    true,
+  }));
+  const { data, error } = await supabase
+    .from('profesor')
+    .upsert(registros, { onConflict: 'documento', ignoreDuplicates: false })
+    .select();
+  if (error) throw error;
+  return data;
+};
+
+/**
+ * insertarComisiones — C-03, paso 7.
+ * Inserta comisiones con sus relaciones comision_profesor.
+ * Resuelve id_asignatura por nombre, y id_profesor por documento.
+ */
+export const insertarComisiones = async (filas) => {
+  const resultados = [];
+
+  for (const f of filas) {
+    // Resolver asignatura
+    const { data: asignatura } = await supabase
+      .from('asignatura').select('id_asignatura').eq('nombre', f.asignatura_nombre).single();
+    if (!asignatura) throw new Error(`No se encontró la asignatura "${f.asignatura_nombre}".`);
+
+    // Insertar comisión si no existe
+    let { data: comisiones, error: errCom } = await supabase
+      .from('comision')
+      .select('id_comision')
+      .eq('nombre', f.comision_nombre)
+      .eq('id_asignatura', asignatura.id_asignatura);
+    if (errCom) throw errCom;
+
+    let id_comision;
+    if (!comisiones || comisiones.length === 0) {
+      const { data: nueva, error: errIns } = await supabase
+        .from('comision')
+        .insert({
+          nombre:        f.comision_nombre,
+          letra_desde:   f.comision_letra_desde,
+          letra_hasta:   f.comision_letra_hasta,
+          id_asignatura: asignatura.id_asignatura,
+          estado:        true,
+        })
+        .select();
+      if (errIns) throw errIns;
+      id_comision = nueva[0].id_comision;
+      resultados.push(nueva[0]);
+    } else {
+      id_comision = comisiones[0].id_comision;
+    }
+
+    // Vincular profesor por documento
+    const { data: profesor } = await supabase
+      .from('profesor').select('id_profesor').eq('documento', Number(f.profesor_documento)).single();
+    if (!profesor) throw new Error(`No se encontró el profesor con documento ${f.profesor_documento}.`);
+
+    // Insertar relación (ignorar si ya existe)
+    await supabase
+      .from('comision_profesor')
+      .upsert({ id_comision, id_profesor: profesor.id_profesor }, { onConflict: 'id_comision,id_profesor', ignoreDuplicates: true });
+  }
+  return resultados;
+};
+
+/**
+ * importarEstructuraAcademica — C-03, orquestador principal.
+ * Llama a cada función de inserción en el orden correcto (respetando FK).
+ * Si algún paso falla, el error se propaga y detiene la importación.
+ */
+export const importarEstructuraAcademica = async (filas) => {
+  try {
+    await insertarEdificios(filas);   // paso 1
+    await insertarFacultades(filas);  // paso 2
+    await insertarCarreras(filas);    // paso 3
+    await insertarPeriodos(filas);    // paso 4
+    await insertarAsignaturas(filas); // paso 5
+    await insertarProfesores(filas);  // paso 6
+    await insertarComisiones(filas);  // paso 7
+    return { data: 'Archivo importado con éxito', error: null };
+  } catch (error) {
+    console.error('Error en importarEstructuraAcademica:', error.message);
+    return { data: null, error: error.message };
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helper privado: deduplica filas por una o varias claves
+// ─────────────────────────────────────────────────────────────────────────────
+const _deduplicar = (filas, claves) => {
+  const vistas = new Set();
+  const campos = Array.isArray(claves) ? claves : [claves];
+  return filas.filter((f) => {
+    const key = campos.map((c) => f[c]).join('||');
+    if (vistas.has(key)) return false;
+    vistas.add(key);
+    return true;
+  });
+};
+
