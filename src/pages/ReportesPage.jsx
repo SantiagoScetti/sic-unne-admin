@@ -1,6 +1,10 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { getReportes } from '../services/reportesService';
+// C-01: imports trazables con el diagrama de secuencia — un import por objeto del dominio
+import { obtenerReportes, obtenerReportesFiltrados, obtenerDetalleReporte, actualizarEstado } from '../services/reporte.service';
+import { actualizarFechaSuspension } from '../services/usuario.service';
+import { registrar } from '../services/auditoriaAdministrativa.service';
+import { notificar } from '../services/notificacion.service';
 
 const getEstadoBadgeStyle = (estado) => {
   const baseStyle = {
@@ -57,7 +61,7 @@ const ReportesPage = () => {
       try {
         setError(null);
         setLoading(true);
-        const data = await getReportes();
+        const data = await obtenerReportes();
         setReportes(data || []);
       } catch (err) {
         console.error("Failed to load reportes", err);

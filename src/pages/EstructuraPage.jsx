@@ -1,8 +1,20 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import Papa from 'papaparse';
-import { fetchPeriodos, fetchEdificios, fetchFacultades, fetchCarreras, fetchAsignaturas, fetchProfesores, fetchComisiones, fetchEstadisticas, crearPeriodo, crearEdificio, crearFacultad, crearCarrera, crearAsignatura, crearProfesor, crearComision, actualizarPeriodo, actualizarEdificio, actualizarFacultad, actualizarCarrera, actualizarAsignatura, actualizarProfesor, actualizarComision, desactivarPeriodo, desactivarEdificio, desactivarFacultad, desactivarCarrera, desactivarAsignatura, desactivarProfesor, desactivarComision, restaurarPeriodo, restaurarEdificio, restaurarFacultad, restaurarCarrera, restaurarAsignatura, restaurarProfesor, restaurarComision, importarEstructuraAcademica } from '../services/estructuraService';
+import { fetchPeriodos, fetchEdificios, fetchFacultades, fetchCarreras, fetchAsignaturas, fetchProfesores, fetchComisiones, fetchEstadisticas, crearPeriodo, crearEdificio, crearFacultad, crearCarrera, crearAsignatura, crearProfesor, crearComision, actualizarPeriodo, actualizarEdificio, actualizarFacultad, actualizarCarrera, actualizarAsignatura, actualizarProfesor, actualizarComision, desactivarPeriodo, desactivarEdificio, desactivarFacultad, desactivarCarrera, desactivarAsignatura, desactivarProfesor, desactivarComision, restaurarPeriodo, restaurarEdificio, restaurarFacultad, restaurarCarrera, restaurarAsignatura, restaurarProfesor, restaurarComision } from '../services/estructuraService';
 import { validarFormatoArchivo, parsearCSV, validarEsquema, detectarDuplicados, detectarIncompletos, detectarFormatosInvalidos } from '../services/csvParser';
+// C-02: imports por objeto del dominio — trazables con el diagrama de secuencia C-02
+import { verificarExistencia as asignaturaVerificarExistencia } from '../services/asignatura.service';
+import { crear as comisionCrear } from '../services/comision.service';
+import { asignar as profesorAsignar } from '../services/profesor.service';
+// C-03: imports por objeto del dominio — trazables con el diagrama de secuencia C-03
+import { insertar as edificioInsertar } from '../services/edificio.service';
+import { insertar as facultadInsertar } from '../services/facultad.service';
+import { insertar as carreraInsertar } from '../services/carrera.service';
+import { insertar as periodoInsertar } from '../services/periodo.service';
+import { insertar as asignaturaInsertar } from '../services/asignatura.service';
+import { insertar as profesorInsertar } from '../services/profesor.service';
+import { insertar as comisionInsertar } from '../services/comision.service';
 import AddEdificioModal from '../components/features/modals/addEdificioModal';
 import AddFacultadModal from '../components/features/modals/addFacultadModal';
 import AddCarreraModal from '../components/features/modals/addCarreraModal';
@@ -283,10 +295,16 @@ const EstructuraPage = () => {
         return;
       }
 
-      // Paso 7 — Importar estructura académica (orquestador en el servicio JS)
-      const { data, error } = await importarEstructuraAcademica(filas);
-
-      if (error) {
+      // C-03: pasos 7-13 — inserción por objeto del dominio (trazable con el diagrama de secuencia)
+      try {
+        await edificioInsertar(filas);   // paso 7  — :Edificio
+        await facultadInsertar(filas);   // paso 8  — :Facultad
+        await carreraInsertar(filas);    // paso 9  — :Carrera
+        await periodoInsertar(filas);    // paso 10 — :Periodo
+        await asignaturaInsertar(filas); // paso 11 — :Asignatura
+        await profesorInsertar(filas);   // paso 12 — :Profesor
+        await comisionInsertar(filas);   // paso 13 — :Comision
+      } catch (importErr) {
         setErrorMessage('Error en la importación de datos');
         setIsLoading(false);
         event.target.value = null;

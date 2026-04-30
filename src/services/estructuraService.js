@@ -1,10 +1,13 @@
+// DEPRECADO - lógica migrada a servicios por entidad
+// Ver: edificio.service.js, facultad.service.js, carrera.service.js, periodo.service.js,
+//      asignatura.service.js, profesor.service.js, comision.service.js
 import { createClient } from '@/lib/supabase/client';
 
 const supabase = createClient();
 
 /** Aplica el filtro de estado a una query de Supabase */
 const applyEstadoFilter = (query, filtroEstado) => {
-  if (filtroEstado === 'Activos')   return query.eq('estado', true);
+  if (filtroEstado === 'Activos') return query.eq('estado', true);
   if (filtroEstado === 'Inactivos') return query.eq('estado', false);
   return query; // 'Todos': sin filtro
 };
@@ -72,8 +75,8 @@ export const fetchAsignaturas = async (filtroEstado = 'Activos') => {
       const profs = a.asignatura_profesor?.map(ap => `${ap.profesor?.apellido}, ${ap.profesor?.nombre}`).join(' | ') || 'Sin Asignar';
       return {
         ...a,
-        nombrePeriodo:  a.periodo?.nombre || 'Sin Asignar',
-        nombreCarrera:  a.carrera?.nombre || 'Sin Asignar',
+        nombrePeriodo: a.periodo?.nombre || 'Sin Asignar',
+        nombreCarrera: a.carrera?.nombre || 'Sin Asignar',
         nombreFacultad: a.carrera?.facultad?.nombre || 'Sin Asignar',
         nombreProfesor: profs
       };
@@ -88,23 +91,23 @@ export const fetchAsignaturas = async (filtroEstado = 'Activos') => {
 export const fetchProfesores = async (filtroEstado = 'Activos') => {
   try {
     const { data, error } = await applyEstadoFilter(
-      supabase.from('profesor').select('*, comision_profesor(count), asignatura_profesor(count)'), 
+      supabase.from('profesor').select('*, comision_profesor(count), asignatura_profesor(count)'),
       filtroEstado
     );
     if (error) throw error;
-    
+
     // Sumar ambos counts para la UI
     const planas = data.map(p => {
       const countComisiones = p.comision_profesor?.[0]?.count || 0;
       const countAsignaturas = p.asignatura_profesor?.[0]?.count || 0;
       const totalAsignaciones = countComisiones + countAsignaturas;
-      
+
       return {
         ...p,
         totalAsignaciones
       };
     });
-    
+
     return { data: planas, error: null };
   } catch (error) {
     console.error('Error fetching profesores:', error.message);
@@ -380,9 +383,9 @@ export const crearComision = async (comisionData) => {
   try {
     // Mapear payload del modal a columnas reales del schema
     const row = {
-      nombre:        comisionData.nombre,
-      letra_desde:   comisionData.letraDesde || comisionData.letra_desde,
-      letra_hasta:   comisionData.letraHasta || comisionData.letra_hasta,
+      nombre: comisionData.nombre,
+      letra_desde: comisionData.letraDesde || comisionData.letra_desde,
+      letra_hasta: comisionData.letraHasta || comisionData.letra_hasta,
       id_asignatura: Number(comisionData.id_asignatura),
     };
 
@@ -405,7 +408,7 @@ export const crearComision = async (comisionData) => {
 export const actualizarComision = async (id, comisionData) => {
   try {
     const row = {
-      nombre:      comisionData.nombre,
+      nombre: comisionData.nombre,
       letra_desde: comisionData.letraDesde || comisionData.letra_desde,
       letra_hasta: comisionData.letraHasta || comisionData.letra_hasta,
       id_asignatura: Number(comisionData.id_asignatura),
@@ -425,7 +428,7 @@ export const actualizarComision = async (id, comisionData) => {
       .from('comision_profesor')
       .delete()
       .eq('id_comision', id);
-    
+
     if (delError) throw delError;
 
     // 3. Insertar nuevas relaciones
@@ -466,30 +469,30 @@ const softUpdate = async (table, pkColumn, id, fields) => {
 /** Actualiza un Periodo. Payload: { nombre, fecha_inicio, fecha_fin } */
 export const actualizarPeriodo = (id, data) =>
   softUpdate('periodo', 'id_periodo', id, {
-    nombre:       data.nombre,
+    nombre: data.nombre,
     fecha_inicio: data.fecha_inicio,
-    fecha_fin:    data.fecha_fin,
+    fecha_fin: data.fecha_fin,
   });
 
 /** Actualiza un Edificio. Payload: { nombre, direccion } */
 export const actualizarEdificio = (id, data) =>
   softUpdate('edificio', 'id_edificio', id, {
-    nombre:    data.nombre,
+    nombre: data.nombre,
     direccion: data.direccion,
   });
 
 /** Actualiza una Facultad. Payload: { nombre, ciudad, id_edificio } */
 export const actualizarFacultad = (id, data) =>
   softUpdate('facultad', 'id_facultad', id, {
-    nombre:      data.nombre,
-    ciudad:      data.ciudad,
+    nombre: data.nombre,
+    ciudad: data.ciudad,
     id_edificio: Number(data.id_edificio),
   });
 
 /** Actualiza una Carrera. Payload: { nombre, id_facultad } */
 export const actualizarCarrera = (id, data) =>
   softUpdate('carrera', 'id_carrera', id, {
-    nombre:      data.nombre,
+    nombre: data.nombre,
     id_facultad: Number(data.id_facultad),
   });
 
@@ -497,10 +500,10 @@ export const actualizarCarrera = (id, data) =>
 export const actualizarAsignatura = async (id, data) => {
   try {
     const row = {
-      nombre:       data.nombre,
+      nombre: data.nombre,
       anio_dictado: data.año || data.anio_dictado,
-      id_periodo:   Number(data.id_periodo),
-      id_carrera:   Number(data.id_carrera),
+      id_periodo: Number(data.id_periodo),
+      id_carrera: Number(data.id_carrera),
     };
 
     const { data: result, error } = await supabase
@@ -516,7 +519,7 @@ export const actualizarAsignatura = async (id, data) => {
       .from('asignatura_profesor')
       .delete()
       .eq('id_asignatura', id);
-    
+
     if (delError) throw delError;
 
     // 3. Insertar la nueva lista de profesores (usamos array para asegurar flexibilidad a futuro si lo desean, aunque limiten desde el front)
@@ -539,10 +542,10 @@ export const actualizarAsignatura = async (id, data) => {
 /** Actualiza un Profesor. Payload: { nombre, apellido, documento, correo } */
 export const actualizarProfesor = (id, data) =>
   softUpdate('profesor', 'id_profesor', id, {
-    nombre:    data.nombre,
-    apellido:  data.apellido,
+    nombre: data.nombre,
+    apellido: data.apellido,
     documento: Number(data.documento),
-    correo:    data.correo,
+    correo: data.correo,
   });
 
 
@@ -562,23 +565,23 @@ const softDelete = async (table, pkColumn, id) => {
   }
 };
 
-export const desactivarPeriodo    = (id) => softDelete('periodo',    'id_periodo',    id);
-export const desactivarEdificio   = (id) => softDelete('edificio',   'id_edificio',   id);
-export const desactivarFacultad   = (id) => softDelete('facultad',   'id_facultad',   id);
-export const desactivarCarrera    = (id) => softDelete('carrera',    'id_carrera',    id);
+export const desactivarPeriodo = (id) => softDelete('periodo', 'id_periodo', id);
+export const desactivarEdificio = (id) => softDelete('edificio', 'id_edificio', id);
+export const desactivarFacultad = (id) => softDelete('facultad', 'id_facultad', id);
+export const desactivarCarrera = (id) => softDelete('carrera', 'id_carrera', id);
 export const desactivarAsignatura = (id) => softDelete('asignatura', 'id_asignatura', id);
-export const desactivarProfesor   = (id) => softDelete('profesor',   'id_profesor',   id);
-export const desactivarComision   = (id) => softDelete('comision',   'id_comision',   id);
+export const desactivarProfesor = (id) => softDelete('profesor', 'id_profesor', id);
+export const desactivarComision = (id) => softDelete('comision', 'id_comision', id);
 
 // ─── FUNCIONES DE RESTAURACIÓN (SOFT RESTORE) ────────────────────────────────
 
-export const restaurarPeriodo    = (id) => softUpdate('periodo',    'id_periodo',    id, { estado: true });
-export const restaurarEdificio   = (id) => softUpdate('edificio',   'id_edificio',   id, { estado: true });
-export const restaurarFacultad   = (id) => softUpdate('facultad',   'id_facultad',   id, { estado: true });
-export const restaurarCarrera    = (id) => softUpdate('carrera',    'id_carrera',    id, { estado: true });
+export const restaurarPeriodo = (id) => softUpdate('periodo', 'id_periodo', id, { estado: true });
+export const restaurarEdificio = (id) => softUpdate('edificio', 'id_edificio', id, { estado: true });
+export const restaurarFacultad = (id) => softUpdate('facultad', 'id_facultad', id, { estado: true });
+export const restaurarCarrera = (id) => softUpdate('carrera', 'id_carrera', id, { estado: true });
 export const restaurarAsignatura = (id) => softUpdate('asignatura', 'id_asignatura', id, { estado: true });
-export const restaurarProfesor   = (id) => softUpdate('profesor',   'id_profesor',   id, { estado: true });
-export const restaurarComision   = (id) => softUpdate('comision',   'id_comision',   id, { estado: true });
+export const restaurarProfesor = (id) => softUpdate('profesor', 'id_profesor', id, { estado: true });
+export const restaurarComision = (id) => softUpdate('comision', 'id_comision', id, { estado: true });
 
 // ─── FUNCIONES RPC (OPERACIONES MASIVAS) ──────────────────────────────────────
 
@@ -612,9 +615,9 @@ export const insertarEdificios = async (filas) => {
   // Deduplicar por nombre de edificio
   const unicos = _deduplicar(filas, 'edificio_nombre');
   const registros = unicos.map((f) => ({
-    nombre:    f.edificio_nombre,
+    nombre: f.edificio_nombre,
     direccion: f.edificio_direccion || 'Sin especificar',
-    estado:    true,
+    estado: true,
   }));
   const { data, error } = await supabase
     .from('edificio')
@@ -642,10 +645,10 @@ export const insertarFacultades = async (filas) => {
     const { data, error } = await supabase
       .from('facultad')
       .upsert({
-        nombre:      f.facultad_nombre,
-        ciudad:      f.facultad_ciudad || 'Sin especificar',
+        nombre: f.facultad_nombre,
+        ciudad: f.facultad_ciudad || 'Sin especificar',
         id_edificio: edificio.id_edificio,
-        estado:      true,
+        estado: true,
       }, { onConflict: 'nombre', ignoreDuplicates: false })
       .select();
     if (error) throw error;
@@ -670,9 +673,9 @@ export const insertarCarreras = async (filas) => {
     const { data, error } = await supabase
       .from('carrera')
       .upsert({
-        nombre:      f.carrera_nombre,
+        nombre: f.carrera_nombre,
         id_facultad: facultad.id_facultad,
-        estado:      true,
+        estado: true,
       }, { onConflict: 'nombre', ignoreDuplicates: false })
       .select();
     if (error) throw error;
@@ -688,10 +691,10 @@ export const insertarCarreras = async (filas) => {
 export const insertarPeriodos = async (filas) => {
   const unicos = _deduplicar(filas, ['periodo_nombre', 'periodo_fecha_inicio']);
   const registros = unicos.map((f) => ({
-    nombre:       f.periodo_nombre,
+    nombre: f.periodo_nombre,
     fecha_inicio: f.periodo_fecha_inicio,
-    fecha_fin:    f.periodo_fecha_fin,
-    estado:       true,
+    fecha_fin: f.periodo_fecha_fin,
+    estado: true,
   }));
   const { data, error } = await supabase
     .from('periodo')
@@ -722,11 +725,11 @@ export const insertarAsignaturas = async (filas) => {
     const { data, error } = await supabase
       .from('asignatura')
       .upsert({
-        nombre:       f.asignatura_nombre,
+        nombre: f.asignatura_nombre,
         anio_dictado: f.asignatura_anio || '',
-        id_carrera:   carrera.id_carrera,
-        id_periodo:   periodo.id_periodo,
-        estado:       true,
+        id_carrera: carrera.id_carrera,
+        id_periodo: periodo.id_periodo,
+        estado: true,
       }, { onConflict: 'nombre', ignoreDuplicates: false })
       .select();
     if (error) throw error;
@@ -742,11 +745,11 @@ export const insertarAsignaturas = async (filas) => {
 export const insertarProfesores = async (filas) => {
   const unicos = _deduplicar(filas, 'profesor_documento');
   const registros = unicos.map((f) => ({
-    nombre:    f.profesor_nombre,
-    apellido:  f.profesor_apellido,
+    nombre: f.profesor_nombre,
+    apellido: f.profesor_apellido,
     documento: Number(f.profesor_documento),
-    correo:    f.profesor_correo || '',
-    estado:    true,
+    correo: f.profesor_correo || '',
+    estado: true,
   }));
   const { data, error } = await supabase
     .from('profesor')
@@ -783,11 +786,11 @@ export const insertarComisiones = async (filas) => {
       const { data: nueva, error: errIns } = await supabase
         .from('comision')
         .insert({
-          nombre:        f.comision_nombre,
-          letra_desde:   f.comision_letra_desde,
-          letra_hasta:   f.comision_letra_hasta,
+          nombre: f.comision_nombre,
+          letra_desde: f.comision_letra_desde,
+          letra_hasta: f.comision_letra_hasta,
           id_asignatura: asignatura.id_asignatura,
-          estado:        true,
+          estado: true,
         })
         .select();
       if (errIns) throw errIns;

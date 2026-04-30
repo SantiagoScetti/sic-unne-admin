@@ -1,3 +1,5 @@
+// DEPRECADO - lógica migrada a servicios por entidad
+// Ver: reporte.service.js, usuario.service.js, auditoriaAdministrativa.service.js, notificacion.service.js
 import { createClient } from '@/lib/supabase/client';
 
 const supabase = createClient();
