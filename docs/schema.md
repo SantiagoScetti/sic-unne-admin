@@ -11,15 +11,6 @@ Foreign Keys
 
 id_carrera → carrera.id_carrera (constraint: asignatura_id_carrera_fkey)
 id_periodo → periodo.id_periodo (constraint: asignatura_id_periodo_fkey)
-asignatura_profesor
-Columnas
-
-id_asignatura (integer)
-id_profesor (integer)
-Foreign Keys
-
-id_asignatura → asignatura.id_asignatura (constraint: asignatura_profesor_id_asignatura_fkey)
-id_profesor → profesor.id_profesor (constraint: asignatura_profesor_id_profesor_fkey)
 auditoria_administrativa
 Columnas
 
@@ -254,9 +245,6 @@ Relaciones desde tablas “hijas” hacia tablas “padre”
 asignatura
 id_carrera → carrera.id_carrera
 id_periodo → periodo.id_periodo
-asignatura_profesor
-id_asignatura → asignatura.id_asignatura
-id_profesor → profesor.id_profesor
 auditoria_administrativa
 id_admin → usuario.id_usuario
 id_usuario_afectado → usuario.id_usuario
@@ -311,7 +299,6 @@ asignatura → periodo
 comision → asignatura
 Asignación/agenda
 comision_profesor → comision, profesor
-asignatura_profesor → asignatura, profesor
 horario_comision → comision, aula, horario
 Flujo de solicitudes / estados
 inscripcion → comision, usuario

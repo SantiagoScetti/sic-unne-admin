@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import Papa from 'papaparse';
-import { fetchPeriodos, fetchEdificios, fetchFacultades, fetchCarreras, fetchAsignaturas, fetchProfesores, fetchComisiones, fetchEstadisticas, crearPeriodo, crearEdificio, crearFacultad, crearCarrera, crearAsignatura, crearProfesor, crearComision, actualizarPeriodo, actualizarEdificio, actualizarFacultad, actualizarCarrera, actualizarAsignatura, actualizarProfesor, actualizarComision, desactivarPeriodo, desactivarEdificio, desactivarFacultad, desactivarCarrera, desactivarAsignatura, desactivarProfesor, desactivarComision, restaurarPeriodo, restaurarEdificio, restaurarFacultad, restaurarCarrera, restaurarAsignatura, restaurarProfesor, restaurarComision } from '../services/estructuraService';
+import { fetchPeriodos, fetchEdificios, fetchFacultades, fetchCarreras, fetchAsignaturas, fetchProfesores, fetchComisiones, fetchEstadisticas, crearPeriodo, crearEdificio, crearFacultad, crearCarrera, crearAsignatura, crearProfesor, actualizarPeriodo, actualizarEdificio, actualizarFacultad, actualizarCarrera, actualizarAsignatura, actualizarProfesor, actualizarComision, desactivarPeriodo, desactivarEdificio, desactivarFacultad, desactivarCarrera, desactivarAsignatura, desactivarProfesor, desactivarComision, restaurarPeriodo, restaurarEdificio, restaurarFacultad, restaurarCarrera, restaurarAsignatura, restaurarProfesor, restaurarComision } from '../services/estructuraService';
 import { validarFormatoArchivo, parsearCSV, validarEsquema, detectarDuplicados, detectarIncompletos, detectarFormatosInvalidos } from '../services/csvParser';
 // C-02: imports por objeto del dominio — trazables con el diagrama de secuencia C-02
 import { verificarExistencia as asignaturaVerificarExistencia } from '../services/asignatura.service';
@@ -120,13 +120,33 @@ const EstructuraPage = () => {
     setItemSeleccionado(null);
   };
 
+  // ── C-02: CREAR COMISIÓN — handler de alta cohesión ─────────────────────────
+  // Trazable con el diagrama de secuencia C-02:
+  //   paso 1: asignaturaVerificarExistencia  → :Asignatura
+  //   paso 2: comisionCrear                 → :Comision
+  //   paso 3: profesorAsignar               → :Profesor
+  // El componente solo orquesta; la lógica de negocio vive en cada servicio.
+  const handleCrearComision = async (datos) => {
+    await asignaturaVerificarExistencia(datos.id_asignatura);                           // paso 1
+    const nueva = await comisionCrear(                                                 // paso 2
+      datos.nombre,
+      datos.letraDesde ?? datos.letra_desde,
+      datos.letraHasta ?? datos.letra_hasta,
+      datos.id_asignatura
+    );
+    await profesorAsignar(nueva.id_comision, datos.profesores_ids);                    // paso 3
+    return nueva;
+  };
+
   const handleSave = async (datos, tipo) => {
     setIsLoading(true);
     setErrorMessage(null);
     let result = { data: null, error: 'Tipo desconocido' };
     const esEdicion = Boolean(editingTipo);
 
-    // Tabla de resolución: IDs leído directamente de itemSeleccionado
+    // Tabla de resolución para entidades genéricas (una función = una responsabilidad)
+    // NOTA: 'Comisión' en modo creación se maneja fuera de esta tabla mediante
+    // handleCrearComision, que implementa el patrón C-02 de alta cohesión.
     const config = {
       'Periodo':    { id: itemSeleccionado?.id_periodo,    crear: crearPeriodo,    actualizar: actualizarPeriodo,    fetch: fetchPeriodos,    set: setPeriodosList    },
       'Edificio':   { id: itemSeleccionado?.id_edificio,   crear: crearEdificio,   actualizar: actualizarEdificio,   fetch: fetchEdificios,   set: setEdificiosList   },
@@ -134,7 +154,7 @@ const EstructuraPage = () => {
       'Carrera':    { id: itemSeleccionado?.id_carrera,    crear: crearCarrera,    actualizar: actualizarCarrera,    fetch: fetchCarreras,    set: setCarrerasList    },
       'Asignatura': { id: itemSeleccionado?.id_asignatura, crear: crearAsignatura, actualizar: actualizarAsignatura, fetch: fetchAsignaturas, set: setAsignaturasList  },
       'Profesor':   { id: itemSeleccionado?.id_profesor,   crear: crearProfesor,   actualizar: actualizarProfesor,   fetch: fetchProfesores,  set: setProfesoresList  },
-      'Comisión':   { id: itemSeleccionado?.id_comision,   crear: crearComision,   actualizar: actualizarComision,   fetch: fetchComisiones,  set: setComisionesList  },
+      'Comisión':   { id: itemSeleccionado?.id_comision,                           actualizar: actualizarComision,   fetch: fetchComisiones,  set: setComisionesList  },
     };
 
     try {
@@ -142,17 +162,25 @@ const EstructuraPage = () => {
       if (!entry) throw new Error(`Tipo "${tipo}" no reconocido`);
 
       if (esEdicion && entry.id) {
-        // ── MODO EDICIÓN: llamar a la función de actualización ──
+        // ── MODO EDICIÓN: delegado al servicio de actualización (igual para todas las entidades) ──
         result = await entry.actualizar(entry.id, datos);
+        if (result.error) {
+          setErrorMessage(`Error al guardar ${tipo}: ${result.error}`);
+          setIsLoading(false);
+          return;
+        }
+      } else if (tipo === 'Comisión') {
+        // ── MODO CREACIÓN de Comisión: C-02 — orquesta 3 servicios cohesivos ──
+        await handleCrearComision(datos);
+        result = { data: true, error: null };
       } else {
-        // ── MODO CREACIÓN: llamar a la función de inserción ──
+        // ── MODO CREACIÓN genérico ──
         result = await entry.crear(datos);
-      }
-
-      if (result.error) {
-        setErrorMessage(`Error al guardar ${tipo}: ${result.error}`);
-        setIsLoading(false);
-        return;
+        if (result.error) {
+          setErrorMessage(`Error al guardar ${tipo}: ${result.error}`);
+          setIsLoading(false);
+          return;
+        }
       }
 
       // Éxito: cerrar modal y refrescar
@@ -296,20 +324,27 @@ const EstructuraPage = () => {
       }
 
       // C-03: pasos 7-13 — inserción por objeto del dominio (trazable con el diagrama de secuencia)
-      try {
-        await edificioInsertar(filas);   // paso 7  — :Edificio
-        await facultadInsertar(filas);   // paso 8  — :Facultad
-        await carreraInsertar(filas);    // paso 9  — :Carrera
-        await periodoInsertar(filas);    // paso 10 — :Periodo
-        await asignaturaInsertar(filas); // paso 11 — :Asignatura
-        await profesorInsertar(filas);   // paso 12 — :Profesor
-        await comisionInsertar(filas);   // paso 13 — :Comision
-      } catch (importErr) {
-        setErrorMessage('Error en la importación de datos');
-        setIsLoading(false);
-        event.target.value = null;
-        return;
-      }
+      // Cada paso tiene su propio try/catch para identificar exactamente dónde falla la importación.
+      try { await edificioInsertar(filas); }   // paso 7  — :Edificio
+      catch (e) { throw new Error(`Error al importar edificios: ${e.message}`); }
+
+      try { await facultadInsertar(filas); }   // paso 8  — :Facultad
+      catch (e) { throw new Error(`Error al importar facultades: ${e.message}`); }
+
+      try { await carreraInsertar(filas); }    // paso 9  — :Carrera
+      catch (e) { throw new Error(`Error al importar carreras: ${e.message}`); }
+
+      try { await periodoInsertar(filas); }    // paso 10 — :Periodo
+      catch (e) { throw new Error(`Error al importar periodos: ${e.message}`); }
+
+      try { await asignaturaInsertar(filas); } // paso 11 — :Asignatura
+      catch (e) { throw new Error(`Error al importar asignaturas: ${e.message}`); }
+
+      try { await profesorInsertar(filas); }   // paso 12 — :Profesor
+      catch (e) { throw new Error(`Error al importar profesores: ${e.message}`); }
+
+      try { await comisionInsertar(filas); }   // paso 13 — :Comision
+      catch (e) { throw new Error(`Error al importar comisiones: ${e.message}`); }
 
       // Éxito — mensaje exacto del caso de uso C-03
       setMensajeExito('Archivo importado con éxito');

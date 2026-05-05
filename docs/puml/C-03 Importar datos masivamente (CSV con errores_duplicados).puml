@@ -1,0 +1,29 @@
+@startuml
+title Diagrama de Secuencia: C-03 Importar datos masivamente (Alt: CSV con errores/duplicados)
+skinparam style strictuml
+autonumber
+
+actor Administrador
+participant "Sistema\n(Interfaz)" as Interfaz
+
+Administrador -> Interfaz: ingresa a estructura academica
+Interfaz --> Administrador: se muestran entidades y botones
+
+Administrador -> Interfaz: hace click en "Importar CSV"
+Interfaz --> Administrador: se abre explorador de archivos
+
+Administrador -> Interfaz: selecciona archivo CSV
+Interfaz -> Interfaz: validarFormatoArchivo(archivo)
+Interfaz -> Interfaz: parsearCSV(archivo)
+Interfaz -> Interfaz: validarEsquema(filas)
+Interfaz -> Interfaz: detectarDuplicados(filas)
+Interfaz -> Interfaz: detectarIncompletos(filas)
+Interfaz -> Interfaz: detectarFormatosInvalidos(filas)
+
+note right of Interfaz
+  El sistema detecta datos invalidos,
+  incompletos o duplicados
+end note
+
+Interfaz --> Administrador: "Revise los datos, se encontraron errores..."
+@enduml

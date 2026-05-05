@@ -1,0 +1,28 @@
+@startuml
+title Diagrama de Secuencia: C-02 Crear Comisión (Caso Normal)
+skinparam style strictuml
+autonumber
+actor Administrador
+participant "Sistema\n(Interfaz)" as Interfaz
+participant "Asignatura" as AS
+participant "Comision" as C
+participant "Profesor" as P
+Administrador -> Interfaz: ingresa a estructura academica
+Interfaz --> Administrador: se muestran entidades existentes
+Administrador -> Interfaz: hace click en "Comisiones"
+Interfaz --> Administrador: se muestra listado y botones
+Administrador -> Interfaz: hace click en "Crear Comision"
+Interfaz --> Administrador: se muestra formulario para agregar comision
+Administrador -> Interfaz: completa todos los campos y confirma
+Interfaz -> Interfaz: validarCampos()
+Interfaz -> AS: verificarExistencia(id_asignatura)
+AS -> AS: verifica existencia
+AS --> Interfaz: asignatura_verificada
+Interfaz -> C: crear(nombre, letraDesde, letraHasta, id_asignatura)
+C -> C: crea el registro
+C --> Interfaz: comision_creada
+Interfaz -> P: asignar(id_comision, profesores_ids)
+P -> P: verifica disponibilidad
+P --> Interfaz: profesores_asignados
+Interfaz --> Administrador: "Comision creada con exito"
+@enduml

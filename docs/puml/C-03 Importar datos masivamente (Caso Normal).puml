@@ -1,0 +1,40 @@
+@startuml
+title Diagrama de Secuencia: C-03 Importar datos masivamente (Caso Normal)
+skinparam style strictuml
+autonumber
+actor Administrador
+participant "Sistema\n(Interfaz)" as Interfaz
+participant "Edificio" as ED
+participant "Facultad" as FA
+participant "Carrera" as CA
+participant "Periodo" as PE
+participant "Asignatura" as AS
+participant "Profesor" as PR
+participant "Comision" as CO
+Administrador -> Interfaz: ingresa a estructura academica
+Interfaz --> Administrador: se muestran entidades y botones
+Administrador -> Interfaz: hace click en "Importar CSV"
+Interfaz --> Administrador: se abre explorador de archivos
+Administrador -> Interfaz: selecciona archivo CSV
+Interfaz -> Interfaz: validarFormatoArchivo(archivo)
+Interfaz -> Interfaz: parsearCSV(archivo)
+Interfaz -> Interfaz: validarEsquema(filas)
+Interfaz -> Interfaz: detectarDuplicados(filas)
+Interfaz -> Interfaz: detectarIncompletos(filas)
+Interfaz -> Interfaz: detectarFormatosInvalidos(filas)
+Interfaz -> ED: insertar(filas)
+ED --> Interfaz: edificios_insertados
+Interfaz -> FA: insertar(filas)
+FA --> Interfaz: facultades_insertadas
+Interfaz -> CA: insertar(filas)
+CA --> Interfaz: carreras_insertadas
+Interfaz -> PE: insertar(filas)
+PE --> Interfaz: periodos_insertados
+Interfaz -> AS: insertar(filas)
+AS --> Interfaz: asignaturas_insertadas
+Interfaz -> PR: insertar(filas)
+PR --> Interfaz: profesores_insertados
+Interfaz -> CO: insertar(filas)
+CO --> Interfaz: comisiones_insertadas
+Interfaz --> Administrador: "Importacion de datos con exito"
+@enduml

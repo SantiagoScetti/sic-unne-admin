@@ -1,0 +1,33 @@
+@startuml
+title Diagrama de Secuencia: C-01 Gestionar Reportes (Alt: Reporte ya procesado)
+skinparam style strictuml
+autonumber
+
+actor Administrador
+participant "Sistema\n(Interfaz)" as Interfaz
+participant "Reporte" as R
+
+Administrador -> Interfaz: ingresa al panel de reportes
+Interfaz -> R: obtenerReportes()
+R -> R: verifica los reportes
+R --> Interfaz: devuelve lista de reportes
+Interfaz --> Administrador: se muestra lista y opciones de filtrado
+
+Administrador -> Interfaz: selecciona filtro "Pendiente"
+Interfaz -> R: obtenerReportesFiltrados("Pendiente")
+R -> R: filtra por estado
+R --> Interfaz: devuelve reportes filtrados
+Interfaz --> Administrador: se muestra lista filtrada
+
+Administrador -> Interfaz: hace click en un reporte
+Interfaz -> R: obtenerDetalleReporte(id_reporte)
+
+R -> R: verifica estado actual
+note right of R
+  El sistema detecta que el
+  reporte ya no esta pendiente
+end note
+
+R --> Interfaz: error_reporte_gestionado
+Interfaz --> Administrador: "Reporte ya gestionado"
+@enduml
