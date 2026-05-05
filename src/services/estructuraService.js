@@ -77,23 +77,11 @@ export const fetchAsignaturas = async (filtroEstado = 'Activos') => {
     );
     if (error) throw error;
     const planas = data.map(a => {
-      // Derivar los profesores de la asignatura a través de comision → comision_profesor → profesor
-      const profesoresSet = new Map();
-      (a.comision || []).forEach(com =>
-        (com.comision_profesor || []).forEach(cp => {
-          const prof = cp.profesor;
-          if (prof) profesoresSet.set(prof.nombre + prof.apellido, prof);
-        })
-      );
-      const profs = profesoresSet.size > 0
-        ? [...profesoresSet.values()].map(p => `${p.apellido}, ${p.nombre}`).join(' | ')
-        : 'Sin Asignar';
       return {
         ...a,
         nombrePeriodo: a.periodo?.nombre || 'Sin Asignar',
         nombreCarrera: a.carrera?.nombre || 'Sin Asignar',
-        nombreFacultad: a.carrera?.facultad?.nombre || 'Sin Asignar',
-        nombreProfesor: profs
+        nombreFacultad: a.carrera?.facultad?.nombre || 'Sin Asignar'
       };
     });
     return { data: planas, error: null };

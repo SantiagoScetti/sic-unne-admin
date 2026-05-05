@@ -79,11 +79,16 @@ const ReportesPage = () => {
   const pendientesCount = reportes.filter(r => r.estado === 'Pendiente').length;
   const resueltosCount = reportes.filter(r => r.estado === 'Resuelto').length;
 
-  // Filter reportes client-side
-  const reportesFiltrados = reportes.filter(r => {
-    if (filtroEstado === 'Todos') return true;
-    return r.estado === filtroEstado;
-  });
+  const handleCambioFiltro = async (estado) => {
+    setFiltroEstado(estado);
+    if (estado === 'Todos') {
+      const data = await obtenerReportes();
+      setReportes(data || []);
+    } else {
+      const data = await obtenerReportesFiltrados(estado);
+      setReportes(data || []);
+    }
+  };
 
   return (
     <div>
@@ -125,7 +130,7 @@ const ReportesPage = () => {
                 <select 
                   id="filtro-estado"
                   value={filtroEstado}
-                  onChange={(e) => setFiltroEstado(e.target.value)}
+                  onChange={(e) => handleCambioFiltro(e.target.value)}
                   style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', backgroundColor: '#ffffff', color: '#2d3748', outline: 'none' }}
                 >
                   <option value="Todos">Todos</option>
@@ -152,14 +157,14 @@ const ReportesPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {reportesFiltrados.length === 0 ? (
+                {reportes.length === 0 ? (
                   <tr>
                     <td colSpan="7" style={{ padding: '30px', textAlign: 'center', color: '#718096' }}>
                       No se encontraron reportes para los filtros seleccionados.
                     </td>
                   </tr>
                 ) : (
-                  reportesFiltrados.map((reporte) => {
+                  reportes.map((reporte) => {
                     const nombreReportado = reporte.receptor ? `${reporte.receptor.nombre} ${reporte.receptor.apellido}` : 'Usuario Desconocido';
                     const fechaFormat = new Date(reporte.fecha_alta).toLocaleDateString('es-AR');
                     

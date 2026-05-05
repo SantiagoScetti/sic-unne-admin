@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
-import Papa from 'papaparse';
+import { descargarCSV, descargarPlantillaCSV } from '../services/export.service';
 import { fetchPeriodos, fetchEdificios, fetchFacultades, fetchCarreras, fetchAsignaturas, fetchProfesores, fetchComisiones, fetchEstadisticas, crearPeriodo, crearEdificio, crearFacultad, crearCarrera, crearAsignatura, crearProfesor, actualizarPeriodo, actualizarEdificio, actualizarFacultad, actualizarCarrera, actualizarAsignatura, actualizarProfesor, actualizarComision, desactivarPeriodo, desactivarEdificio, desactivarFacultad, desactivarCarrera, desactivarAsignatura, desactivarProfesor, desactivarComision, restaurarPeriodo, restaurarEdificio, restaurarFacultad, restaurarCarrera, restaurarAsignatura, restaurarProfesor, restaurarComision } from '../services/estructuraService';
 import { validarFormatoArchivo, parsearCSV, validarEsquema, detectarDuplicados, detectarIncompletos, detectarFormatosInvalidos } from '../services/csvParser';
 // C-02: imports por objeto del dominio — trazables con el diagrama de secuencia C-02
@@ -379,20 +379,7 @@ const EstructuraPage = () => {
     }
   };
 
-  const descargarPlantillaCSV = () => {
-    const cabeceras = "edificio_nombre,edificio_direccion,facultad_nombre,facultad_ciudad,carrera_nombre,periodo_nombre,periodo_fecha_inicio,periodo_fecha_fin,asignatura_nombre,asignatura_anio,profesor_nombre,profesor_apellido,profesor_documento,profesor_correo,comision_nombre,comision_letra_desde,comision_letra_hasta";
-    const ejemplo = "Campus Deodoro Roca,Av. Libertad 5470,FaCENA,Corrientes,Licenciatura en Sistemas,1er Cuatrimestre,2025-03-01,2025-07-31,Ingeniería de Software II,4to,Juan,Pérez,12345678,jperez@unne.edu.ar,COM-A,A,M";
-    const csvContent = `${cabeceras}\n${ejemplo}`;
-    
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'plantilla_importacion_sic.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+
 
   const exportarDatosCSV = () => {
     let listaActual = [];
@@ -412,15 +399,7 @@ const EstructuraPage = () => {
       return;
     }
 
-    const csvContent = Papa.unparse(listaActual);
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `exportacion_${entidadActiva.toLowerCase()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    descargarCSV(`exportacion_${entidadActiva.toLowerCase()}.csv`, listaActual);
   };
 
   const handleEdit = (tipo, item) => {
@@ -531,7 +510,7 @@ const EstructuraPage = () => {
       case 'Asignaturas': {
         const lista = aplicarFiltro(asignaturasList);
         if (lista.length === 0) return (<tr style={rowStyle}><td colSpan={7} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
-        return lista.map(a => (<tr className="table-row-hover" key={a.id_asignatura} style={rowStyle}><td style={cellStyle}>{a.id_asignatura}</td><td style={{...cellStyle, fontWeight:'600'}}>{a.nombre}</td><td style={cellStyle}>{a.anio_dictado}</td><td style={cellStyle}>{a.nombrePeriodo}</td><td style={cellStyle}>{a.nombreFacultad}</td><td style={cellStyle}>{a.nombreProfesor}</td><ActionsCell tipo="Asignaturas" item={a} estadoRegistro={a.estado} /></tr>));
+        return lista.map(a => (<tr className="table-row-hover" key={a.id_asignatura} style={rowStyle}><td style={cellStyle}>{a.id_asignatura}</td><td style={{...cellStyle, fontWeight:'600'}}>{a.nombre}</td><td style={cellStyle}>{a.anio_dictado}</td><td style={cellStyle}>{a.nombrePeriodo}</td><td style={cellStyle}>{a.nombreFacultad}</td><td style={cellStyle}>{formatearProfesores(a)}</td><ActionsCell tipo="Asignaturas" item={a} estadoRegistro={a.estado} /></tr>));
       }
       case 'Profesores': {
         const lista = aplicarFiltro(profesoresList);
@@ -551,6 +530,20 @@ const EstructuraPage = () => {
   };
 
   const currentActiveColor = entidadActiva === 'Periodos' ? colores.Periodo : (colores[entidadActiva] || '#3182ce');
+
+  const formatearProfesores = (asignatura) => {
+    const profesoresSet = new Map();
+    (asignatura.comision || []).forEach(com =>
+      (com.comision_profesor || []).forEach(cp => {
+        const prof = cp.profesor;
+        if (prof) profesoresSet.set(prof.nombre + prof.apellido, prof);
+      })
+    );
+    return profesoresSet.size > 0
+      ? [...profesoresSet.values()]
+          .map(p => `${p.apellido}, ${p.nombre}`).join(' | ')
+      : 'Sin Asignar';
+  };
 
   return (
     <div style={{ position: 'relative' }}>

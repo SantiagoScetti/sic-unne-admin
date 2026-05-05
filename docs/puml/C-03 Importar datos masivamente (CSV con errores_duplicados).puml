@@ -25,5 +25,5 @@ note right of Interfaz
   incompletos o duplicados
 end note
 
-Interfaz --> Administrador: "Revise los datos, se encontraron errores..."
+Interfaz --> Administrador: "Mensaje de error especifico del parser"
 @enduml
