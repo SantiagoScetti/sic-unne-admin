@@ -1,21 +1,35 @@
 @startuml
-title Diagrama de Secuencia: C-02 Crear Comisión (Alt: Datos de formulario inválidos)
+
+title Diagrama de Secuencia: C-02 Crear Comision (Alt: Datos de formulario invalidos)
+
 skinparam style strictuml
+skinparam ParticipantPadding 40
+skinparam BoxPadding 20
+
 autonumber
 
 actor Administrador
+
 participant "Sistema\n(Interfaz)" as Interfaz
 
 Administrador -> Interfaz: ingresa a estructura academica
+activate Interfaz
 Interfaz --> Administrador: se muestran entidades existentes
+deactivate Interfaz
 
 Administrador -> Interfaz: hace click en "Comisiones"
+activate Interfaz
 Interfaz --> Administrador: se muestra listado y botones
+deactivate Interfaz
 
 Administrador -> Interfaz: hace click en "Crear Comision"
+activate Interfaz
 Interfaz --> Administrador: se muestra formulario de creacion
+deactivate Interfaz
 
 Administrador -> Interfaz: completa campos y confirma
+activate Interfaz
+
 Interfaz -> Interfaz: validarCampos()
 
 note right of Interfaz
@@ -24,11 +38,18 @@ note right of Interfaz
 end note
 
 Interfaz --> Administrador: muestra avisos de validacion en los campos afectados
+deactivate Interfaz
+
 Administrador -> Interfaz: corrige los datos y confirma
+activate Interfaz
+
 Interfaz -> Interfaz: validarCampos()
 
 note right of Interfaz
   A partir de aqui, el flujo
   retoma el curso normal.
 end note
+
+deactivate Interfaz
+
 @enduml

@@ -1,18 +1,30 @@
 @startuml
+
 title Diagrama de Secuencia: C-03 Importar datos masivamente (Alt: CSV con errores/duplicados)
+
 skinparam style strictuml
+skinparam ParticipantPadding 40
+skinparam BoxPadding 20
+
 autonumber
 
 actor Administrador
+
 participant "Sistema\n(Interfaz)" as Interfaz
 
 Administrador -> Interfaz: ingresa a estructura academica
+activate Interfaz
 Interfaz --> Administrador: se muestran entidades y botones
+deactivate Interfaz
 
 Administrador -> Interfaz: hace click en "Importar CSV"
+activate Interfaz
 Interfaz --> Administrador: se abre explorador de archivos
+deactivate Interfaz
 
 Administrador -> Interfaz: selecciona archivo CSV
+activate Interfaz
+
 Interfaz -> Interfaz: validarFormatoArchivo(archivo)
 Interfaz -> Interfaz: parsearCSV(archivo)
 Interfaz -> Interfaz: validarEsquema(filas)
@@ -25,5 +37,7 @@ note right of Interfaz
   incompletos o duplicados
 end note
 
-Interfaz --> Administrador: "Mensaje de error especifico del parser"
+Interfaz --> Administrador: "Error en la importacion de datos"
+deactivate Interfaz
+
 @enduml

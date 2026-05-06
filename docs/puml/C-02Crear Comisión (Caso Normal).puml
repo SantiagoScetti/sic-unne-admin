@@ -1,28 +1,59 @@
 @startuml
-title Diagrama de Secuencia: C-02 Crear Comisión (Caso Normal)
+
+title Diagrama de Secuencia: C-02 Crear Comision (Caso Normal)
+
 skinparam style strictuml
+skinparam ParticipantPadding 40
+skinparam BoxPadding 20
+
 autonumber
+
 actor Administrador
+
 participant "Sistema\n(Interfaz)" as Interfaz
 participant "Asignatura" as AS
-participant "Comision" as C
-participant "Profesor" as P
+participant "Comision"   as C
+participant "Profesor"   as P
+
 Administrador -> Interfaz: ingresa a estructura academica
+activate Interfaz
 Interfaz --> Administrador: se muestran entidades existentes
+deactivate Interfaz
+
 Administrador -> Interfaz: hace click en "Comisiones"
+activate Interfaz
 Interfaz --> Administrador: se muestra listado y botones
+deactivate Interfaz
+
 Administrador -> Interfaz: hace click en "Crear Comision"
+activate Interfaz
 Interfaz --> Administrador: se muestra formulario para agregar comision
-Administrador -> Interfaz: completa todos los campos y confirma
+deactivate Interfaz
+
+Administrador -> Interfaz: completa campos (nombre, letras, asignatura, profesores) y confirma
+activate Interfaz
+
 Interfaz -> Interfaz: validarCampos()
+
 Interfaz -> AS: verificarExistencia(id_asignatura)
-AS -> AS: verifica existencia
-AS --> Interfaz: asignatura_verificada
+activate AS
+AS -> AS: busca asignatura por id en base de datos
+Interfaz <-- AS: asignatura_verificada
+deactivate AS
+
 Interfaz -> C: crear(nombre, letraDesde, letraHasta, id_asignatura)
-C -> C: crea el registro
-C --> Interfaz: comision_creada
+activate C
+C -> C: inserta registro en tabla comision
+Interfaz <-- C: comision_creada
+deactivate C
+
 Interfaz -> P: asignar(id_comision, profesores_ids)
-P -> P: verifica disponibilidad
-P --> Interfaz: profesores_asignados
+activate P
+P -> P: inserta relaciones en comision_profesor
+Interfaz <-- P: profesores_asignados
+deactivate P
+
 Interfaz --> Administrador: "Comision creada con exito"
+deactivate Interfaz
+
 @enduml

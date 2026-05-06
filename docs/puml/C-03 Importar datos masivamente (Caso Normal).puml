@@ -1,40 +1,87 @@
 @startuml
+
 title Diagrama de Secuencia: C-03 Importar datos masivamente (Caso Normal)
+
 skinparam style strictuml
+skinparam ParticipantPadding 40
+skinparam BoxPadding 20
+
 autonumber
+
 actor Administrador
+
 participant "Sistema\n(Interfaz)" as Interfaz
-participant "Edificio" as ED
-participant "Facultad" as FA
-participant "Carrera" as CA
-participant "Periodo" as PE
-participant "Asignatura" as AS
-participant "Profesor" as PR
-participant "Comision" as CO
+participant "Edificio"    as ED
+participant "Facultad"    as FA
+participant "Carrera"     as CA
+participant "Periodo"     as PE
+participant "Asignatura"  as AS
+participant "Profesor"    as PR
+participant "Comision"    as CO
+
 Administrador -> Interfaz: ingresa a estructura academica
+activate Interfaz
 Interfaz --> Administrador: se muestran entidades y botones
+deactivate Interfaz
+
 Administrador -> Interfaz: hace click en "Importar CSV"
+activate Interfaz
 Interfaz --> Administrador: se abre explorador de archivos
+deactivate Interfaz
+
 Administrador -> Interfaz: selecciona archivo CSV
+activate Interfaz
+
 Interfaz -> Interfaz: validarFormatoArchivo(archivo)
 Interfaz -> Interfaz: parsearCSV(archivo)
 Interfaz -> Interfaz: validarEsquema(filas)
 Interfaz -> Interfaz: detectarDuplicados(filas)
 Interfaz -> Interfaz: detectarIncompletos(filas)
 Interfaz -> Interfaz: detectarFormatosInvalidos(filas)
+
 Interfaz -> ED: insertar(filas)
-ED --> Interfaz: edificios_insertados
+activate ED
+ED -> ED: inserta edificios nuevos en base de datos
+Interfaz <-- ED: edificios_insertados
+deactivate ED
+
 Interfaz -> FA: insertar(filas)
-FA --> Interfaz: facultades_insertadas
+activate FA
+FA -> FA: inserta facultades nuevas en base de datos
+Interfaz <-- FA: facultades_insertadas
+deactivate FA
+
 Interfaz -> CA: insertar(filas)
-CA --> Interfaz: carreras_insertadas
+activate CA
+CA -> CA: inserta carreras nuevas en base de datos
+Interfaz <-- CA: carreras_insertadas
+deactivate CA
+
 Interfaz -> PE: insertar(filas)
-PE --> Interfaz: periodos_insertados
+activate PE
+PE -> PE: inserta periodos nuevos en base de datos
+Interfaz <-- PE: periodos_insertados
+deactivate PE
+
 Interfaz -> AS: insertar(filas)
-AS --> Interfaz: asignaturas_insertadas
+activate AS
+AS -> AS: inserta asignaturas nuevas en base de datos
+Interfaz <-- AS: asignaturas_insertadas
+deactivate AS
+
 Interfaz -> PR: insertar(filas)
-PR --> Interfaz: profesores_insertados
+activate PR
+PR -> PR: inserta profesores nuevos en base de datos
+Interfaz <-- PR: profesores_insertados
+deactivate PR
+
 Interfaz -> CO: insertar(filas)
-CO --> Interfaz: comisiones_insertadas
-Interfaz --> Administrador: "Importacion de datos con exito"
+activate CO
+CO -> CO: inserta comisiones y relaciones en base de datos
+Interfaz <-- CO: comisiones_insertadas
+deactivate CO
+
+Interfaz --> Administrador: "Archivo importado con exito"
+deactivate Interfaz
+
 @enduml
