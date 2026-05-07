@@ -13,7 +13,7 @@ const applyEstadoFilter = (query, filtroEstado) => {
 // Métodos trazables con el diagrama de secuencia C-03.
 // =============================================================================
 
-export const obtenerListado = async (filtroEstado = 'Activos') => {
+export const obtenerEdificios = async (filtroEstado = 'Activos') => {
   try {
     const { data, error } = await applyEstadoFilter(supabase.from('edificio').select('*'), filtroEstado);
     if (error) throw error;

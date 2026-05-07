@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { signUpUser } from "@/src/services/authClientService";
+import { signUpUser } from "@/src/services/auth/authClientService";
 import { Button } from "@/components/ui/button";
 import {
   Card,

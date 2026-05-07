@@ -1,6 +1,6 @@
 "use client";
 
-import { signOutUser } from "@/src/services/authClientService";
+import { signOutUser } from "@/src/services/auth/authClientService";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 

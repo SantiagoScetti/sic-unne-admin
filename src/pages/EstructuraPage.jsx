@@ -61,9 +61,9 @@ const EstructuraPage = () => {
       const [
         periodosRes, edificiosRes, facultadesRes, carrerasRes, asignaturasRes, profRes, comisionesRes, statsRes
       ] = await Promise.all([
-        periodoService.obtenerListado(filtroEstado), edificioService.obtenerListado(filtroEstado), facultadService.obtenerListado(filtroEstado),
-        carreraService.obtenerListado(filtroEstado), asignaturaService.obtenerListado(filtroEstado), profesorService.obtenerListado(filtroEstado),
-        comisionService.obtenerListado(filtroEstado), fetchEstadisticas()
+        periodoService.obtenerPeriodos(filtroEstado), edificioService.obtenerEdificios(filtroEstado), facultadService.obtenerFacultades(filtroEstado),
+        carreraService.obtenerCarreras(filtroEstado), asignaturaService.obtenerAsignaturas(filtroEstado), profesorService.obtenerProfesores(filtroEstado),
+        comisionService.obtenerComisiones(filtroEstado), fetchEstadisticas()
       ]);
 
       const errors = [periodosRes, edificiosRes, facultadesRes, carrerasRes, asignaturasRes, profRes, comisionesRes, statsRes].map(r => r.error).filter(Boolean);
@@ -159,13 +159,13 @@ const EstructuraPage = () => {
     // NOTA: 'Comisión' en modo creación se maneja fuera de esta tabla mediante
     // handleCrearComision, que implementa el patrón C-02 de alta cohesión.
     const config = {
-      'Periodo':    { id: itemSeleccionado?.id_periodo,    crear: periodoService.crear,    actualizar: periodoService.actualizar,    fetch: periodoService.obtenerListado,    set: setPeriodosList    },
-      'Edificio':   { id: itemSeleccionado?.id_edificio,   crear: edificioService.crear,   actualizar: edificioService.actualizar,   fetch: edificioService.obtenerListado,   set: setEdificiosList   },
-      'Facultad':   { id: itemSeleccionado?.id_facultad,   crear: facultadService.crear,   actualizar: facultadService.actualizar,   fetch: facultadService.obtenerListado,  set: setFacultadesList  },
-      'Carrera':    { id: itemSeleccionado?.id_carrera,    crear: carreraService.crear,    actualizar: carreraService.actualizar,    fetch: carreraService.obtenerListado,    set: setCarrerasList    },
-      'Asignatura': { id: itemSeleccionado?.id_asignatura, crear: asignaturaService.crear, actualizar: asignaturaService.actualizar, fetch: asignaturaService.obtenerListado, set: setAsignaturasList  },
-      'Profesor':   { id: itemSeleccionado?.id_profesor,   crear: profesorService.crear,   actualizar: profesorService.actualizar,   fetch: profesorService.obtenerListado,  set: setProfesoresList  },
-      'Comisión':   { id: itemSeleccionado?.id_comision,                                   actualizar: comisionService.actualizar,   fetch: comisionService.obtenerListado,  set: setComisionesList  },
+      'Periodo':    { id: itemSeleccionado?.id_periodo,    crear: periodoService.crear,    actualizar: periodoService.actualizar,    fetch: periodoService.obtenerPeriodos,    set: setPeriodosList    },
+      'Edificio':   { id: itemSeleccionado?.id_edificio,   crear: edificioService.crear,   actualizar: edificioService.actualizar,   fetch: edificioService.obtenerEdificios,   set: setEdificiosList   },
+      'Facultad':   { id: itemSeleccionado?.id_facultad,   crear: facultadService.crear,   actualizar: facultadService.actualizar,   fetch: facultadService.obtenerFacultades,  set: setFacultadesList  },
+      'Carrera':    { id: itemSeleccionado?.id_carrera,    crear: carreraService.crear,    actualizar: carreraService.actualizar,    fetch: carreraService.obtenerCarreras,    set: setCarrerasList    },
+      'Asignatura': { id: itemSeleccionado?.id_asignatura, crear: asignaturaService.crear, actualizar: asignaturaService.actualizar, fetch: asignaturaService.obtenerAsignaturas, set: setAsignaturasList  },
+      'Profesor':   { id: itemSeleccionado?.id_profesor,   crear: profesorService.crear,   actualizar: profesorService.actualizar,   fetch: profesorService.obtenerProfesores,  set: setProfesoresList  },
+      'Comisión':   { id: itemSeleccionado?.id_comision,                                   actualizar: comisionService.actualizar,   fetch: comisionService.obtenerComisiones,  set: setComisionesList  },
     };
 
     try {
@@ -214,13 +214,13 @@ const EstructuraPage = () => {
 
   const handleRestore = async (tipo, item) => {
     const pkMap = {
-      'Periodos':    { fn: (id) => periodoService.cambiarEstado(id, true),    pk: item.id_periodo,    fetch: periodoService.obtenerListado,    set: setPeriodosList    },
-      'Edificios':   { fn: (id) => edificioService.cambiarEstado(id, true),   pk: item.id_edificio,   fetch: edificioService.obtenerListado,   set: setEdificiosList   },
-      'Facultades':  { fn: (id) => facultadService.cambiarEstado(id, true),   pk: item.id_facultad,   fetch: facultadService.obtenerListado,  set: setFacultadesList  },
-      'Carreras':    { fn: (id) => carreraService.cambiarEstado(id, true),    pk: item.id_carrera,    fetch: carreraService.obtenerListado,    set: setCarrerasList    },
-      'Asignaturas': { fn: (id) => asignaturaService.cambiarEstado(id, true), pk: item.id_asignatura, fetch: asignaturaService.obtenerListado, set: setAsignaturasList  },
-      'Profesores':  { fn: (id) => profesorService.cambiarEstado(id, true),   pk: item.id_profesor,   fetch: profesorService.obtenerListado,  set: setProfesoresList  },
-      'Comisiones':  { fn: (id) => comisionService.cambiarEstado(id, true),   pk: item.id_comision,   fetch: comisionService.obtenerListado,  set: setComisionesList  },
+      'Periodos':    { fn: (id) => periodoService.cambiarEstado(id, true),    pk: item.id_periodo,    fetch: periodoService.obtenerPeriodos,    set: setPeriodosList    },
+      'Edificios':   { fn: (id) => edificioService.cambiarEstado(id, true),   pk: item.id_edificio,   fetch: edificioService.obtenerEdificios,   set: setEdificiosList   },
+      'Facultades':  { fn: (id) => facultadService.cambiarEstado(id, true),   pk: item.id_facultad,   fetch: facultadService.obtenerFacultades,  set: setFacultadesList  },
+      'Carreras':    { fn: (id) => carreraService.cambiarEstado(id, true),    pk: item.id_carrera,    fetch: carreraService.obtenerCarreras,    set: setCarrerasList    },
+      'Asignaturas': { fn: (id) => asignaturaService.cambiarEstado(id, true), pk: item.id_asignatura, fetch: asignaturaService.obtenerAsignaturas, set: setAsignaturasList  },
+      'Profesores':  { fn: (id) => profesorService.cambiarEstado(id, true),   pk: item.id_profesor,   fetch: profesorService.obtenerProfesores,  set: setProfesoresList  },
+      'Comisiones':  { fn: (id) => comisionService.cambiarEstado(id, true),   pk: item.id_comision,   fetch: comisionService.obtenerComisiones,  set: setComisionesList  },
     };
     const entry = pkMap[tipo];
     if (!entry) return;
@@ -234,13 +234,13 @@ const EstructuraPage = () => {
 
   const handleDelete = async (tipo) => {
     const pkMap = {
-      'Periodo':    { fn: (id) => periodoService.cambiarEstado(id, false),    pk: itemSeleccionado?.id_periodo,    fetch: periodoService.obtenerListado,    set: setPeriodosList    },
-      'Edificio':   { fn: (id) => edificioService.cambiarEstado(id, false),   pk: itemSeleccionado?.id_edificio,   fetch: edificioService.obtenerListado,   set: setEdificiosList   },
-      'Facultad':   { fn: (id) => facultadService.cambiarEstado(id, false),   pk: itemSeleccionado?.id_facultad,   fetch: facultadService.obtenerListado,  set: setFacultadesList  },
-      'Carrera':    { fn: (id) => carreraService.cambiarEstado(id, false),    pk: itemSeleccionado?.id_carrera,    fetch: carreraService.obtenerListado,    set: setCarrerasList    },
-      'Asignatura': { fn: (id) => asignaturaService.cambiarEstado(id, false), pk: itemSeleccionado?.id_asignatura, fetch: asignaturaService.obtenerListado, set: setAsignaturasList  },
-      'Profesor':   { fn: (id) => profesorService.cambiarEstado(id, false),   pk: itemSeleccionado?.id_profesor,   fetch: profesorService.obtenerListado,  set: setProfesoresList  },
-      'Comisión':   { fn: (id) => comisionService.cambiarEstado(id, false),   pk: itemSeleccionado?.id_comision,   fetch: comisionService.obtenerListado,  set: setComisionesList  },
+      'Periodo':    { fn: (id) => periodoService.cambiarEstado(id, false),    pk: itemSeleccionado?.id_periodo,    fetch: periodoService.obtenerPeriodos,    set: setPeriodosList    },
+      'Edificio':   { fn: (id) => edificioService.cambiarEstado(id, false),   pk: itemSeleccionado?.id_edificio,   fetch: edificioService.obtenerEdificios,   set: setEdificiosList   },
+      'Facultad':   { fn: (id) => facultadService.cambiarEstado(id, false),   pk: itemSeleccionado?.id_facultad,   fetch: facultadService.obtenerFacultades,  set: setFacultadesList  },
+      'Carrera':    { fn: (id) => carreraService.cambiarEstado(id, false),    pk: itemSeleccionado?.id_carrera,    fetch: carreraService.obtenerCarreras,    set: setCarrerasList    },
+      'Asignatura': { fn: (id) => asignaturaService.cambiarEstado(id, false), pk: itemSeleccionado?.id_asignatura, fetch: asignaturaService.obtenerAsignaturas, set: setAsignaturasList  },
+      'Profesor':   { fn: (id) => profesorService.cambiarEstado(id, false),   pk: itemSeleccionado?.id_profesor,   fetch: profesorService.obtenerProfesores,  set: setProfesoresList  },
+      'Comisión':   { fn: (id) => comisionService.cambiarEstado(id, false),   pk: itemSeleccionado?.id_comision,   fetch: comisionService.obtenerComisiones,  set: setComisionesList  },
     };
 
     const entry = pkMap[tipo];
@@ -366,9 +366,9 @@ const EstructuraPage = () => {
       const [
         periodosRes, edificiosRes, facultadesRes, carrerasRes, asignaturasRes, profRes, comisionesRes, statsRes
       ] = await Promise.all([
-        periodoService.obtenerListado(filtroEstado), edificioService.obtenerListado(filtroEstado), facultadService.obtenerListado(filtroEstado),
-        carreraService.obtenerListado(filtroEstado), asignaturaService.obtenerListado(filtroEstado), profesorService.obtenerListado(filtroEstado),
-        comisionService.obtenerListado(filtroEstado), fetchEstadisticas()
+        periodoService.obtenerPeriodos(filtroEstado), edificioService.obtenerEdificios(filtroEstado), facultadService.obtenerFacultades(filtroEstado),
+        carreraService.obtenerCarreras(filtroEstado), asignaturaService.obtenerAsignaturas(filtroEstado), profesorService.obtenerProfesores(filtroEstado),
+        comisionService.obtenerComisiones(filtroEstado), fetchEstadisticas()
       ]);
 
       if (periodosRes.data)    setPeriodosList(periodosRes.data);

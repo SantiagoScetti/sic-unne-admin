@@ -12,7 +12,7 @@ const applyEstadoFilter = (query, filtroEstado) => {
 // :Carrera — Objeto del dominio (C-03)
 // =============================================================================
 
-export const obtenerListado = async (filtroEstado = 'Activos') => {
+export const obtenerCarreras = async (filtroEstado = 'Activos') => {
   try {
     const { data, error } = await applyEstadoFilter(
       supabase.from('carrera').select('*, facultad(nombre)'),

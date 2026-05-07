@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { signInWithPassword } from "@/src/services/authClientService";
+import { signInWithPassword } from "@/src/services/auth/authClientService";
 
 export function LoginForm({
   className,

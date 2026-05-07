@@ -12,7 +12,7 @@ const applyEstadoFilter = (query, filtroEstado) => {
 // :Periodo — Objeto del dominio (C-03)
 // =============================================================================
 
-export const obtenerListado = async (filtroEstado = 'Activos') => {
+export const obtenerPeriodos = async (filtroEstado = 'Activos') => {
   try {
     const { data, error } = await applyEstadoFilter(supabase.from('periodo').select('*'), filtroEstado);
     if (error) throw error;

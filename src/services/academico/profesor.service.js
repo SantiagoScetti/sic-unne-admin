@@ -13,7 +13,7 @@ const applyEstadoFilter = (query, filtroEstado) => {
 // Métodos trazables con los diagramas de secuencia C-02 y C-03.
 // =============================================================================
 
-export const obtenerListado = async (filtroEstado = 'Activos') => {
+export const obtenerProfesores = async (filtroEstado = 'Activos') => {
   try {
     const { data, error } = await applyEstadoFilter(
       supabase.from('profesor').select('*, comision_profesor(count)'),

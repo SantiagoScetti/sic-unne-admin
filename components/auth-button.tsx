@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "./ui/button";
-import { getServerClaims } from "@/src/services/authServerService";
+import { getServerClaims } from "@/src/services/auth/authServerService";
 import { LogoutButton } from "./logout-button";
 
 export async function AuthButton() {

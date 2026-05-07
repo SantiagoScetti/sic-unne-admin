@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getServerUserWithRole } from "@/src/services/authServerService";
+import { getServerUserWithRole } from "@/src/services/auth/authServerService";
 import AdminLayout from "@/src/layouts/AdminLayout";
 import EstructuraPage from "@/src/pages/EstructuraPage";
 import { Suspense } from "react";
