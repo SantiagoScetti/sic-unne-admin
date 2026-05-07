@@ -1,20 +1,14 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
-import { descargarCSV, descargarPlantillaCSV } from '../services/export.service';
-import { fetchPeriodos, fetchEdificios, fetchFacultades, fetchCarreras, fetchAsignaturas, fetchProfesores, fetchComisiones, fetchEstadisticas, crearPeriodo, crearEdificio, crearFacultad, crearCarrera, crearAsignatura, crearProfesor, actualizarPeriodo, actualizarEdificio, actualizarFacultad, actualizarCarrera, actualizarAsignatura, actualizarProfesor, actualizarComision, desactivarPeriodo, desactivarEdificio, desactivarFacultad, desactivarCarrera, desactivarAsignatura, desactivarProfesor, desactivarComision, restaurarPeriodo, restaurarEdificio, restaurarFacultad, restaurarCarrera, restaurarAsignatura, restaurarProfesor, restaurarComision } from '../services/estructuraService';
-import { validarFormatoArchivo, parsearCSV, validarEsquema, detectarDuplicados, detectarIncompletos, detectarFormatosInvalidos } from '../services/csvParser';
-// C-02: imports por objeto del dominio — trazables con el diagrama de secuencia C-02
-import { verificarExistencia as asignaturaVerificarExistencia } from '../services/asignatura.service';
-import { crear as comisionCrear } from '../services/comision.service';
-import { asignar as profesorAsignar } from '../services/profesor.service';
-// C-03: imports por objeto del dominio — trazables con el diagrama de secuencia C-03
-import { insertar as edificioInsertar } from '../services/edificio.service';
-import { insertar as facultadInsertar } from '../services/facultad.service';
-import { insertar as carreraInsertar } from '../services/carrera.service';
-import { insertar as periodoInsertar } from '../services/periodo.service';
-import { insertar as asignaturaInsertar } from '../services/asignatura.service';
-import { insertar as profesorInsertar } from '../services/profesor.service';
-import { insertar as comisionInsertar } from '../services/comision.service';
+import { descargarCSV, descargarPlantillaCSV } from '../services/utils/export.service';
+import * as periodoService from '../services/academico/periodo.service';
+import * as edificioService from '../services/academico/edificio.service';
+import * as facultadService from '../services/academico/facultad.service';
+import * as carreraService from '../services/academico/carrera.service';
+import * as asignaturaService from '../services/academico/asignatura.service';
+import * as profesorService from '../services/academico/profesor.service';
+import * as comisionService from '../services/academico/comision.service';
+import { validarFormatoArchivo, parsearCSV, validarEsquema, detectarDuplicados, detectarIncompletos, detectarFormatosInvalidos } from '../services/utils/csvParser';
 import AddEdificioModal from '../components/features/modals/addEdificioModal';
 import AddFacultadModal from '../components/features/modals/addFacultadModal';
 import AddCarreraModal from '../components/features/modals/addCarreraModal';
@@ -42,6 +36,23 @@ const EstructuraPage = () => {
 
   const csvInputRef = useRef(null);
 
+  const fetchEstadisticas = async () => {
+    try {
+      const [Periodos, Edificios, Facultades, Carreras, Asignaturas, Profesores, Comisiones] = await Promise.all([
+        periodoService.contarActivos(),
+        edificioService.contarActivos(),
+        facultadService.contarActivos(),
+        carreraService.contarActivos(),
+        asignaturaService.contarActivos(),
+        profesorService.contarActivos(),
+        comisionService.contarActivos()
+      ]);
+      return { data: { Periodos, Edificios, Facultades, Carreras, Asignaturas, Profesores, Comisiones }, error: null };
+    } catch (error) {
+      return { data: null, error: error.message };
+    }
+  };
+
   // Re-fetcha todas las listas cuando cambia el filtro de estado
   useEffect(() => {
     const loadData = async () => {
@@ -50,9 +61,9 @@ const EstructuraPage = () => {
       const [
         periodosRes, edificiosRes, facultadesRes, carrerasRes, asignaturasRes, profRes, comisionesRes, statsRes
       ] = await Promise.all([
-        fetchPeriodos(filtroEstado), fetchEdificios(filtroEstado), fetchFacultades(filtroEstado),
-        fetchCarreras(filtroEstado), fetchAsignaturas(filtroEstado), fetchProfesores(filtroEstado),
-        fetchComisiones(filtroEstado), fetchEstadisticas()
+        periodoService.obtenerListado(filtroEstado), edificioService.obtenerListado(filtroEstado), facultadService.obtenerListado(filtroEstado),
+        carreraService.obtenerListado(filtroEstado), asignaturaService.obtenerListado(filtroEstado), profesorService.obtenerListado(filtroEstado),
+        comisionService.obtenerListado(filtroEstado), fetchEstadisticas()
       ]);
 
       const errors = [periodosRes, edificiosRes, facultadesRes, carrerasRes, asignaturasRes, profRes, comisionesRes, statsRes].map(r => r.error).filter(Boolean);
@@ -127,14 +138,14 @@ const EstructuraPage = () => {
   //   paso 3: profesorAsignar               → :Profesor
   // El componente solo orquesta; la lógica de negocio vive en cada servicio.
   const handleCrearComision = async (datos) => {
-    await asignaturaVerificarExistencia(datos.id_asignatura);                           // paso 1
-    const nueva = await comisionCrear(                                                 // paso 2
+    await asignaturaService.verificarExistencia(datos.id_asignatura);                           // paso 1
+    const nueva = await comisionService.crear(                                                 // paso 2
       datos.nombre,
       datos.letraDesde ?? datos.letra_desde,
       datos.letraHasta ?? datos.letra_hasta,
       datos.id_asignatura
     );
-    await profesorAsignar(nueva.id_comision, datos.profesores_ids);                    // paso 3
+    await profesorService.asignar(nueva.id_comision, datos.profesores_ids);                    // paso 3
     return nueva;
   };
 
@@ -148,13 +159,13 @@ const EstructuraPage = () => {
     // NOTA: 'Comisión' en modo creación se maneja fuera de esta tabla mediante
     // handleCrearComision, que implementa el patrón C-02 de alta cohesión.
     const config = {
-      'Periodo':    { id: itemSeleccionado?.id_periodo,    crear: crearPeriodo,    actualizar: actualizarPeriodo,    fetch: fetchPeriodos,    set: setPeriodosList    },
-      'Edificio':   { id: itemSeleccionado?.id_edificio,   crear: crearEdificio,   actualizar: actualizarEdificio,   fetch: fetchEdificios,   set: setEdificiosList   },
-      'Facultad':   { id: itemSeleccionado?.id_facultad,   crear: crearFacultad,   actualizar: actualizarFacultad,   fetch: fetchFacultades,  set: setFacultadesList  },
-      'Carrera':    { id: itemSeleccionado?.id_carrera,    crear: crearCarrera,    actualizar: actualizarCarrera,    fetch: fetchCarreras,    set: setCarrerasList    },
-      'Asignatura': { id: itemSeleccionado?.id_asignatura, crear: crearAsignatura, actualizar: actualizarAsignatura, fetch: fetchAsignaturas, set: setAsignaturasList  },
-      'Profesor':   { id: itemSeleccionado?.id_profesor,   crear: crearProfesor,   actualizar: actualizarProfesor,   fetch: fetchProfesores,  set: setProfesoresList  },
-      'Comisión':   { id: itemSeleccionado?.id_comision,                           actualizar: actualizarComision,   fetch: fetchComisiones,  set: setComisionesList  },
+      'Periodo':    { id: itemSeleccionado?.id_periodo,    crear: periodoService.crear,    actualizar: periodoService.actualizar,    fetch: periodoService.obtenerListado,    set: setPeriodosList    },
+      'Edificio':   { id: itemSeleccionado?.id_edificio,   crear: edificioService.crear,   actualizar: edificioService.actualizar,   fetch: edificioService.obtenerListado,   set: setEdificiosList   },
+      'Facultad':   { id: itemSeleccionado?.id_facultad,   crear: facultadService.crear,   actualizar: facultadService.actualizar,   fetch: facultadService.obtenerListado,  set: setFacultadesList  },
+      'Carrera':    { id: itemSeleccionado?.id_carrera,    crear: carreraService.crear,    actualizar: carreraService.actualizar,    fetch: carreraService.obtenerListado,    set: setCarrerasList    },
+      'Asignatura': { id: itemSeleccionado?.id_asignatura, crear: asignaturaService.crear, actualizar: asignaturaService.actualizar, fetch: asignaturaService.obtenerListado, set: setAsignaturasList  },
+      'Profesor':   { id: itemSeleccionado?.id_profesor,   crear: profesorService.crear,   actualizar: profesorService.actualizar,   fetch: profesorService.obtenerListado,  set: setProfesoresList  },
+      'Comisión':   { id: itemSeleccionado?.id_comision,                                   actualizar: comisionService.actualizar,   fetch: comisionService.obtenerListado,  set: setComisionesList  },
     };
 
     try {
@@ -203,13 +214,13 @@ const EstructuraPage = () => {
 
   const handleRestore = async (tipo, item) => {
     const pkMap = {
-      'Periodos':    { fn: restaurarPeriodo,    pk: item.id_periodo,    fetch: fetchPeriodos,    set: setPeriodosList    },
-      'Edificios':   { fn: restaurarEdificio,   pk: item.id_edificio,   fetch: fetchEdificios,   set: setEdificiosList   },
-      'Facultades':  { fn: restaurarFacultad,   pk: item.id_facultad,   fetch: fetchFacultades,  set: setFacultadesList  },
-      'Carreras':    { fn: restaurarCarrera,    pk: item.id_carrera,    fetch: fetchCarreras,    set: setCarrerasList    },
-      'Asignaturas': { fn: restaurarAsignatura, pk: item.id_asignatura, fetch: fetchAsignaturas, set: setAsignaturasList  },
-      'Profesores':  { fn: restaurarProfesor,   pk: item.id_profesor,   fetch: fetchProfesores,  set: setProfesoresList  },
-      'Comisiones':  { fn: restaurarComision,   pk: item.id_comision,   fetch: fetchComisiones,  set: setComisionesList  },
+      'Periodos':    { fn: (id) => periodoService.cambiarEstado(id, true),    pk: item.id_periodo,    fetch: periodoService.obtenerListado,    set: setPeriodosList    },
+      'Edificios':   { fn: (id) => edificioService.cambiarEstado(id, true),   pk: item.id_edificio,   fetch: edificioService.obtenerListado,   set: setEdificiosList   },
+      'Facultades':  { fn: (id) => facultadService.cambiarEstado(id, true),   pk: item.id_facultad,   fetch: facultadService.obtenerListado,  set: setFacultadesList  },
+      'Carreras':    { fn: (id) => carreraService.cambiarEstado(id, true),    pk: item.id_carrera,    fetch: carreraService.obtenerListado,    set: setCarrerasList    },
+      'Asignaturas': { fn: (id) => asignaturaService.cambiarEstado(id, true), pk: item.id_asignatura, fetch: asignaturaService.obtenerListado, set: setAsignaturasList  },
+      'Profesores':  { fn: (id) => profesorService.cambiarEstado(id, true),   pk: item.id_profesor,   fetch: profesorService.obtenerListado,  set: setProfesoresList  },
+      'Comisiones':  { fn: (id) => comisionService.cambiarEstado(id, true),   pk: item.id_comision,   fetch: comisionService.obtenerListado,  set: setComisionesList  },
     };
     const entry = pkMap[tipo];
     if (!entry) return;
@@ -223,13 +234,13 @@ const EstructuraPage = () => {
 
   const handleDelete = async (tipo) => {
     const pkMap = {
-      'Periodo':    { fn: desactivarPeriodo,    pk: itemSeleccionado?.id_periodo,    fetch: fetchPeriodos,    set: setPeriodosList    },
-      'Edificio':   { fn: desactivarEdificio,   pk: itemSeleccionado?.id_edificio,   fetch: fetchEdificios,   set: setEdificiosList   },
-      'Facultad':   { fn: desactivarFacultad,   pk: itemSeleccionado?.id_facultad,   fetch: fetchFacultades,  set: setFacultadesList  },
-      'Carrera':    { fn: desactivarCarrera,    pk: itemSeleccionado?.id_carrera,    fetch: fetchCarreras,    set: setCarrerasList    },
-      'Asignatura': { fn: desactivarAsignatura, pk: itemSeleccionado?.id_asignatura, fetch: fetchAsignaturas, set: setAsignaturasList  },
-      'Profesor':   { fn: desactivarProfesor,   pk: itemSeleccionado?.id_profesor,   fetch: fetchProfesores,  set: setProfesoresList  },
-      'Comisión':   { fn: desactivarComision,   pk: itemSeleccionado?.id_comision,   fetch: fetchComisiones,  set: setComisionesList  },
+      'Periodo':    { fn: (id) => periodoService.cambiarEstado(id, false),    pk: itemSeleccionado?.id_periodo,    fetch: periodoService.obtenerListado,    set: setPeriodosList    },
+      'Edificio':   { fn: (id) => edificioService.cambiarEstado(id, false),   pk: itemSeleccionado?.id_edificio,   fetch: edificioService.obtenerListado,   set: setEdificiosList   },
+      'Facultad':   { fn: (id) => facultadService.cambiarEstado(id, false),   pk: itemSeleccionado?.id_facultad,   fetch: facultadService.obtenerListado,  set: setFacultadesList  },
+      'Carrera':    { fn: (id) => carreraService.cambiarEstado(id, false),    pk: itemSeleccionado?.id_carrera,    fetch: carreraService.obtenerListado,    set: setCarrerasList    },
+      'Asignatura': { fn: (id) => asignaturaService.cambiarEstado(id, false), pk: itemSeleccionado?.id_asignatura, fetch: asignaturaService.obtenerListado, set: setAsignaturasList  },
+      'Profesor':   { fn: (id) => profesorService.cambiarEstado(id, false),   pk: itemSeleccionado?.id_profesor,   fetch: profesorService.obtenerListado,  set: setProfesoresList  },
+      'Comisión':   { fn: (id) => comisionService.cambiarEstado(id, false),   pk: itemSeleccionado?.id_comision,   fetch: comisionService.obtenerListado,  set: setComisionesList  },
     };
 
     const entry = pkMap[tipo];
@@ -325,25 +336,25 @@ const EstructuraPage = () => {
 
       // C-03: pasos 7-13 — inserción por objeto del dominio (trazable con el diagrama de secuencia)
       // Cada paso tiene su propio try/catch para identificar exactamente dónde falla la importación.
-      try { await edificioInsertar(filas); }   // paso 7  — :Edificio
+      try { await edificioService.insertar(filas); }   // paso 7  — :Edificio
       catch (e) { throw new Error(`Error al importar edificios: ${e.message}`); }
 
-      try { await facultadInsertar(filas); }   // paso 8  — :Facultad
+      try { await facultadService.insertar(filas); }   // paso 8  — :Facultad
       catch (e) { throw new Error(`Error al importar facultades: ${e.message}`); }
 
-      try { await carreraInsertar(filas); }    // paso 9  — :Carrera
+      try { await carreraService.insertar(filas); }    // paso 9  — :Carrera
       catch (e) { throw new Error(`Error al importar carreras: ${e.message}`); }
 
-      try { await periodoInsertar(filas); }    // paso 10 — :Periodo
+      try { await periodoService.insertar(filas); }    // paso 10 — :Periodo
       catch (e) { throw new Error(`Error al importar periodos: ${e.message}`); }
 
-      try { await asignaturaInsertar(filas); } // paso 11 — :Asignatura
+      try { await asignaturaService.insertar(filas); } // paso 11 — :Asignatura
       catch (e) { throw new Error(`Error al importar asignaturas: ${e.message}`); }
 
-      try { await profesorInsertar(filas); }   // paso 12 — :Profesor
+      try { await profesorService.insertar(filas); }   // paso 12 — :Profesor
       catch (e) { throw new Error(`Error al importar profesores: ${e.message}`); }
 
-      try { await comisionInsertar(filas); }   // paso 13 — :Comision
+      try { await comisionService.insertar(filas); }   // paso 13 — :Comision
       catch (e) { throw new Error(`Error al importar comisiones: ${e.message}`); }
 
       // Éxito — mensaje exacto del caso de uso C-03
@@ -355,9 +366,9 @@ const EstructuraPage = () => {
       const [
         periodosRes, edificiosRes, facultadesRes, carrerasRes, asignaturasRes, profRes, comisionesRes, statsRes
       ] = await Promise.all([
-        fetchPeriodos(filtroEstado), fetchEdificios(filtroEstado), fetchFacultades(filtroEstado),
-        fetchCarreras(filtroEstado), fetchAsignaturas(filtroEstado), fetchProfesores(filtroEstado),
-        fetchComisiones(filtroEstado), fetchEstadisticas()
+        periodoService.obtenerListado(filtroEstado), edificioService.obtenerListado(filtroEstado), facultadService.obtenerListado(filtroEstado),
+        carreraService.obtenerListado(filtroEstado), asignaturaService.obtenerListado(filtroEstado), profesorService.obtenerListado(filtroEstado),
+        comisionService.obtenerListado(filtroEstado), fetchEstadisticas()
       ]);
 
       if (periodosRes.data)    setPeriodosList(periodosRes.data);

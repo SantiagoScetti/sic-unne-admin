@@ -2,7 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { signOutUser } from '../services/authClientService';
+import { signOutUser } from '../services/auth/authClientService';
 
 const AdminLayout = ({ adminEmail, children }) => {
   const pathname = usePathname();

@@ -2,10 +2,126 @@ import { createClient } from '@/lib/supabase/client';
 
 const supabase = createClient();
 
+const applyEstadoFilter = (query, filtroEstado) => {
+  if (filtroEstado === 'Activos') return query.eq('estado', true);
+  if (filtroEstado === 'Inactivos') return query.eq('estado', false);
+  return query;
+};
+
 // =============================================================================
 // :Comision — Objeto del dominio (C-02, C-03)
 // Métodos trazables con los diagramas de secuencia C-02 y C-03.
 // =============================================================================
+
+export const obtenerListado = async (filtroEstado = 'Activos') => {
+  try {
+    const { data, error } = await applyEstadoFilter(
+      supabase.from('comision').select(`
+        *,
+        asignatura (
+          *,
+          carrera (
+            *,
+            facultad (*)
+          )
+        ),
+        comision_profesor (
+          profesor (*)
+        )
+      `),
+      filtroEstado
+    );
+
+    if (error) throw error;
+
+    const planas = data.map(com => ({
+      ...com,
+      id_comision: com.id_comision,
+      nombreComision: com.nombre,
+      letraDesde: com.letra_desde,
+      letraHasta: com.letra_hasta,
+      nombreAsignatura: com.asignatura?.nombre || 'N/A',
+      nombreFacultad: com.asignatura?.carrera?.facultad?.nombre || 'N/A',
+      profesoresNombresArray: com.comision_profesor?.map(cp => `${cp.profesor?.nombre} ${cp.profesor?.apellido}`) || []
+    }));
+
+    return { data: planas, error: null };
+  } catch (error) {
+    console.error('Error obteniendo comisiones:', error.message);
+    return { data: null, error: error.message };
+  }
+};
+
+export const contarActivos = async () => {
+  try {
+    const { count, error } = await supabase
+      .from('comision')
+      .select('*', { count: 'exact', head: true })
+      .eq('estado', true);
+    if (error) throw error;
+    return count || 0;
+  } catch (error) {
+    console.error('Error contando comisiones:', error.message);
+    return 0;
+  }
+};
+
+export const actualizar = async (id, comisionData) => {
+  try {
+    const row = {
+      nombre: comisionData.nombre,
+      letra_desde: comisionData.letraDesde || comisionData.letra_desde,
+      letra_hasta: comisionData.letraHasta || comisionData.letra_hasta,
+      id_asignatura: Number(comisionData.id_asignatura),
+    };
+
+    // 1. Actualizar datos base
+    const { data, error } = await supabase
+      .from('comision')
+      .update(row)
+      .eq('id_comision', id)
+      .select();
+
+    if (error) throw error;
+
+    // 2. Eliminar relaciones viejas en N:M
+    const { error: delError } = await supabase
+      .from('comision_profesor')
+      .delete()
+      .eq('id_comision', id);
+
+    if (delError) throw delError;
+
+    // 3. Insertar nuevas relaciones
+    if (comisionData.profesores_ids && comisionData.profesores_ids.length > 0) {
+      const relaciones = comisionData.profesores_ids.map(id_profesor => ({
+        id_comision: id,
+        id_profesor,
+      }));
+      const { error: relError } = await supabase.from('comision_profesor').insert(relaciones);
+      if (relError) throw relError;
+    }
+
+    return { data: data ? data[0] : null, error: null };
+  } catch (error) {
+    console.error('Error actualizando comisión:', error.message);
+    return { data: null, error: error.message };
+  }
+};
+
+export const cambiarEstado = async (id, estado) => {
+  try {
+    const { error } = await supabase
+      .from('comision')
+      .update({ estado })
+      .eq('id_comision', id);
+    if (error) throw error;
+    return { error: null };
+  } catch (error) {
+    console.error('Error cambiando estado comisión id=' + id + ':', error.message);
+    return { error: error.message };
+  }
+};
 
 /**
  * crear — C-02, paso 2.

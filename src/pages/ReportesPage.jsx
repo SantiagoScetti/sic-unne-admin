@@ -1,10 +1,10 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 // C-01: imports trazables con el diagrama de secuencia — un import por objeto del dominio
-import { obtenerReportes, obtenerReportesFiltrados, obtenerDetalleReporte, actualizarEstado } from '../services/reporte.service';
-import { actualizarFechaSuspension } from '../services/usuario.service';
-import { registrar } from '../services/auditoriaAdministrativa.service';
-import { notificar } from '../services/notificacion.service';
+import { obtenerReportes, obtenerReportesFiltrados, obtenerDetalleReporte, actualizarEstado } from '../services/reportes/reporte.service';
+import { actualizarFechaSuspension } from '../services/auth/usuario.service';
+import { registrar } from '../services/reportes/auditoriaAdministrativa.service';
+import { notificar } from '../services/reportes/notificacion.service';
 
 const getEstadoBadgeStyle = (estado) => {
   const baseStyle = {
