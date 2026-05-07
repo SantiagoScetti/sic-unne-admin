@@ -11,23 +11,29 @@ autonumber
 actor Administrador
 
 participant "Sistema\n(Interfaz)" as Interfaz
+participant "Comision" as C
 
-Administrador -> Interfaz: ingresa a estructura academica
+Administrador -> Interfaz: Ingresa a estructura academica
 activate Interfaz
-Interfaz --> Administrador: se muestran entidades existentes
+Interfaz --> Administrador: Se muestran entidades existentes
 deactivate Interfaz
 
-Administrador -> Interfaz: hace click en "Comisiones"
+Administrador -> Interfaz: Hace click en "Comisiones"
 activate Interfaz
-Interfaz --> Administrador: se muestra listado y botones
+Interfaz -> C: Solicita lista de Comisiones
+activate C
+C -> C: obtenerComisiones()
+Interfaz <-- C: Devuelve lista de Comisiones
+deactivate C
+Interfaz --> Administrador: Se muestra listado y botones
 deactivate Interfaz
 
-Administrador -> Interfaz: hace click en "Crear Comision"
+Administrador -> Interfaz: Hace click en "Crear Comision"
 activate Interfaz
-Interfaz --> Administrador: se muestra formulario de creacion
+Interfaz --> Administrador: Se muestra addComisionModal
 deactivate Interfaz
 
-Administrador -> Interfaz: completa campos y confirma
+Administrador -> Interfaz: Completa campos y confirma
 activate Interfaz
 
 Interfaz -> Interfaz: validarCampos()
@@ -37,10 +43,10 @@ note right of Interfaz
   vacios o formatos incorrectos
 end note
 
-Interfaz --> Administrador: muestra avisos de validacion en los campos afectados
+Interfaz --> Administrador: Muestra avisos de validacion en los campos afectados
 deactivate Interfaz
 
-Administrador -> Interfaz: corrige los datos y confirma
+Administrador -> Interfaz: Corrige los datos y confirma
 activate Interfaz
 
 Interfaz -> Interfaz: validarCampos()
@@ -50,6 +56,5 @@ note right of Interfaz
   retoma el curso normal.
 end note
 
-deactivate Interfaz
 
 @enduml

@@ -12,17 +12,17 @@ actor Administrador
 
 participant "Sistema\n(Interfaz)" as Interfaz
 
-Administrador -> Interfaz: ingresa a estructura academica
+Administrador -> Interfaz: Ingresa a estructura academica
 activate Interfaz
-Interfaz --> Administrador: se muestran entidades y botones
+Interfaz --> Administrador: Se muestran entidades y botones
 deactivate Interfaz
 
-Administrador -> Interfaz: hace click en "Importar CSV"
+Administrador -> Interfaz: Hace click en boton "Importar CSV"
 activate Interfaz
-Interfaz --> Administrador: se abre explorador de archivos
+Interfaz --> Administrador: Se abre explorador de archivos
 deactivate Interfaz
 
-Administrador -> Interfaz: selecciona archivo CSV
+Administrador -> Interfaz: Selecciona archivo CSV
 activate Interfaz
 
 Interfaz -> Interfaz: validarFormatoArchivo(archivo)

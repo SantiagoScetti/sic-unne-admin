@@ -16,67 +16,74 @@ participant "Usuario"                    as U
 participant "AuditoriaAdministrativa"    as A
 participant "Notificacion"               as N
 
-Administrador -> Interfaz: ingresa al panel de reportes
+Administrador -> Interfaz: Ingresa al panel de reportes
 activate Interfaz
 
-Interfaz -> R: obtenerReportes()
+Interfaz -> R: Solicita lista de Reportes
 activate R
-R -> R: consulta todos los reportes con datos de usuarios
-Interfaz <-- R: lista_reportes
+R -> R: obtenerReportes()
+Interfaz <-- R: Devuelve lista de Reportes
 deactivate R
 
-Interfaz --> Administrador: se muestra lista y opciones de filtrado
+Interfaz --> Administrador: Se muestra lista y opciones de filtrado
 deactivate Interfaz
 
-Administrador -> Interfaz: selecciona filtro "Pendiente"
+Administrador -> Interfaz: Selecciona filtro "Pendiente"
 activate Interfaz
 
-Interfaz -> R: obtenerReportesFiltrados("Pendiente")
+Interfaz -> R: Solicita lista de Reportes filtrada
 activate R
-R -> R: filtra reportes por estado
-Interfaz <-- R: reportes_filtrados
+R -> R: obtenerReportesFiltrados("Pendiente")
+Interfaz <-- R: Devuelve lista de Reportes filtrada
 deactivate R
 
-Interfaz --> Administrador: se muestra lista filtrada
+Interfaz --> Administrador: Se muestra lista filtrada
 deactivate Interfaz
 
-Administrador -> Interfaz: hace click en un reporte
+Administrador -> Interfaz: Hace click en un reporte
 activate Interfaz
 
-Interfaz -> R: obtenerDetalleReporte(id_reporte)
+Interfaz -> R: Solicita detalles del Reporte
 activate R
-R -> R: busca reporte por id con datos relacionados
-Interfaz <-- R: detalle_reporte
+R -> R: obtenerDetalleReporte(id_reporte)
+Interfaz <-- R: Devuelve detalles del Reporte
 deactivate R
 
-Interfaz --> Administrador: se muestra detalle completo
+Interfaz --> Administrador: Se muestra detalle del Reporte completo
 deactivate Interfaz
 
-Administrador -> Interfaz: selecciona accion y resuelve
+Administrador -> Interfaz: Selecciona accion y fecha de suspension
 activate Interfaz
 
-Interfaz -> R: actualizarEstado(id_reporte, "Resuelto", resolucion)
+Interfaz -> R: Solicita actualizacion del Reporte
 activate R
-R -> R: actualiza estado y resolucion del reporte
-Interfaz <-- R: estado_actualizado
+R -> R: actualizarEstado(id_reporte, "Resuelto", resolucion)
+Interfaz <-- R: Estado del reporte actualizado
 deactivate R
 
-Interfaz -> U: actualizarFechaSuspension(receptor_id, duracion)
+Interfaz -> U: Solicita actualizar la fecha de suspension
 activate U
-U -> U: registra suspension del usuario reportado
-Interfaz <-- U: suspension_registrada
+U -> U: actualizarFechaSuspension(receptor_id, duracion)
+Interfaz <-- U: Fecha de suspension registrada
 deactivate U
 
-Interfaz -> A: registrar(id_reporte, accion, admin_id)
+
+Interfaz -> A: Solicita registrar la Auditoria
 activate A
-A -> A: inserta registro en auditoria administrativa
-Interfaz <-- A: auditoria_registrada
+A -> A: registrar(id_reporte, accion, admin_id)
+Interfaz <-- A: Auditoria registrada
 deactivate A
 
-Interfaz -> N: notificar(emisor_id, receptor_id)
+Interfaz -> N: Solicita crear la Notificacion
 activate N
-N -> N: inserta notificaciones para ambos usuarios
-Interfaz <-- N: notificaciones_enviadas
+N -> N: crearNotificacion(receptor_id, accion, mensaje, fecha)
+Interfaz <-- N: Notificacion creada
+deactivate N
+
+Interfaz -> N: Solicita enviar la Notificacion
+activate N
+N -> N: notificar(emisor_id, receptor_id)
+Interfaz <-- N: Notificacion enviada
 deactivate N
 
 Interfaz --> Administrador: "Reporte actualizado"

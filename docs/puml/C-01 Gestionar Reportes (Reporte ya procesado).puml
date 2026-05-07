@@ -16,40 +16,40 @@ participant "Reporte"             as R
 Administrador -> Interfaz: ingresa al panel de reportes
 activate Interfaz
 
-Interfaz -> R: obtenerReportes()
+Interfaz -> R: Solicita lista de reportes
 activate R
-R -> R: consulta todos los reportes con datos de usuarios
-Interfaz <-- R: lista_reportes
+    R -> R: obtenerReportes()
+Interfaz <-- R: Devuelve lista de reportes
 deactivate R
 
-Interfaz --> Administrador: se muestra lista y opciones de filtrado
+Interfaz --> Administrador: Se muestra lista y opciones de filtrado
 deactivate Interfaz
 
-Administrador -> Interfaz: selecciona filtro "Pendiente"
+Administrador -> Interfaz: Selecciona filtro "Pendiente"
 activate Interfaz
 
-Interfaz -> R: obtenerReportesFiltrados("Pendiente")
+Interfaz -> R: Solicita reportes filtrados por estado
 activate R
-R -> R: filtra reportes por estado
-Interfaz <-- R: reportes_filtrados
+    R -> R: obtenerReportesFiltrados("Pendiente")
+Interfaz <-- R: Devuelve los reportes filtrados
 deactivate R
 
-Interfaz --> Administrador: se muestra lista filtrada
+Interfaz --> Administrador: Se muestra lista filtrada
 deactivate Interfaz
 
-Administrador -> Interfaz: hace click en un reporte
+Administrador -> Interfaz: Hace click en un reporte
 activate Interfaz
 
-Interfaz -> R: obtenerDetalleReporte(id_reporte)
+Interfaz -> R: Solicita detalle del reporte
 activate R
-R -> R: busca reporte por id y verifica estado actual
+R -> R: obtenerDetalleReporte(id_reporte)
 
 note right of R
   El sistema detecta que el
   reporte ya no esta pendiente
 end note
 
-Interfaz <-- R: error_reporte_ya_gestionado
+Interfaz <-- R: Devuelve error de Reporte ya gestionado
 deactivate R
 
 Interfaz --> Administrador: "Reporte ya gestionado"
