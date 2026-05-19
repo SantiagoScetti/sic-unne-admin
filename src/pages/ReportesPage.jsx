@@ -1,10 +1,11 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 // C-01: imports trazables con el diagrama de secuencia — un import por objeto del dominio
-import { obtenerReportes, obtenerReportesFiltrados, obtenerDetalleReporte, actualizarEstado } from '../services/reportes/reporte.service';
+import { obtenerReportes, obtenerReportesFiltrados, actualizarEstado } from '../services/reportes/reporte.service';
 import { actualizarFechaSuspension } from '../services/auth/usuario.service';
 import { registrar } from '../services/reportes/auditoriaAdministrativa.service';
 import { notificar } from '../services/reportes/notificacion.service';
+import AccionReporteModal from '../components/features/modals/accionReporteModal';
 
 const getEstadoBadgeStyle = (estado) => {
   const baseStyle = {
@@ -55,6 +56,10 @@ const ReportesPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filtroEstado, setFiltroEstado] = useState('Todos');
+  const [reporteSeleccionado, setReporteSeleccionado] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
 
   useEffect(() => {
     const fetchReportes = async () => {
@@ -90,10 +95,86 @@ const ReportesPage = () => {
     }
   };
 
+  const handleAbrirModal = (reporte) => {
+    setReporteSeleccionado(reporte);
+    setIsModalOpen(true);
+  };
+
+  const handleGuardarAccion = async ({ accion, fechaHasta, observaciones }) => {
+    if (!reporteSeleccionado) return;
+    setIsSaving(true);
+    try {
+      // Determinar nuevo estado del reporte según la acción
+      const nuevoEstado = accion === 'Enviar aviso' ? 'En Revision' : 'Resuelto';
+
+      // 1. Actualizar el reporte (estado + resolución)
+      await actualizarEstado(reporteSeleccionado.id_reporte, nuevoEstado, observaciones || accion);
+
+      // 2. Si es suspensión temporal, actualizar fecha en el usuario
+      if (accion === 'Suspender temporalmente' && fechaHasta && reporteSeleccionado.receptor_id) {
+        await actualizarFechaSuspension(reporteSeleccionado.receptor_id, fechaHasta);
+      }
+
+      // 3. Registrar auditoría administrativa
+      await registrar({
+        accion,
+        id_reporte: reporteSeleccionado.id_reporte,
+        observaciones,
+        fechaHasta,
+      });
+
+      // 4. Notificar — al receptor siempre; al emisor solo si no es el Sistema
+      const emisorId = reporteSeleccionado.emisor_id;
+      const receptorId = reporteSeleccionado.receptor_id;
+      if (emisorId && receptorId) {
+        await notificar(emisorId, receptorId);
+      } else if (receptorId) {
+        // Solo notificar al receptor cuando el emisor es el Sistema
+        await notificar(receptorId, receptorId);
+      }
+
+      // 5. Cerrar modal y refrescar lista
+      setIsModalOpen(false);
+      setReporteSeleccionado(null);
+      setSuccessMsg(`Acción "${accion}" aplicada con éxito`);
+      setTimeout(() => setSuccessMsg(''), 3500);
+      const data = filtroEstado === 'Todos' ? await obtenerReportes() : await obtenerReportesFiltrados(filtroEstado);
+      setReportes(data || []);
+    } catch (err) {
+      setError(`Error al guardar la acción: ${err.message}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleEliminarReporte = async () => {
+    if (!reporteSeleccionado) return;
+    setIsSaving(true);
+    try {
+      await actualizarEstado(reporteSeleccionado.id_reporte, 'Desestimado', 'Eliminado por el administrador');
+      setIsModalOpen(false);
+      setReporteSeleccionado(null);
+      setSuccessMsg('Reporte desestimado correctamente');
+      setTimeout(() => setSuccessMsg(''), 3500);
+      const data = filtroEstado === 'Todos' ? await obtenerReportes() : await obtenerReportesFiltrados(filtroEstado);
+      setReportes(data || []);
+    } catch (err) {
+      setError(`Error al desestimar el reporte: ${err.message}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
-    <div>
+    <div style={{ position: 'relative' }}>
+      {/* Toast de éxito */}
+      {successMsg && (
+        <div style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#38a169', color: 'white', padding: '12px 24px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', gap: '10px', zIndex: 2000 }}>
+          <span>✅</span><span style={{ fontWeight: '600' }}>{successMsg}</span>
+        </div>
+      )}
       <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '20px', color: '#2d3748' }}>Gestión de Reportes</h1>
-      
+
       {error && (
         <div style={{ backgroundColor: '#fed7d7', color: '#c53030', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
           <strong>Error: </strong>{error}
@@ -127,7 +208,7 @@ const ReportesPage = () => {
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <label htmlFor="filtro-estado" style={{ fontWeight: '500', color: '#4a5568', fontSize: '0.875rem' }}>Filtrar por estado:</label>
-                <select 
+                <select
                   id="filtro-estado"
                   value={filtroEstado}
                   onChange={(e) => handleCambioFiltro(e.target.value)}
@@ -167,7 +248,7 @@ const ReportesPage = () => {
                   reportes.map((reporte) => {
                     const nombreReportado = reporte.receptor ? `${reporte.receptor.nombre} ${reporte.receptor.apellido}` : 'Usuario Desconocido';
                     const fechaFormat = new Date(reporte.fecha_alta).toLocaleDateString('es-AR');
-                    
+
                     return (
                       <tr key={reporte.id_reporte} style={{ borderBottom: '1px solid #e2e8f0' }}>
                         <td style={{ padding: '15px', color: '#718096' }}>{reporte.id_reporte}</td>
@@ -183,14 +264,14 @@ const ReportesPage = () => {
                         </td>
                         <td style={{ padding: '15px', color: '#718096' }}>{fechaFormat}</td>
                         <td style={{ padding: '15px', textAlign: 'right' }}>
-                          <button 
-                            onClick={() => console.log('Abrir reporte id:', reporte.id_reporte)}
-                            style={{ 
-                              padding: '6px 12px', 
-                              backgroundColor: '#edf2f7', 
-                              color: '#4a5568', 
-                              border: 'none', 
-                              borderRadius: '6px', 
+                          <button
+                            onClick={() => handleAbrirModal(reporte)}
+                            style={{
+                              padding: '6px 12px',
+                              backgroundColor: '#edf2f7',
+                              color: '#4a5568',
+                              border: 'none',
+                              borderRadius: '6px',
                               fontWeight: '500',
                               cursor: 'pointer',
                               transition: 'background-color 0.2s'
@@ -210,6 +291,16 @@ const ReportesPage = () => {
           </div>
         </>
       )}
+
+      {/* Modal de acción sobre reporte */}
+      <AccionReporteModal
+        isOpen={isModalOpen}
+        onClose={() => { setIsModalOpen(false); setReporteSeleccionado(null); }}
+        onSave={handleGuardarAccion}
+        onEliminar={handleEliminarReporte}
+        reporte={reporteSeleccionado}
+        isSaving={isSaving}
+      />
     </div>
   );
 };

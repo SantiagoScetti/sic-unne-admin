@@ -29,9 +29,10 @@ type AddComisionModalProps = {
   initialData?: NuevaComision | null;
   isEditMode?: boolean;
   onDelete?: () => void;
+  isSaving?: boolean;
 };
 
-const AddComisionModal = ({ isOpen, onClose, onSave, profesoresDisponibles, asignaturasDisponibles, initialData = null, isEditMode = false, onDelete }: AddComisionModalProps) => {
+const AddComisionModal = ({ isOpen, onClose, onSave, profesoresDisponibles, asignaturasDisponibles, initialData = null, isEditMode = false, onDelete, isSaving = false }: AddComisionModalProps) => {
   const [nuevaComision, setNuevaComision] = useState<NuevaComision>({
     nombre: '', letraDesde: '', letraHasta: '', id_asignatura: '', profesores_ids: [] as number[]
   });
@@ -144,7 +145,7 @@ const AddComisionModal = ({ isOpen, onClose, onSave, profesoresDisponibles, asig
           <div>
             <label style={labelStyle}>Nombre de Comisión *</label>
             <input className="modal-input" style={{ ...inputBaseStyle, border: `1px solid ${errores.nombre ? '#e53e3e' : '#e2e8f0'}` }} 
-              value={nuevaComision.nombre} onChange={(e) => setNuevaComision({...nuevaComision, nombre: e.target.value.toUpperCase()})} placeholder="Ej: COMISIÓN A" />
+              value={nuevaComision.nombre} onChange={(e) => setNuevaComision({...nuevaComision, nombre: e.target.value})} placeholder="Ej: Comisión A" />
             {errores.nombre && <p style={errorTextStyle}>{errores.nombre}</p>}
           </div>
 
@@ -190,10 +191,12 @@ const AddComisionModal = ({ isOpen, onClose, onSave, profesoresDisponibles, asig
 
         <div style={footerStyle}>
           {isEditMode && onDelete && (
-            <button onClick={confirmarEliminar} style={btnDeleteStyle}>Eliminar</button>
+            <button onClick={confirmarEliminar} disabled={isSaving} style={btnDeleteStyle}>Eliminar</button>
           )}
-          <button onClick={confirmarCancelar} style={btnCancelStyle}>Cancelar</button>
-          <button onClick={confirmarGuardar} style={btnSaveStyle}>{isEditMode ? 'Guardar cambios' : 'Guardar Comisión'}</button>
+          <button onClick={confirmarCancelar} disabled={isSaving} style={{ ...btnCancelStyle, opacity: isSaving ? 0.5 : 1 }}>Cancelar</button>
+          <button onClick={confirmarGuardar} disabled={isSaving} style={{ ...btnSaveStyle, opacity: isSaving ? 0.8 : 1, cursor: isSaving ? 'not-allowed' : 'pointer' }}>
+            {isSaving ? '⏳ Guardando...' : isEditMode ? 'Guardar cambios' : 'Guardar Comisión'}
+          </button>
         </div>
       </div>
     </div>

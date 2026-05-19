@@ -13,9 +13,10 @@ type AddEdificioModalProps = {
   initialData?: NuevoEdificio | null;
   isEditMode?: boolean;
   onDelete?: () => void;
+  isSaving?: boolean;
 };
 
-const AddEdificioModal = ({ isOpen, onClose, onSave, initialData = null, isEditMode = false, onDelete }: AddEdificioModalProps) => {
+const AddEdificioModal = ({ isOpen, onClose, onSave, initialData = null, isEditMode = false, onDelete, isSaving = false }: AddEdificioModalProps) => {
   const [nuevoEdificio, setNuevoEdificio] = useState<NuevoEdificio>({ nombre: '', direccion: '' });
   const [errores, setErrores] = useState({ nombre: '', direccion: '' });
 
@@ -123,10 +124,12 @@ const AddEdificioModal = ({ isOpen, onClose, onSave, initialData = null, isEditM
 
         <div style={footerStyle}>
           {isEditMode && onDelete && (
-            <button onClick={confirmarEliminar} style={btnDeleteStyle}>Eliminar</button>
+            <button onClick={confirmarEliminar} disabled={isSaving} style={btnDeleteStyle}>Eliminar</button>
           )}
-          <button onClick={confirmarCancelar} style={btnCancelStyle}>Cancelar</button>
-          <button onClick={confirmarGuardar} style={btnSaveStyle}>{isEditMode ? 'Guardar cambios' : 'Guardar Edificio'}</button>
+          <button onClick={confirmarCancelar} disabled={isSaving} style={{ ...btnCancelStyle, opacity: isSaving ? 0.5 : 1 }}>Cancelar</button>
+          <button onClick={confirmarGuardar} disabled={isSaving} style={{ ...btnSaveStyle, opacity: isSaving ? 0.8 : 1, cursor: isSaving ? 'not-allowed' : 'pointer' }}>
+            {isSaving ? '⏳ Guardando...' : isEditMode ? 'Guardar cambios' : 'Guardar Edificio'}
+          </button>
         </div>
       </div>
     </div>

@@ -19,9 +19,10 @@ type AddCarreraModalProps = {
   initialData?: NuevaCarrera | null;
   isEditMode?: boolean;
   onDelete?: () => void;
+  isSaving?: boolean;
 };
 
-const AddCarreraModal = ({ isOpen, onClose, onSave, facultadesDisponibles, initialData = null, isEditMode = false, onDelete }: AddCarreraModalProps) => {
+const AddCarreraModal = ({ isOpen, onClose, onSave, facultadesDisponibles, initialData = null, isEditMode = false, onDelete, isSaving = false }: AddCarreraModalProps) => {
   const [nuevaCarrera, setNuevaCarrera] = useState<NuevaCarrera>({ nombre: '', id_facultad: '' });
   const [errores, setErrores] = useState({ nombre: '', facultad: '' });
 
@@ -130,10 +131,12 @@ const AddCarreraModal = ({ isOpen, onClose, onSave, facultadesDisponibles, initi
 
         <div style={footerStyle}>
           {isEditMode && onDelete && (
-            <button onClick={confirmarEliminar} style={btnDeleteStyle}>Eliminar</button>
+            <button onClick={confirmarEliminar} disabled={isSaving} style={btnDeleteStyle}>Eliminar</button>
           )}
-          <button onClick={confirmarCancelar} style={btnCancelStyle}>Cancelar</button>
-          <button onClick={confirmarGuardar} style={btnSaveStyle}>{isEditMode ? 'Guardar cambios' : 'Guardar Carrera'}</button>
+          <button onClick={confirmarCancelar} disabled={isSaving} style={{ ...btnCancelStyle, opacity: isSaving ? 0.5 : 1 }}>Cancelar</button>
+          <button onClick={confirmarGuardar} disabled={isSaving} style={{ ...btnSaveStyle, opacity: isSaving ? 0.8 : 1, cursor: isSaving ? 'not-allowed' : 'pointer' }}>
+            {isSaving ? '⏳ Guardando...' : isEditMode ? 'Guardar cambios' : 'Guardar Carrera'}
+          </button>
         </div>
       </div>
     </div>

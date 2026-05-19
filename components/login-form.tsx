@@ -44,7 +44,7 @@ export function LoginForm({
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="w-full max-w-md bg-white border border-gray-200 shadow-md rounded-2xl">
-        
+
         <CardHeader className="space-y-4">
           {/* LOGO */}
           <div className="flex justify-center">
@@ -69,7 +69,7 @@ export function LoginForm({
         <CardContent>
           <form onSubmit={handleLogin}>
             <div className="flex flex-col gap-5">
-              
+
               {/* EMAIL */}
               <div className="grid gap-2">
                 <Label htmlFor="email" className="text-gray-700">
@@ -82,7 +82,7 @@ export function LoginForm({
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="bg-gray-50 border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                  className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
 
@@ -105,7 +105,7 @@ export function LoginForm({
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="bg-gray-50 border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                  className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
 

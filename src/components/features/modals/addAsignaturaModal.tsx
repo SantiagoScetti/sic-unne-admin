@@ -35,9 +35,10 @@ type AddAsignaturaModalProps = {
   initialData?: NuevaAsignatura | null;
   isEditMode?: boolean;
   onDelete?: () => void;
+  isSaving?: boolean;
 };
 
-const AddAsignaturaModal = ({ isOpen, onClose, onSave, carrerasDisponibles, profesoresDisponibles, periodosDisponibles, initialData = null, isEditMode = false, onDelete }: AddAsignaturaModalProps) => {
+const AddAsignaturaModal = ({ isOpen, onClose, onSave, carrerasDisponibles, profesoresDisponibles, periodosDisponibles, initialData = null, isEditMode = false, onDelete, isSaving = false }: AddAsignaturaModalProps) => {
   const [nuevaAsignatura, setNuevaAsignatura] = useState<NuevaAsignatura>({
     nombre: '', año: '', id_periodo: '', id_carrera: '', id_profesor: ''
   });
@@ -188,10 +189,12 @@ const AddAsignaturaModal = ({ isOpen, onClose, onSave, carrerasDisponibles, prof
 
         <div style={footerStyle}>
           {isEditMode && onDelete && (
-            <button onClick={confirmarEliminar} style={btnDeleteStyle}>Eliminar</button>
+            <button onClick={confirmarEliminar} disabled={isSaving} style={btnDeleteStyle}>Eliminar</button>
           )}
-          <button onClick={confirmarCancelar} style={btnCancelStyle}>Cancelar</button>
-          <button onClick={confirmarGuardar} style={btnSaveStyle}>{isEditMode ? 'Guardar cambios' : 'Guardar Asignatura'}</button>
+          <button onClick={confirmarCancelar} disabled={isSaving} style={{ ...btnCancelStyle, opacity: isSaving ? 0.5 : 1 }}>Cancelar</button>
+          <button onClick={confirmarGuardar} disabled={isSaving} style={{ ...btnSaveStyle, opacity: isSaving ? 0.8 : 1, cursor: isSaving ? 'not-allowed' : 'pointer' }}>
+            {isSaving ? '⏳ Guardando...' : isEditMode ? 'Guardar cambios' : 'Guardar Asignatura'}
+          </button>
         </div>
       </div>
     </div>

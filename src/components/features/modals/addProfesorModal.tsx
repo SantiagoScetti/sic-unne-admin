@@ -25,9 +25,10 @@ type AddProfesorModalProps = {
   initialData?: NuevoProfesor | null;
   isEditMode?: boolean;
   onDelete?: () => void;
+  isSaving?: boolean;
 };
 
-const AddProfesorModal = ({ isOpen, onClose, onSave, initialData = null, isEditMode = false, onDelete }: AddProfesorModalProps) => {
+const AddProfesorModal = ({ isOpen, onClose, onSave, initialData = null, isEditMode = false, onDelete, isSaving = false }: AddProfesorModalProps) => {
   const [nuevoProfesor, setNuevoProfesor] = useState<NuevoProfesorForm>({
     nombre: '', apellido: '', documento: '', correo: '', cod_area: '', telefono: ''
   });
@@ -190,10 +191,12 @@ const AddProfesorModal = ({ isOpen, onClose, onSave, initialData = null, isEditM
 
         <div style={footerStyle}>
           {isEditMode && onDelete && (
-            <button onClick={confirmarEliminar} style={btnDeleteStyle}>Eliminar</button>
+            <button onClick={confirmarEliminar} disabled={isSaving} style={btnDeleteStyle}>Eliminar</button>
           )}
-          <button onClick={confirmarCancelar} style={btnCancelStyle}>Cancelar</button>
-          <button onClick={confirmarGuardar} style={btnSaveStyle}>{isEditMode ? 'Guardar cambios' : 'Guardar Profesor'}</button>
+          <button onClick={confirmarCancelar} disabled={isSaving} style={{ ...btnCancelStyle, opacity: isSaving ? 0.5 : 1 }}>Cancelar</button>
+          <button onClick={confirmarGuardar} disabled={isSaving} style={{ ...btnSaveStyle, opacity: isSaving ? 0.8 : 1, cursor: isSaving ? 'not-allowed' : 'pointer' }}>
+            {isSaving ? '⏳ Guardando...' : isEditMode ? 'Guardar cambios' : 'Guardar Profesor'}
+          </button>
         </div>
       </div>
     </div>

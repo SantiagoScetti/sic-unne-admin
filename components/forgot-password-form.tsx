@@ -45,53 +45,99 @@ export function ForgotPasswordForm({
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       {success ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Check Your Email</CardTitle>
-            <CardDescription>Password reset instructions sent</CardDescription>
+        <Card className="w-full max-w-md bg-white border border-gray-200 shadow-md rounded-2xl">
+          <CardHeader className="space-y-4">
+            <div className="flex justify-center">
+              <img
+                src="/images/logo-sic.png"
+                alt="UNNE"
+                className="h-20 w-auto object-contain"
+              />
+            </div>
+            <div className="text-center">
+              <CardTitle className="text-2xl font-semibold text-gray-800">
+                Revisá tu correo
+              </CardTitle>
+              <CardDescription className="text-gray-500">
+                Te enviamos las instrucciones para restablecer tu contraseña
+              </CardDescription>
+            </div>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
-              If you registered using your email and password, you will receive
-              a password reset email.
+            <p className="text-sm text-gray-600 text-center">
+              Si tu cuenta está registrada, recibirás un correo con el enlace
+              para restablecer la contraseña.
             </p>
+            <div className="mt-6 text-center text-sm text-gray-600">
+              <Link href="/auth/login" className="text-blue-600 hover:underline">
+                Volver al inicio de sesión
+              </Link>
+            </div>
           </CardContent>
         </Card>
       ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Reset Your Password</CardTitle>
-            <CardDescription>
-              Type in your email and we&apos;ll send you a link to reset your
-              password
-            </CardDescription>
+        <Card className="w-full max-w-md bg-white border border-gray-200 shadow-md rounded-2xl">
+          <CardHeader className="space-y-4">
+            {/* LOGO */}
+            <div className="flex justify-center">
+              <img
+                src="/images/logo-sic.png"
+                alt="UNNE"
+                className="h-20 w-auto object-contain"
+              />
+            </div>
+
+            {/* TITULOS */}
+            <div className="text-center">
+              <CardTitle className="text-2xl font-semibold text-gray-800">
+                Restablecer contraseña
+              </CardTitle>
+              <CardDescription className="text-gray-500">
+                Ingresá tu correo y te enviaremos un enlace para restablecer tu contraseña
+              </CardDescription>
+            </div>
           </CardHeader>
+
           <CardContent>
             <form onSubmit={handleForgotPassword}>
-              <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-5">
+
+                {/* EMAIL */}
                 <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email" className="text-gray-700">
+                    Correo institucional
+                  </Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="m@example.com"
+                    placeholder="usuario@unne.edu.ar"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
-                {error && <p className="text-sm text-red-500">{error}</p>}
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Sending..." : "Send reset email"}
+
+                {/* ERROR */}
+                {error && (
+                  <p className="text-sm text-red-500 text-center">{error}</p>
+                )}
+
+                {/* BOTON */}
+                <Button
+                  type="submit"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Enviando..." : "Enviar enlace"}
                 </Button>
               </div>
-              <div className="mt-4 text-center text-sm">
-                Already have an account?{" "}
-                <Link
-                  href="/auth/login"
-                  className="underline underline-offset-4"
-                >
-                  Login
+
+              {/* VOLVER AL LOGIN */}
+              <div className="mt-6 text-center text-sm text-gray-600">
+                ¿Recordaste tu contraseña?{" "}
+                <Link href="/auth/login" className="text-blue-600 hover:underline">
+                  Iniciar sesión
                 </Link>
               </div>
             </form>

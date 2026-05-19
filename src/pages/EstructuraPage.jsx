@@ -637,12 +637,12 @@ const EstructuraPage = () => {
         </table>
       </div>
 
-      <AddPeriodoModal    isOpen={isPeriodoModalOpen}    onClose={() => setIsPeriodoModalOpen(false)}    onSave={(d) => handleSave(d, 'Periodo')}    initialData={editingTipo === 'Periodos'    ? itemSeleccionado : null} isEditMode={editingTipo === 'Periodos'}    onDelete={() => handleDelete('Periodo')} />
-      <AddEdificioModal   isOpen={isEdificioModalOpen}   onClose={() => setIsEdificioModalOpen(false)}   onSave={(d) => handleSave(d, 'Edificio')}   initialData={editingTipo === 'Edificios'   ? itemSeleccionado : null} isEditMode={editingTipo === 'Edificios'}   onDelete={() => handleDelete('Edificio')} />
-      <AddFacultadModal   isOpen={isFacultadModalOpen}   onClose={() => setIsFacultadModalOpen(false)}   onSave={(d) => handleSave(d, 'Facultad')}   edificiosDisponibles={edificiosDisponibles} initialData={editingTipo === 'Facultades'   ? itemSeleccionado : null} isEditMode={editingTipo === 'Facultades'}   onDelete={() => handleDelete('Facultad')} />
-      <AddCarreraModal    isOpen={isCarreraModalOpen}    onClose={() => setIsCarreraModalOpen(false)}    onSave={(d) => handleSave(d, 'Carrera')}    facultadesDisponibles={facultadesDisponibles} initialData={editingTipo === 'Carreras'    ? itemSeleccionado : null} isEditMode={editingTipo === 'Carreras'}    onDelete={() => handleDelete('Carrera')} />
-      <AddAsignaturaModal isOpen={isAsignaturaModalOpen} onClose={() => setIsAsignaturaModalOpen(false)} onSave={(d) => handleSave(d, 'Asignatura')} carrerasDisponibles={carrerasDisponibles} profesoresDisponibles={profesoresDisponibles} periodosDisponibles={periodosList} initialData={editingTipo === 'Asignaturas' ? itemSeleccionado : null} isEditMode={editingTipo === 'Asignaturas'} onDelete={() => handleDelete('Asignatura')} />
-      <AddProfesorModal   isOpen={isProfesorModalOpen}   onClose={() => setIsProfesorModalOpen(false)}   onSave={(d) => handleSave(d, 'Profesor')}   initialData={editingTipo === 'Profesores'   ? itemSeleccionado : null} isEditMode={editingTipo === 'Profesores'}   onDelete={() => handleDelete('Profesor')} />
+      <AddPeriodoModal    isOpen={isPeriodoModalOpen}    onClose={() => setIsPeriodoModalOpen(false)}    onSave={(d) => handleSave(d, 'Periodo')}    initialData={editingTipo === 'Periodos'    ? itemSeleccionado : null} isEditMode={editingTipo === 'Periodos'}    onDelete={() => handleDelete('Periodo')}    isSaving={isLoading} />
+      <AddEdificioModal   isOpen={isEdificioModalOpen}   onClose={() => setIsEdificioModalOpen(false)}   onSave={(d) => handleSave(d, 'Edificio')}   initialData={editingTipo === 'Edificios'   ? itemSeleccionado : null} isEditMode={editingTipo === 'Edificios'}   onDelete={() => handleDelete('Edificio')}   isSaving={isLoading} />
+      <AddFacultadModal   isOpen={isFacultadModalOpen}   onClose={() => setIsFacultadModalOpen(false)}   onSave={(d) => handleSave(d, 'Facultad')}   edificiosDisponibles={edificiosDisponibles} initialData={editingTipo === 'Facultades'   ? itemSeleccionado : null} isEditMode={editingTipo === 'Facultades'}   onDelete={() => handleDelete('Facultad')}   isSaving={isLoading} />
+      <AddCarreraModal    isOpen={isCarreraModalOpen}    onClose={() => setIsCarreraModalOpen(false)}    onSave={(d) => handleSave(d, 'Carrera')}    facultadesDisponibles={facultadesDisponibles} initialData={editingTipo === 'Carreras'    ? itemSeleccionado : null} isEditMode={editingTipo === 'Carreras'}    onDelete={() => handleDelete('Carrera')}    isSaving={isLoading} />
+      <AddAsignaturaModal isOpen={isAsignaturaModalOpen} onClose={() => setIsAsignaturaModalOpen(false)} onSave={(d) => handleSave(d, 'Asignatura')} carrerasDisponibles={carrerasDisponibles} profesoresDisponibles={profesoresDisponibles} periodosDisponibles={periodosList} initialData={editingTipo === 'Asignaturas' ? itemSeleccionado : null} isEditMode={editingTipo === 'Asignaturas'} onDelete={() => handleDelete('Asignatura')} isSaving={isLoading} />
+      <AddProfesorModal   isOpen={isProfesorModalOpen}   onClose={() => setIsProfesorModalOpen(false)}   onSave={(d) => handleSave(d, 'Profesor')}   initialData={editingTipo === 'Profesores'   ? itemSeleccionado : null} isEditMode={editingTipo === 'Profesores'}   onDelete={() => handleDelete('Profesor')}   isSaving={isLoading} />
       <AddComisionModal
         isOpen={isComisionModalOpen}
         onClose={() => setIsComisionModalOpen(false)}
@@ -652,6 +652,7 @@ const EstructuraPage = () => {
         initialData={editingTipo === 'Comisiones' ? itemSeleccionado : null}
         isEditMode={editingTipo === 'Comisiones'}
         onDelete={() => handleDelete('Comisión')}
+        isSaving={isLoading}
       />
     </div>
   );

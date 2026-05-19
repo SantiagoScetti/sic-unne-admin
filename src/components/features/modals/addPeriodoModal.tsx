@@ -14,9 +14,10 @@ type AddPeriodoModalProps = {
   initialData?: NuevoPeriodo | null;
   isEditMode?: boolean;
   onDelete?: () => void;
+  isSaving?: boolean;
 };
 
-const AddPeriodoModal = ({ isOpen, onClose, onSave, initialData = null, isEditMode = false, onDelete }: AddPeriodoModalProps) => {
+const AddPeriodoModal = ({ isOpen, onClose, onSave, initialData = null, isEditMode = false, onDelete, isSaving = false }: AddPeriodoModalProps) => {
   const [nuevoPeriodo, setNuevoPeriodo] = useState<NuevoPeriodo>({ nombre: '', fecha_inicio: '', fecha_fin: '' });
   const [errores, setErrores] = useState({ nombre: '', fecha_inicio: '', fecha_fin: '' });
 
@@ -150,10 +151,12 @@ const AddPeriodoModal = ({ isOpen, onClose, onSave, initialData = null, isEditMo
         </div>
         <div style={footerStyle}>
           {isEditMode && onDelete && (
-            <button onClick={confirmarEliminar} style={btnDeleteStyle}>Eliminar</button>
+            <button onClick={confirmarEliminar} disabled={isSaving} style={btnDeleteStyle}>Eliminar</button>
           )}
-          <button onClick={confirmarCancelar} style={btnCancelStyle}>Cancelar</button>
-          <button onClick={confirmarGuardar} style={btnSaveStyle}>{isEditMode ? 'Guardar cambios' : 'Guardar Periodo'}</button>
+          <button onClick={confirmarCancelar} disabled={isSaving} style={{ ...btnCancelStyle, opacity: isSaving ? 0.5 : 1 }}>Cancelar</button>
+          <button onClick={confirmarGuardar} disabled={isSaving} style={{ ...btnSaveStyle, opacity: isSaving ? 0.8 : 1, cursor: isSaving ? 'not-allowed' : 'pointer' }}>
+            {isSaving ? '⏳ Guardando...' : isEditMode ? 'Guardar cambios' : 'Guardar Periodo'}
+          </button>
         </div>
       </div>
     </div>
