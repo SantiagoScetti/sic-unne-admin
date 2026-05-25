@@ -24,8 +24,8 @@ export type Reporte = {
 };
 
 export type AccionReporte = {
-  accion: 'Suspender temporalmente' | 'Suspender indefinidamente' | 'Enviar aviso';
-  fechaHasta?: string;         // solo si accion === 'Suspender temporalmente'
+  accion: 'Suspender Temporalmente' | 'Suspender Indefinidamente' | 'Enviar aviso';
+  fechaHasta?: string;
   observaciones: string;
 };
 
@@ -91,7 +91,7 @@ const AccionReporteModal = ({
       e.accion = 'Debe seleccionar una acción.';
       ok = false;
     }
-    if (accion === 'Suspender temporalmente') {
+    if (accion === 'Suspender Temporalmente') {
       if (!fechaHasta) {
         e.fechaHasta = 'Debe indicar la fecha hasta.';
         ok = false;
@@ -107,11 +107,11 @@ const AccionReporteModal = ({
 
   const confirmarGuardar = () => {
     if (!validar()) return;
-    const accionLabel = accion === 'Suspender temporalmente' && fechaHasta
+    const accionLabel = accion === 'Suspender Temporalmente' && fechaHasta
       ? `${accion} hasta ${fechaHasta}`
       : accion;
     if (!window.confirm(`¿Desea aplicar "${accionLabel}" al estudiante ${receptor?.nombre} ${receptor?.apellido}?`)) return;
-    onSave({ accion, fechaHasta: accion === 'Suspender temporalmente' ? fechaHasta : undefined, observaciones });
+    onSave({ accion, fechaHasta: accion === 'Suspender Temporalmente' ? fechaHasta : undefined, observaciones });
   };
 
   const confirmarEliminar = () => {
@@ -195,7 +195,7 @@ const AccionReporteModal = ({
           <div>
             <label style={labelStyle}>Acción a tomar *</label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '6px' }}>
-              {(['Enviar aviso', 'Suspender temporalmente', 'Suspender indefinidamente'] as const).map((op) => (
+              {(['Enviar aviso', 'Suspender Temporalmente', 'Suspender Indefinidamente'] as const).map((op) => (
                 <label
                   key={op}
                   style={{
@@ -217,8 +217,8 @@ const AccionReporteModal = ({
                   />
                   <span style={{ fontSize: '0.9rem', fontWeight: accion === op ? '600' : '400', color: accion === op ? '#2b6cb0' : '#4a5568' }}>
                     {op === 'Enviar aviso' && '📢 '}
-                    {op === 'Suspender temporalmente' && '⏸️ '}
-                    {op === 'Suspender indefinidamente' && '🚫 '}
+                    {op === 'Suspender Temporalmente' && '⏸️ '}
+                    {op === 'Suspender Indefinidamente' && '🚫 '}
                     {op}
                   </span>
                 </label>
@@ -228,7 +228,7 @@ const AccionReporteModal = ({
           </div>
 
           {/* ── Fecha hasta (solo si suspensión temporal) ── */}
-          {accion === 'Suspender temporalmente' && (
+          {accion === 'Suspender Temporalmente' && (
             <div style={{ paddingLeft: '8px', borderLeft: '3px solid #3182ce' }}>
               <label style={labelStyle}>Suspender hasta *</label>
               <input

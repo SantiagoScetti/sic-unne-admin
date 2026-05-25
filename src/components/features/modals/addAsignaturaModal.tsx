@@ -22,7 +22,6 @@ type NuevaAsignatura = {
   año: string;
   id_periodo: number | string;
   id_carrera: string;
-  id_profesor: number | string;
 };
 
 type AddAsignaturaModalProps = {
@@ -40,25 +39,23 @@ type AddAsignaturaModalProps = {
 
 const AddAsignaturaModal = ({ isOpen, onClose, onSave, carrerasDisponibles, profesoresDisponibles, periodosDisponibles, initialData = null, isEditMode = false, onDelete, isSaving = false }: AddAsignaturaModalProps) => {
   const [nuevaAsignatura, setNuevaAsignatura] = useState<NuevaAsignatura>({
-    nombre: '', año: '', id_periodo: '', id_carrera: '', id_profesor: ''
+    nombre: '', año: '', id_periodo: '', id_carrera: ''
   });
-  const [errores, setErrores] = useState({ nombre: '', año: '', periodo: '', carrera: '', profesor: '' });
+  const [errores, setErrores] = useState({ nombre: '', año: '', periodo: '', carrera: '' });
 
   useEffect(() => {
     if (!isOpen) return;
     if (isEditMode && initialData) {
-      const profId = (initialData as any)?.profesores_ids?.length > 0 ? (initialData as any).profesores_ids[0] : '';
       setNuevaAsignatura({
         nombre: initialData.nombre || '',
         año: initialData.año || (initialData as any).anio_dictado || '',
         id_periodo: initialData.id_periodo || '',
         id_carrera: initialData.id_carrera || '',
-        id_profesor: profId
       });
     } else {
-      setNuevaAsignatura({ nombre: '', año: '', id_periodo: '', id_carrera: '', id_profesor: '' });
+      setNuevaAsignatura({ nombre: '', año: '', id_periodo: '', id_carrera: '' });
     }
-    setErrores({ nombre: '', año: '', periodo: '', carrera: '', profesor: '' });
+    setErrores({ nombre: '', año: '', periodo: '', carrera: '' });
   }, [isOpen, isEditMode, initialData]);
 
   if (!isOpen) return null;
@@ -89,11 +86,6 @@ const AddAsignaturaModal = ({ isOpen, onClose, onSave, carrerasDisponibles, prof
       erroresTemp.carrera = "Debe seleccionar una carrera.";
       esValido = false;
     }
-    // Restricción: Profesor Titular
-    if (!nuevaAsignatura.id_profesor) {
-      erroresTemp.profesor = "Debe seleccionar un profesor titular.";
-      esValido = false;
-    }
 
     setErrores(erroresTemp);
     return esValido;
@@ -103,13 +95,9 @@ const AddAsignaturaModal = ({ isOpen, onClose, onSave, carrerasDisponibles, prof
     if (validarCampos()) {
       const accion = isEditMode ? "modificar" : "agregar";
       if (window.confirm(`¿Desea ${accion} la asignatura "${nuevaAsignatura.nombre}"?`)) {
-        const payload = {
-          ...nuevaAsignatura,
-          profesores_ids: [Number(nuevaAsignatura.id_profesor)]
-        };
-        onSave(payload as any);
-        setNuevaAsignatura({ nombre: '', año: '', id_periodo: '', id_carrera: '', id_profesor: '' });
-        setErrores({ nombre: '', año: '', periodo: '', carrera: '', profesor: '' });
+        onSave(nuevaAsignatura as any);
+        setNuevaAsignatura({ nombre: '', año: '', id_periodo: '', id_carrera: '' });
+        setErrores({ nombre: '', año: '', periodo: '', carrera: '' });
       }
     }
   };
@@ -123,8 +111,8 @@ const AddAsignaturaModal = ({ isOpen, onClose, onSave, carrerasDisponibles, prof
 
   const confirmarCancelar = () => {
     if (window.confirm("¿Desea cancelar la operación?")) {
-      setNuevaAsignatura({ nombre: '', año: '', id_periodo: '', id_carrera: '', id_profesor: '' });
-      setErrores({ nombre: '', año: '', periodo: '', carrera: '', profesor: '' });
+      setNuevaAsignatura({ nombre: '', año: '', id_periodo: '', id_carrera: '' });
+      setErrores({ nombre: '', año: '', periodo: '', carrera: '' });
       onClose();
     }
   };
@@ -140,7 +128,7 @@ const AddAsignaturaModal = ({ isOpen, onClose, onSave, carrerasDisponibles, prof
 
       <div style={{ ...modalStyle, width: '500px' }}>
         <h2 style={titleStyle}>{isEditMode ? 'Editar Asignatura' : 'Nueva Asignatura'}</h2>
-        
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
           <div>
@@ -177,14 +165,7 @@ const AddAsignaturaModal = ({ isOpen, onClose, onSave, carrerasDisponibles, prof
             {errores.carrera && <p style={errorTextStyle}>{errores.carrera}</p>}
           </div>
 
-          <div>
-            <label style={labelStyle}>Profesor Titular *</label>
-            <select className="modal-select" style={{ ...inputBaseStyle, border: `1px solid ${errores.profesor ? '#e53e3e' : '#e2e8f0'}` }} value={nuevaAsignatura.id_profesor} onChange={(e) => setNuevaAsignatura({ ...nuevaAsignatura, id_profesor: Number(e.target.value) })}>
-              <option value="">Seleccione un profesor...</option>
-              {profesoresDisponibles.map(p => <option key={p.id} value={p.id}>{p.apellido}, {p.nombre}</option>)}
-            </select>
-            {errores.profesor && <p style={errorTextStyle}>{errores.profesor}</p>}
-          </div>
+
         </div>
 
         <div style={footerStyle}>

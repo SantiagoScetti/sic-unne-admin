@@ -15,30 +15,14 @@ export const obtenerReportes = async () => {
   const { data, error } = await supabase
     .from('reporte')
     .select(`
-      id_reporte,
-      motivo,
-      estado,
-      fecha_alta,
-      resolucion_admin,
-      accion_tomada,
-      admin_id,
-      emisor_id,
-      receptor_id,
-      emisor:usuario!emisor_id (
-        id_usuario,
-        nombre,
-        apellido
-      ),
-      receptor:usuario!receptor_id (
-        id_usuario,
-        nombre,
-        apellido
-      )
+      *,
+      emisor:usuario!emisor_id (id_usuario, nombre, apellido),
+      receptor:usuario!receptor_id (id_usuario, nombre, apellido)
     `)
     .order('fecha_alta', { ascending: false });
 
   if (error) {
-    console.error('Error fetching reportes:', error);
+    console.error('Error fetching reportes:', error.message);
     throw new Error(error.message);
   }
   return data;
@@ -53,12 +37,7 @@ export const obtenerReportesFiltrados = async (estado) => {
   let query = supabase
     .from('reporte')
     .select(`
-      id_reporte,
-      motivo,
-      estado,
-      fecha_alta,
-      resolucion_admin,
-      accion_tomada,
+      *,
       emisor:usuario!emisor_id (id_usuario, nombre, apellido),
       receptor:usuario!receptor_id (id_usuario, nombre, apellido)
     `)
@@ -84,18 +63,9 @@ export const obtenerDetalleReporte = async (id_reporte) => {
   const { data, error } = await supabase
     .from('reporte')
     .select(`
-      id_reporte,
-      motivo,
-      estado,
-      fecha_alta,
-      resolucion_admin,
-      accion_tomada,
-      admin_id,
-      emisor_id,
-      receptor_id,
+      *,
       emisor:usuario!emisor_id (id_usuario, nombre, apellido),
-      receptor:usuario!receptor_id (id_usuario, nombre, apellido),
-      periodo:periodo!id_periodo (nombre)
+      receptor:usuario!receptor_id (id_usuario, nombre, apellido)
     `)
     .eq('id_reporte', id_reporte)
     .single();
@@ -113,17 +83,20 @@ export const obtenerDetalleReporte = async (id_reporte) => {
  * Mensaje de éxito: "Reporte actualizado"
  */
 export const actualizarEstado = async (id_reporte, estado, resolucion) => {
+  const payload = { estado };
+  // Solo actualizar accion_tomada si se provee un valor válido (CK: 'Enviar aviso', 'Suspender Temporalmente', 'Suspender Indefinidamente')
+  if (resolucion !== null && resolucion !== undefined) {
+    payload.accion_tomada = resolucion;
+  }
+
   const { data, error } = await supabase
     .from('reporte')
-    .update({
-      estado,
-      resolucion_admin: resolucion,
-    })
+    .update(payload)
     .eq('id_reporte', id_reporte)
     .select();
 
   if (error) {
-    console.error('Error actualizando estado reporte:', error);
+    console.error('Error actualizando estado reporte:', error.message);
     throw new Error(error.message);
   }
   return data?.[0] || null;

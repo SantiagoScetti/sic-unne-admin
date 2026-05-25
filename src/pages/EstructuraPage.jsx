@@ -451,9 +451,9 @@ const EstructuraPage = () => {
     switch (entidadActiva) {
       case 'Periodos': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Fecha Inicio</th><th style={headerStyle}>Fecha Fin</th></>);
       case 'Edificios': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Dirección</th><th style={headerStyle}>Ciudad</th></>);
-      case 'Facultades': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Edificios</th><th style={headerStyle}>Carreras</th></>);
+      case 'Facultades': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Ciudad</th><th style={headerStyle}>Edificio Asociado</th><th style={headerStyle}>Carreras</th></>);
       case 'Carreras': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Facultad</th><th style={headerStyle}>Asignaturas</th></>);
-      case 'Asignaturas': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Año</th><th style={headerStyle}>Periodo</th><th style={headerStyle}>Facultad</th><th style={headerStyle}>Profesor a cargo</th></>);
+      case 'Asignaturas': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Año</th><th style={headerStyle}>Periodo</th><th style={headerStyle}>Carrera</th></>);
       case 'Profesores': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Apellido</th><th style={headerStyle}>Documento</th><th style={headerStyle}>Correo</th><th style={headerStyle}>Telefono</th><th style={headerStyle}>Estado</th><th style={headerStyle}>Asignaciones</th></>);
       case 'Comisiones': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Letras</th><th style={headerStyle}>Asignatura</th><th style={headerStyle}>Facultad</th><th style={headerStyle}>Profesores</th><th style={headerStyle}>Inscriptos</th></>);
       default: return null;
@@ -511,7 +511,7 @@ const EstructuraPage = () => {
       case 'Facultades': {
         const lista = aplicarFiltro(facultadesList);
         if (lista.length === 0) return (<tr style={rowStyle}><td colSpan={5} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
-        return lista.map(f => (<tr className="table-row-hover" key={f.id_facultad} style={rowStyle}><td style={cellStyle}>{f.id_facultad}</td><td style={{...cellStyle, fontWeight:'600'}}>{f.nombre}</td><td style={cellStyle}>{f.ciudad}</td><td style={cellStyle}>{f.nombreEdificio}</td><ActionsCell tipo="Facultades" item={f} estadoRegistro={f.estado} /></tr>));
+        return lista.map(f => (<tr className="table-row-hover" key={f.id_facultad} style={rowStyle}><td style={cellStyle}>{f.id_facultad}</td><td style={{...cellStyle, fontWeight:'600'}}>{f.nombre}</td><td style={cellStyle}>{f.ciudad}</td><td style={cellStyle}>{f.nombreEdificio}</td><td style={cellStyle}><button style={{ padding: '4px 12px', backgroundColor: '#ebf8ff', color: '#2b6cb0', border: '1px solid #90cdf4', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer' }}>Ver Carreras</button></td><ActionsCell tipo="Facultades" item={f} estadoRegistro={f.estado} /></tr>));
       }
       case 'Carreras': {
         const lista = aplicarFiltro(carrerasList);
@@ -521,7 +521,7 @@ const EstructuraPage = () => {
       case 'Asignaturas': {
         const lista = aplicarFiltro(asignaturasList);
         if (lista.length === 0) return (<tr style={rowStyle}><td colSpan={7} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
-        return lista.map(a => (<tr className="table-row-hover" key={a.id_asignatura} style={rowStyle}><td style={cellStyle}>{a.id_asignatura}</td><td style={{...cellStyle, fontWeight:'600'}}>{a.nombre}</td><td style={cellStyle}>{a.anio_dictado}</td><td style={cellStyle}>{a.nombrePeriodo}</td><td style={cellStyle}>{a.nombreFacultad}</td><td style={cellStyle}>{formatearProfesores(a)}</td><ActionsCell tipo="Asignaturas" item={a} estadoRegistro={a.estado} /></tr>));
+        return lista.map(a => (<tr className="table-row-hover" key={a.id_asignatura} style={rowStyle}><td style={cellStyle}>{a.id_asignatura}</td><td style={{...cellStyle, fontWeight:'600'}}>{a.nombre}</td><td style={cellStyle}>{a.anio_dictado}</td><td style={cellStyle}>{a.nombrePeriodo}</td><td style={cellStyle}>{a.nombreCarrera}</td><ActionsCell tipo="Asignaturas" item={a} estadoRegistro={a.estado} /></tr>));
       }
       case 'Profesores': {
         const lista = aplicarFiltro(profesoresList);

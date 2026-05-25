@@ -111,10 +111,10 @@ export const insertar = async (filas) => {
     const { data, error } = await supabase
       .from('facultad')
       .upsert({
-        nombre:      f.facultad_nombre,
-        ciudad:      f.facultad_ciudad || 'Sin especificar',
+        nombre: f.facultad_nombre,
+        ciudad: f.facultad_ciudad || 'Sin especificar',
         id_edificio: edificio.id_edificio,
-        estado:      true,
+        estado: true,
       }, { onConflict: 'nombre', ignoreDuplicates: false })
       .select();
 

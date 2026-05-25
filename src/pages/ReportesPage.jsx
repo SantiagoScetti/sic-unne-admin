@@ -105,13 +105,14 @@ const ReportesPage = () => {
     setIsSaving(true);
     try {
       // Determinar nuevo estado del reporte según la acción
-      const nuevoEstado = accion === 'Enviar aviso' ? 'En Revision' : 'Resuelto';
+      // CK válidos: 'Pendiente', 'Resuelto', 'Desestimado'
+      const nuevoEstado = 'Resuelto';
 
-      // 1. Actualizar el reporte (estado + resolución)
-      await actualizarEstado(reporteSeleccionado.id_reporte, nuevoEstado, observaciones || accion);
+      // 1. Actualizar el reporte (estado + accion_tomada)
+      await actualizarEstado(reporteSeleccionado.id_reporte, nuevoEstado, accion);
 
       // 2. Si es suspensión temporal, actualizar fecha en el usuario
-      if (accion === 'Suspender temporalmente' && fechaHasta && reporteSeleccionado.receptor_id) {
+      if (accion === 'Suspender Temporalmente' && fechaHasta && reporteSeleccionado.receptor_id) {
         await actualizarFechaSuspension(reporteSeleccionado.receptor_id, fechaHasta);
       }
 
@@ -151,7 +152,7 @@ const ReportesPage = () => {
     if (!reporteSeleccionado) return;
     setIsSaving(true);
     try {
-      await actualizarEstado(reporteSeleccionado.id_reporte, 'Desestimado', 'Eliminado por el administrador');
+      await actualizarEstado(reporteSeleccionado.id_reporte, 'Desestimado', null);
       setIsModalOpen(false);
       setReporteSeleccionado(null);
       setSuccessMsg('Reporte desestimado correctamente');
@@ -255,7 +256,7 @@ const ReportesPage = () => {
                         <td style={{ padding: '15px', fontWeight: '500', color: '#2d3748' }}>{nombreReportado}</td>
                         <td style={{ padding: '15px', color: '#4a5568' }}>{reporte.motivo}</td>
                         <td style={{ padding: '15px', color: '#718096', fontSize: '0.875rem' }}>
-                          {reporte.resolucion_admin || <span style={{ fontStyle: 'italic', color: '#a0aec0' }}>Sin descripción</span>}
+                          {reporte.accion_tomada || <span style={{ fontStyle: 'italic', color: '#a0aec0' }}>Sin descripción</span>}
                         </td>
                         <td style={{ padding: '15px' }}>
                           <span style={getEstadoBadgeStyle(reporte.estado)}>
