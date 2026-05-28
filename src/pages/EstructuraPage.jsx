@@ -131,22 +131,19 @@ const EstructuraPage = () => {
     setItemSeleccionado(null);
   };
 
-  // ── C-02: CREAR COMISIÓN — handler de alta cohesión ─────────────────────────
-  // Trazable con el diagrama de secuencia C-02:
-  //   paso 1: asignaturaVerificarExistencia  → :Asignatura
-  //   paso 2: comisionCrear                 → :Comision
-  //   paso 3: profesorAsignar               → :Profesor
-  // El componente solo orquesta; la lógica de negocio vive en cada servicio.
+  // ── C-02: CREAR COMISIÓN — arquitectura en 3 capas ──────────────────────────
+  // Trazable con el diagrama de secuencia C-02 (versión 3 capas):
+  //   Interfaz → comision.service.crear() → POST /api/comisiones → ServicioComision
+  // El servidor valida la asignatura, crea la comisión y vincula los profesores
+  // en UNA sola operación (ya no se hace orquestación BaaS desde el cliente).
   const handleCrearComision = async (datos) => {
-    await asignaturaService.verificarExistencia(datos.id_asignatura);                           // paso 1
-    const nueva = await comisionService.crear(                                                 // paso 2
+    return await comisionService.crear(
       datos.nombre,
       datos.letraDesde ?? datos.letra_desde,
       datos.letraHasta ?? datos.letra_hasta,
-      datos.id_asignatura
+      datos.id_asignatura,
+      datos.profesores_ids
     );
-    await profesorService.asignar(nueva.id_comision, datos.profesores_ids);                    // paso 3
-    return nueva;
   };
 
   const handleSave = async (datos, tipo) => {

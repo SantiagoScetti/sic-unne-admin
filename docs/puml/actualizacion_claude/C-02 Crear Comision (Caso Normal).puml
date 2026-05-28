@@ -1,0 +1,87 @@
+@startuml
+
+title Diagrama de Secuencia: C-02 Crear Comision (Caso Normal) - Arquitectura 3 capas
+
+skinparam style strictuml
+skinparam ParticipantPadding 40
+skinparam BoxPadding 20
+
+autonumber
+
+actor Administrador
+
+box "Capa de Presentacion" #LightBlue
+  participant "Sistema\n(Interfaz React)" as Interfaz
+end box
+
+box "Capa de Aplicacion (Cliente)" #LightYellow
+  participant "comision.service.js" as Service
+end box
+
+box "Capa de Aplicacion (Servidor)" #LightGreen
+  participant "API Backend\n(/api/comisiones)" as API
+end box
+
+box "Capa de Datos" #LightGray
+  database "Supabase\n(PostgreSQL)" as DB
+end box
+
+Administrador -> Interfaz: Ingresa a estructura academica
+activate Interfaz
+Interfaz --> Administrador: Se muestran entidades existentes
+deactivate Interfaz
+
+Administrador -> Interfaz: Hace click en "Comisiones"
+activate Interfaz
+Interfaz -> Service: obtenerComisiones("Activos")
+activate Service
+Service -> API: fetch('/api/comisiones?filtroEstado=Activos', GET)
+activate API
+API -> DB: SELECT comision (+ asignatura, carrera, facultad, profesores)
+activate DB
+DB --> API: filas
+deactivate DB
+API --> Service: { data: [...], error: null }
+deactivate API
+Service --> Interfaz: lista normalizada
+deactivate Service
+Interfaz --> Administrador: Se muestra listado y botones
+deactivate Interfaz
+
+Administrador -> Interfaz: Hace click en "Crear Comision"
+activate Interfaz
+Interfaz --> Administrador: Se muestra addComisionModal
+deactivate Interfaz
+
+Administrador -> Interfaz: Completa campos y confirma
+activate Interfaz
+
+Interfaz -> Interfaz: validarCampos()
+
+Interfaz -> Service: crear(nombre, letraDesde, letraHasta, id_asignatura, profesores_ids)
+activate Service
+Service -> API: fetch('/api/comisiones', POST)\nbody = { nombre, letraDesde, letraHasta, id_asignatura, profesores_ids }
+activate API
+
+API -> API: Valida campos requeridos
+API -> DB: INSERT INTO comision
+activate DB
+DB --> API: comision_creada (id_comision)
+deactivate DB
+
+alt profesores_ids.length > 0
+    API -> DB: INSERT INTO comision_profesor (batch)
+    activate DB
+    DB --> API: vinculos_creados
+    deactivate DB
+end
+
+API --> Service: 201 { data: comision, error: null }
+deactivate API
+Service --> Interfaz: comision creada
+deactivate Service
+
+Interfaz --> Administrador: "Comision creada con exito"
+deactivate Interfaz
+
+@enduml

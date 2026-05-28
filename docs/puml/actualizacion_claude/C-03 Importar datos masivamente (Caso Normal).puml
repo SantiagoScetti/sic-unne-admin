@@ -1,0 +1,115 @@
+@startuml
+
+title Diagrama de Secuencia: C-03 Importar datos masivamente (Caso Normal) - Arquitectura 3 capas
+
+skinparam style strictuml
+skinparam ParticipantPadding 40
+skinparam BoxPadding 20
+
+autonumber
+
+actor Administrador
+
+box "Capa de Presentacion" #LightBlue
+  participant "Sistema\n(Interfaz React)" as Interfaz
+  participant "csvParser.js" as Parser
+end box
+
+box "Capa de Aplicacion (Cliente)" #LightYellow
+  participant "comision.service.js" as Service
+end box
+
+box "Capa de Aplicacion (Servidor)" #LightGreen
+  participant "API Backend\n(/api/comisiones)" as API
+end box
+
+box "Capa de Datos" #LightGray
+  database "Supabase\n(PostgreSQL)" as DB
+end box
+
+Administrador -> Interfaz: Ingresa a estructura academica
+activate Interfaz
+Interfaz --> Administrador: Se muestran entidades y botones
+deactivate Interfaz
+
+Administrador -> Interfaz: Hace click en "Importar CSV"
+activate Interfaz
+Interfaz --> Administrador: Se abre explorador de archivos
+deactivate Interfaz
+
+Administrador -> Interfaz: Selecciona archivo CSV
+activate Interfaz
+
+Interfaz -> Parser: validarFormatoArchivo(archivo)
+activate Parser
+Parser --> Interfaz: ok
+deactivate Parser
+
+Interfaz -> Parser: parsearCSV(archivo)
+activate Parser
+Parser --> Interfaz: filas[]
+deactivate Parser
+
+Interfaz -> Parser: validarEsquema(filas)
+activate Parser
+Parser --> Interfaz: sin errores
+deactivate Parser
+
+Interfaz -> Parser: detectarDuplicados(filas)
+activate Parser
+Parser --> Interfaz: sin errores
+deactivate Parser
+
+Interfaz -> Parser: detectarIncompletos(filas)
+activate Parser
+Parser --> Interfaz: sin errores
+deactivate Parser
+
+Interfaz -> Parser: detectarFormatosInvalidos(filas)
+activate Parser
+Parser --> Interfaz: sin errores
+deactivate Parser
+
+Interfaz -> Service: insertar(filas)
+activate Service
+Service -> API: fetch('/api/comisiones', POST)\nbody = { filas }
+activate API
+
+loop por cada fila del CSV
+    API -> DB: SELECT id_asignatura WHERE nombre = ...
+    activate DB
+    DB --> API: asignatura
+    deactivate DB
+
+    API -> DB: SELECT comision WHERE nombre + id_asignatura (idempotencia)
+    activate DB
+    DB --> API: existentes?
+    deactivate DB
+
+    alt comision no existe
+        API -> DB: INSERT INTO comision
+        activate DB
+        DB --> API: comision_creada
+        deactivate DB
+    end
+
+    API -> DB: SELECT id_profesor WHERE documento = ...
+    activate DB
+    DB --> API: profesor
+    deactivate DB
+
+    API -> DB: UPSERT comision_profesor (id_comision, id_profesor)
+    activate DB
+    DB --> API: vinculo_ok
+    deactivate DB
+end
+
+API --> Service: 200 { data: [...], insertadas: N, errores: null }
+deactivate API
+Service --> Interfaz: resumen importacion
+deactivate Service
+
+Interfaz --> Administrador: "Archivo importado con exito"
+deactivate Interfaz
+
+@enduml

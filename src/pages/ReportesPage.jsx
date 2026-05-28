@@ -1,10 +1,8 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-// C-01: imports trazables con el diagrama de secuencia — un import por objeto del dominio
-import { obtenerReportes, obtenerReportesFiltrados, actualizarEstado } from '../services/reportes/reporte.service';
-import { actualizarFechaSuspension } from '../services/auth/usuario.service';
-import { registrar } from '../services/reportes/auditoriaAdministrativa.service';
-import { notificar } from '../services/reportes/notificacion.service';
+// C-01: el cliente solo conoce el servicio HTTP. La orquestación (estado +
+// sanción + auditoría + notificaciones) ocurre en el backend.
+import { obtenerReportes, obtenerReportesFiltrados, resolverReporte } from '../services/reportes/reporte.service';
 import AccionReporteModal from '../components/features/modals/accionReporteModal';
 
 const getEstadoBadgeStyle = (estado) => {
@@ -100,49 +98,37 @@ const ReportesPage = () => {
     setIsModalOpen(true);
   };
 
+  const refrescarLista = async () => {
+    const data = filtroEstado === 'Todos'
+      ? await obtenerReportes()
+      : await obtenerReportesFiltrados(filtroEstado);
+    setReportes(data || []);
+  };
+
   const handleGuardarAccion = async ({ accion, fechaHasta, observaciones }) => {
     if (!reporteSeleccionado) return;
     setIsSaving(true);
     try {
-      // Determinar nuevo estado del reporte según la acción
-      // CK válidos: 'Pendiente', 'Resuelto', 'Desestimado'
-      const nuevoEstado = 'Resuelto';
-
-      // 1. Actualizar el reporte (estado + accion_tomada)
-      await actualizarEstado(reporteSeleccionado.id_reporte, nuevoEstado, accion);
-
-      // 2. Si es suspensión temporal, actualizar fecha en el usuario
-      if (accion === 'Suspender Temporalmente' && fechaHasta && reporteSeleccionado.receptor_id) {
-        await actualizarFechaSuspension(reporteSeleccionado.receptor_id, fechaHasta);
-      }
-
-      // 3. Registrar auditoría administrativa
-      await registrar({
+      // Una sola llamada: el backend orquesta estado + sanción + auditoría +
+      // notificaciones (patrones Estado, Estrategia y Observador).
+      await resolverReporte(reporteSeleccionado.id_reporte, {
+        estado: 'Resuelto',
         accion,
-        id_reporte: reporteSeleccionado.id_reporte,
-        observaciones,
         fechaHasta,
+        observaciones,
       });
 
-      // 4. Notificar — al receptor siempre; al emisor solo si no es el Sistema
-      const emisorId = reporteSeleccionado.emisor_id;
-      const receptorId = reporteSeleccionado.receptor_id;
-      if (emisorId && receptorId) {
-        await notificar(emisorId, receptorId);
-      } else if (receptorId) {
-        // Solo notificar al receptor cuando el emisor es el Sistema
-        await notificar(receptorId, receptorId);
-      }
-
-      // 5. Cerrar modal y refrescar lista
       setIsModalOpen(false);
       setReporteSeleccionado(null);
       setSuccessMsg(`Acción "${accion}" aplicada con éxito`);
       setTimeout(() => setSuccessMsg(''), 3500);
-      const data = filtroEstado === 'Todos' ? await obtenerReportes() : await obtenerReportesFiltrados(filtroEstado);
-      setReportes(data || []);
+      await refrescarLista();
     } catch (err) {
-      setError(`Error al guardar la acción: ${err.message}`);
+      if (err.message === 'CONFLIC_ALREADY_PROCESSED') {
+        setError("Este reporte ya ha sido procesado por otro administrador. Por favor, recargá la página.");
+      } else {
+        setError(`Error al guardar la acción: ${err.message}`);
+      }
     } finally {
       setIsSaving(false);
     }
@@ -152,15 +138,21 @@ const ReportesPage = () => {
     if (!reporteSeleccionado) return;
     setIsSaving(true);
     try {
-      await actualizarEstado(reporteSeleccionado.id_reporte, 'Desestimado', null);
+      await resolverReporte(reporteSeleccionado.id_reporte, {
+        estado: 'Desestimado',
+        observaciones: '',
+      });
       setIsModalOpen(false);
       setReporteSeleccionado(null);
       setSuccessMsg('Reporte desestimado correctamente');
       setTimeout(() => setSuccessMsg(''), 3500);
-      const data = filtroEstado === 'Todos' ? await obtenerReportes() : await obtenerReportesFiltrados(filtroEstado);
-      setReportes(data || []);
+      await refrescarLista();
     } catch (err) {
-      setError(`Error al desestimar el reporte: ${err.message}`);
+      if (err.message === 'CONFLIC_ALREADY_PROCESSED') {
+        setError("Este reporte ya ha sido procesado por otro administrador. Por favor, recargá la página.");
+      } else {
+        setError(`Error al desestimar el reporte: ${err.message}`);
+      }
     } finally {
       setIsSaving(false);
     }

@@ -1,10 +1,7 @@
-import { createClient } from '@/lib/supabase/client';
-
-const supabase = createClient();
-
 // =============================================================================
 // :Reporte — Objeto del dominio (C-01)
-// Métodos trazables con el diagrama de secuencia C-01.
+// Métodos del cliente refactorizados para consumir las API Routes (3 capas).
+// Mantiene exactamente la misma firma y comportamiento que el servicio original.
 // =============================================================================
 
 /**
@@ -12,47 +9,29 @@ const supabase = createClient();
  * Devuelve todos los reportes con datos de emisor y receptor.
  */
 export const obtenerReportes = async () => {
-  const { data, error } = await supabase
-    .from('reporte')
-    .select(`
-      *,
-      emisor:usuario!emisor_id (id_usuario, nombre, apellido),
-      receptor:usuario!receptor_id (id_usuario, nombre, apellido)
-    `)
-    .order('fecha_alta', { ascending: false });
-
-  if (error) {
-    console.error('Error fetching reportes:', error.message);
-    throw new Error(error.message);
+  const res = await fetch('/api/reportes');
+  const result = await res.json();
+  
+  if (!res.ok) {
+    console.error('Error fetching reportes:', result.error);
+    throw new Error(result.error || 'Fallo al obtener reportes');
   }
-  return data;
+  return result.data;
 };
 
 /**
  * obtenerReportesFiltrados — C-01, variante de listado.
  * Devuelve reportes filtrando por estado ('Pendiente', 'Resuelto', 'Desestimado', 'En Revision').
- * Si estado es 'Todos' o undefined, devuelve todos los reportes.
  */
 export const obtenerReportesFiltrados = async (estado) => {
-  let query = supabase
-    .from('reporte')
-    .select(`
-      *,
-      emisor:usuario!emisor_id (id_usuario, nombre, apellido),
-      receptor:usuario!receptor_id (id_usuario, nombre, apellido)
-    `)
-    .order('fecha_alta', { ascending: false });
+  const res = await fetch(`/api/reportes?filtroEstado=${estado || 'Todos'}`);
+  const result = await res.json();
 
-  if (estado && estado !== 'Todos') {
-    query = query.eq('estado', estado);
+  if (!res.ok) {
+    console.error('Error fetching reportes filtrados:', result.error);
+    throw new Error(result.error || 'Fallo al obtener reportes filtrados');
   }
-
-  const { data, error } = await query;
-  if (error) {
-    console.error('Error fetching reportes filtrados:', error);
-    throw new Error(error.message);
-  }
-  return data;
+  return result.data;
 };
 
 /**
@@ -60,44 +39,53 @@ export const obtenerReportesFiltrados = async (estado) => {
  * Devuelve un único reporte por ID con todos sus datos relacionados.
  */
 export const obtenerDetalleReporte = async (id_reporte) => {
-  const { data, error } = await supabase
-    .from('reporte')
-    .select(`
-      *,
-      emisor:usuario!emisor_id (id_usuario, nombre, apellido),
-      receptor:usuario!receptor_id (id_usuario, nombre, apellido)
-    `)
-    .eq('id_reporte', id_reporte)
-    .single();
+  const res = await fetch(`/api/reportes/${id_reporte}`);
+  const result = await res.json();
 
-  if (error) {
-    console.error('Error fetching detalle reporte:', error);
-    throw new Error(error.message);
+  if (!res.ok) {
+    console.error('Error fetching detalle reporte:', result.error);
+    throw new Error(result.error || 'Fallo al obtener detalle del reporte');
   }
-  return data;
+  return result.data;
 };
 
 /**
- * actualizarEstado — C-01, paso de resolución.
- * Actualiza el estado y la resolución del administrador en el reporte.
- * Mensaje de éxito: "Reporte actualizado"
+ * resolverReporte — C-01, operación crítica (resolver o desestimar).
+ *
+ * Una sola llamada al backend. El servidor orquesta toda la operación
+ * (cambio de estado + sanción + auditoría + notificaciones) aplicando los
+ * patrones Estado, Estrategia y Observador. La UI ya no encadena 4 fetches.
+ *
+ * Regla de negocio (409): si el reporte ya fue procesado por otro admin,
+ * se lanza 'CONFLIC_ALREADY_PROCESSED' para alertar en la UI.
+ *
+ * @param {number} id_reporte
+ * @param {Object} payload
+ * @param {'Resuelto'|'Desestimado'} payload.estado
+ * @param {string} [payload.accion]        - requerido si estado='Resuelto'
+ * @param {string} [payload.fechaHasta]    - requerido si accion='Suspender Temporalmente'
+ * @param {string} [payload.observaciones]
+ * @param {number} [payload.admin_id]      - opcional; el server resuelve un admin por defecto
  */
-export const actualizarEstado = async (id_reporte, estado, resolucion) => {
-  const payload = { estado };
-  // Solo actualizar accion_tomada si se provee un valor válido (CK: 'Enviar aviso', 'Suspender Temporalmente', 'Suspender Indefinidamente')
-  if (resolucion !== null && resolucion !== undefined) {
-    payload.accion_tomada = resolucion;
+export const resolverReporte = async (
+  id_reporte,
+  { estado, accion, fechaHasta, observaciones, admin_id } = {}
+) => {
+  const res = await fetch(`/api/reportes/${id_reporte}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ estado, accion, fechaHasta, observaciones, admin_id }),
+  });
+
+  const result = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    if (res.status === 409) {
+      throw new Error('CONFLIC_ALREADY_PROCESSED');
+    }
+    console.error('Error resolviendo reporte:', result.error);
+    throw new Error(result.error || 'Fallo al resolver el reporte');
   }
 
-  const { data, error } = await supabase
-    .from('reporte')
-    .update(payload)
-    .eq('id_reporte', id_reporte)
-    .select();
-
-  if (error) {
-    console.error('Error actualizando estado reporte:', error.message);
-    throw new Error(error.message);
-  }
-  return data?.[0] || null;
+  return result.data;
 };

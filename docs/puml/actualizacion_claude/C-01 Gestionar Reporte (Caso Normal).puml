@@ -1,0 +1,115 @@
+@startuml
+
+title Diagrama de Secuencia: C-01 Gestionar Reporte (Caso Normal) - 3 capas + patrones
+
+skinparam style strictuml
+skinparam ParticipantPadding 25
+skinparam BoxPadding 12
+
+autonumber
+
+actor Administrador
+
+box "Presentacion" #LightBlue
+  participant "Sistema\n(ReportesPage)" as Interfaz
+end box
+
+box "Servicios HTTP (cliente)" #LightYellow
+  participant "reporte.service.js" as Service
+end box
+
+box "Controlador" #Lavender
+  participant "API\n(/api/reportes/[id])" as API
+end box
+
+box "Dominio" #LightGreen
+  participant "ServicioResolucionReporte" as Servicio
+  participant "Reporte" as Reporte
+  participant "EstadoPendiente\n(PATRON ESTADO)" as Estado
+  participant "AccionResolucion\n(PATRON ESTRATEGIA)" as Estrategia
+  participant "DispatcherEventos\n(PATRON OBSERVADOR)" as Dispatcher
+end box
+
+box "Infraestructura / Datos" #LightGray
+  participant "Repositorios" as Repo
+  database "Supabase" as DB
+end box
+
+Administrador -> Interfaz: Selecciona reporte y elige accion (ej. Suspender Temporalmente)
+activate Interfaz
+Interfaz -> Service: resolverReporte(id, { estado:'Resuelto', accion, fechaHasta, observaciones })
+activate Service
+Service -> API: fetch('/api/reportes/:id', PATCH)
+activate API
+API -> Servicio: resolver({ id, accion, fechaHasta, observaciones })
+activate Servicio
+
+Servicio -> Repo: obtenerPorId(id)
+activate Repo
+Repo -> DB: SELECT reporte WHERE id
+activate DB
+DB --> Repo: fila
+deactivate DB
+Repo --> Servicio: Reporte (reconstruye su Estado)
+deactivate Repo
+
+== (1) PATRON ESTADO ==
+Servicio -> Reporte: resolver(accion)
+activate Reporte
+Reporte -> Estado: resolver(reporte, accion)
+activate Estado
+Estado -> Reporte: registrarAccion(accion)
+Estado -> Reporte: transicionarA(EstadoResuelto)
+deactivate Estado
+Reporte --> Servicio: ok (estado = Resuelto)
+deactivate Reporte
+Servicio -> Repo: guardar(reporte)
+activate Repo
+Repo -> DB: UPDATE reporte SET estado, accion_tomada, admin_id
+activate DB
+DB --> Repo: ok
+deactivate DB
+deactivate Repo
+
+== (2) PATRON ESTRATEGIA ==
+Servicio -> Estrategia: aplicar(ctx)
+activate Estrategia
+Estrategia -> Repo: usuarioRepo.suspender(receptor_id, fechaHasta)
+activate Repo
+Repo -> DB: UPDATE usuario SET estado='Suspendido', fecha_suspension_hasta
+activate DB
+DB --> Repo: ok
+deactivate DB
+deactivate Repo
+Estrategia --> Servicio: ResultadoAccion (mensaje + detalle)
+deactivate Estrategia
+
+== (3) PATRON OBSERVADOR ==
+Servicio -> Dispatcher: publicar(ReporteResueltoEvent)
+activate Dispatcher
+Dispatcher -> Repo: NotificarUsuariosListener -> crearVarias(notificaciones)
+activate Repo
+Repo -> DB: INSERT notificacion (receptor + emisor)
+activate DB
+DB --> Repo: ok
+deactivate DB
+deactivate Repo
+Dispatcher -> Repo: RegistrarAuditoriaListener -> registrar(log)
+activate Repo
+Repo -> DB: INSERT auditoria_administrativa
+activate DB
+DB --> Repo: ok
+deactivate DB
+deactivate Repo
+deactivate Dispatcher
+
+Servicio --> API: Reporte resuelto
+deactivate Servicio
+API --> Service: 200 { data: { estado:'Resuelto', accion_tomada } }
+deactivate API
+Service --> Interfaz: ok
+deactivate Service
+Interfaz --> Administrador: "Accion aplicada con exito"
+deactivate Interfaz
+
+@enduml

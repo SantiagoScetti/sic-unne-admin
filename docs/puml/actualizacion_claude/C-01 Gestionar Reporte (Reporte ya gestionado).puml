@@ -1,0 +1,84 @@
+@startuml
+
+title Diagrama de Secuencia: C-01 Gestionar Reporte (Alt: Reporte ya gestionado) - 3 capas
+
+skinparam style strictuml
+skinparam ParticipantPadding 25
+skinparam BoxPadding 12
+
+autonumber
+
+actor Administrador
+
+box "Presentacion" #LightBlue
+  participant "Sistema\n(ReportesPage)" as Interfaz
+end box
+
+box "Servicios HTTP (cliente)" #LightYellow
+  participant "reporte.service.js" as Service
+end box
+
+box "Controlador" #Lavender
+  participant "API\n(/api/reportes/[id])" as API
+end box
+
+box "Dominio" #LightGreen
+  participant "ServicioResolucionReporte" as Servicio
+  participant "Reporte" as Reporte
+  participant "EstadoResuelto\n(PATRON ESTADO)" as Estado
+end box
+
+box "Infraestructura / Datos" #LightGray
+  participant "Repositorios" as Repo
+  database "Supabase" as DB
+end box
+
+Administrador -> Interfaz: Intenta resolver un reporte ya procesado
+activate Interfaz
+Interfaz -> Service: resolverReporte(id, { estado:'Resuelto', accion })
+activate Service
+Service -> API: fetch('/api/reportes/:id', PATCH)
+activate API
+API -> Servicio: resolver({ id, accion })
+activate Servicio
+
+Servicio -> Repo: obtenerPorId(id)
+activate Repo
+Repo -> DB: SELECT reporte WHERE id
+activate DB
+DB --> Repo: fila (estado = 'Resuelto')
+deactivate DB
+Repo --> Servicio: Reporte (Estado = EstadoResuelto)
+deactivate Repo
+
+== PATRON ESTADO detecta transicion invalida ==
+Servicio -> Reporte: resolver(accion)
+activate Reporte
+Reporte -> Estado: resolver(reporte, accion)
+activate Estado
+note right of Estado
+  EstadoResuelto es terminal:
+  hereda el comportamiento por
+  defecto y lanza
+  ReporteYaProcesadoError.
+end note
+Estado --> Reporte: throw ReporteYaProcesadoError
+deactivate Estado
+Reporte --> Servicio: propaga excepcion
+deactivate Reporte
+Servicio --> API: propaga excepcion
+deactivate Servicio
+
+API --> Service: 409 Conflict\n{ codigo:'CONFLIC_ALREADY_PROCESSED' }
+deactivate API
+Service --> Interfaz: throw 'CONFLIC_ALREADY_PROCESSED'
+deactivate Service
+Interfaz --> Administrador: "Este reporte ya fue procesado por otro administrador"
+deactivate Interfaz
+
+note over Repo, DB
+  No hubo escritura: ni UPDATE,
+  ni notificaciones, ni auditoria.
+end note
+
+@enduml

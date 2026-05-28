@@ -1,53 +1,66 @@
-import { createClient } from '@/lib/supabase/client';
-
-const supabase = createClient();
-
 // =============================================================================
-// :Comision — Service (Pasarela a Edge Functions — sin lógica de negocio)
+// :Comision — Service (Cliente HTTP puro hacia /api/comisiones)
 //
-// Este archivo NO contiene SQL ni lógica de negocio.
-// Toda la lógica vive en las Edge Functions de Supabase.
+// Este archivo NO contiene SQL ni acceso directo a Supabase.
+// Hace llamadas fetch contra nuestro backend a mano (Next.js API Routes).
 //
-// Trazabilidad con Diagramas de Secuencia:
-//   obtenerComisiones → C-02 → Edge Function `obtener-comisiones`
-//   crear             → C-02 → Edge Function `crear-comision`
-//   insertar          → C-03 → Edge Function `importar-comisiones-csv`
-//   actualizar        →        Edge Function `actualizar-comision`
-//   cambiarEstado     →        Edge Function `cambiar-estado-comision`
-//   contarActivos     →        Edge Function `contar-comisiones-activas`
+// Trazabilidad con Diagramas de Secuencia (versión 3 capas):
+//   obtenerComisiones → C-02 → GET    /api/comisiones?filtroEstado=...
+//   crear             → C-02 → POST   /api/comisiones    body simple
+//   insertar          → C-03 → POST   /api/comisiones    body { filas }
+//   actualizar        →        PUT    /api/comisiones/:id
+//   cambiarEstado     →        PATCH  /api/comisiones/:id
+//   contarActivos     →        GET    /api/comisiones/contar-activas
 // =============================================================================
+
+const ENDPOINT = '/api/comisiones';
+
+const jsonFetch = async (url, options = {}) => {
+  const res = await fetch(url, {
+    headers: { 'Content-Type': 'application/json', ...(options.headers ?? {}) },
+    ...options,
+  });
+  let payload = null;
+  try { payload = await res.json(); } catch { /* respuesta sin cuerpo */ }
+  return { res, payload };
+};
 
 /**
  * obtenerComisiones — C-02, lectura.
  * @param {string} filtroEstado - 'Activos' | 'Inactivos' | 'Todos'
  */
 export const obtenerComisiones = async (filtroEstado = 'Activos') => {
-  const { data, error } = await supabase.functions.invoke('obtener-comisiones', {
-    body: { filtroEstado },
-  });
-
-  if (error) {
-    console.error('[obtenerComisiones] Error invocando Edge Function:', error);
-    return { data: null, error: error.message };
+  try {
+    const { res, payload } = await jsonFetch(
+      `${ENDPOINT}?filtroEstado=${encodeURIComponent(filtroEstado)}`
+    );
+    if (!res.ok) {
+      const msg = payload?.error ?? `HTTP ${res.status}`;
+      console.error('[obtenerComisiones] Error API:', msg);
+      return { data: null, error: msg };
+    }
+    return { data: payload?.data ?? [], error: payload?.error ?? null };
+  } catch (err) {
+    console.error('[obtenerComisiones] Error de red:', err);
+    return { data: null, error: err.message };
   }
-
-  return { data: data?.data ?? [], error: data?.error ?? null };
 };
 
 /**
- * contarActivos — Auxiliar
+ * contarActivos — Auxiliar.
  */
 export const contarActivos = async () => {
-  const { data, error } = await supabase.functions.invoke('contar-comisiones-activas', {
-    body: {},
-  });
-
-  if (error) {
-    console.error('[contarActivos] Error invocando Edge Function:', error);
+  try {
+    const { res, payload } = await jsonFetch(`${ENDPOINT}/contar-activas`);
+    if (!res.ok) {
+      console.error('[contarActivos] Error API:', payload?.error ?? res.status);
+      return 0;
+    }
+    return payload?.data ?? 0;
+  } catch (err) {
+    console.error('[contarActivos] Error de red:', err);
     return 0;
   }
-
-  return data?.data ?? 0;
 };
 
 /**
@@ -59,21 +72,23 @@ export const contarActivos = async () => {
  * @param {number[]} profesores_ids
  */
 export const crear = async (nombre, letraDesde, letraHasta, id_asignatura, profesores_ids = []) => {
-  const { data, error } = await supabase.functions.invoke('crear-comision', {
-    body: { nombre, letraDesde, letraHasta, id_asignatura, profesores_ids },
+  const { res, payload } = await jsonFetch(ENDPOINT, {
+    method: 'POST',
+    body: JSON.stringify({ nombre, letraDesde, letraHasta, id_asignatura, profesores_ids }),
   });
 
-  if (error) {
-    console.error('[crear] Error invocando Edge Function:', error);
-    throw new Error(error.message);
+  if (!res.ok && res.status !== 207) {
+    const msg = payload?.error ?? `HTTP ${res.status}`;
+    console.error('[crear] Error API:', msg);
+    throw new Error(msg);
   }
 
-  if (data?.error) {
-    console.error('[crear] Error retornado por la Edge Function:', data.error);
-    throw new Error(data.error);
+  if (payload?.error && res.status !== 207) {
+    console.error('[crear] Error retornado por la API:', payload.error);
+    throw new Error(payload.error);
   }
 
-  return data?.data ?? data;
+  return payload?.data ?? payload;
 };
 
 /**
@@ -81,26 +96,23 @@ export const crear = async (nombre, letraDesde, letraHasta, id_asignatura, profe
  * @param {Object[]} filas - Filas parseadas del CSV
  */
 export const insertar = async (filas) => {
-  const { data, error } = await supabase.functions.invoke('importar-comisiones-csv', {
-    body: { filas },
+  const { res, payload } = await jsonFetch(ENDPOINT, {
+    method: 'POST',
+    body: JSON.stringify({ filas }),
   });
 
-  if (error) {
-    console.error('[insertar] Error invocando Edge Function:', error);
-    throw new Error(error.message);
+  // 207 = importación parcial (algunas filas OK, otras con error)
+  if (!res.ok && res.status !== 207) {
+    const msg = payload?.error ?? `HTTP ${res.status}`;
+    console.error('[insertar] Error API:', msg);
+    throw new Error(msg);
   }
 
-  if (data?.error) {
-    console.error('[insertar] Error retornado por la Edge Function:', data.error);
-    throw new Error(data.error);
+  if (payload?.errores?.length > 0) {
+    console.warn('[insertar] Importación parcial — errores por fila:', payload.errores);
   }
 
-  // data.errores contiene errores parciales de filas individuales (HTTP 207)
-  if (data?.errores?.length > 0) {
-    console.warn('[insertar] Importación parcial — errores por fila:', data.errores);
-  }
-
-  return data;
+  return payload;
 };
 
 /**
@@ -109,16 +121,21 @@ export const insertar = async (filas) => {
  * @param {Object} comisionData - Datos actualizados
  */
 export const actualizar = async (id, comisionData) => {
-  const { data, error } = await supabase.functions.invoke('actualizar-comision', {
-    body: { id, comisionData },
-  });
-
-  if (error) {
-    console.error('[actualizar] Error invocando Edge Function:', error);
-    return { data: null, error: error.message };
+  try {
+    const { res, payload } = await jsonFetch(`${ENDPOINT}/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ comisionData }),
+    });
+    if (!res.ok) {
+      const msg = payload?.error ?? `HTTP ${res.status}`;
+      console.error('[actualizar] Error API:', msg);
+      return { data: null, error: msg };
+    }
+    return { data: payload?.data ?? null, error: payload?.error ?? null };
+  } catch (err) {
+    console.error('[actualizar] Error de red:', err);
+    return { data: null, error: err.message };
   }
-
-  return { data: data?.data ?? null, error: data?.error ?? null };
 };
 
 /**
@@ -127,14 +144,19 @@ export const actualizar = async (id, comisionData) => {
  * @param {boolean} estado - true (activo) | false (inactivo)
  */
 export const cambiarEstado = async (id, estado) => {
-  const { data, error } = await supabase.functions.invoke('cambiar-estado-comision', {
-    body: { id, estado },
-  });
-
-  if (error) {
-    console.error('[cambiarEstado] Error invocando Edge Function:', error);
-    return { error: error.message };
+  try {
+    const { res, payload } = await jsonFetch(`${ENDPOINT}/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ estado }),
+    });
+    if (!res.ok) {
+      const msg = payload?.error ?? `HTTP ${res.status}`;
+      console.error('[cambiarEstado] Error API:', msg);
+      return { error: msg };
+    }
+    return { error: payload?.error ?? null };
+  } catch (err) {
+    console.error('[cambiarEstado] Error de red:', err);
+    return { error: err.message };
   }
-
-  return { error: data?.error ?? null };
 };

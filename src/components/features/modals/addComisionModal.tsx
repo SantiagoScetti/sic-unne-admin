@@ -72,8 +72,8 @@ const AddComisionModal = ({ isOpen, onClose, onSave, profesoresDisponibles, asig
     if (!regexLetra.test(nuevaComision.letraDesde) || !regexLetra.test(nuevaComision.letraHasta)) {
       erroresTemp.letras = "Ambas letras deben ser un único carácter (A-Z).";
       esValido = false;
-    } else if (nuevaComision.letraHasta.toUpperCase() < nuevaComision.letraDesde.toUpperCase()) {
-      erroresTemp.letras = "La letra 'Hasta' debe ser posterior o igual a 'Desde'.";
+    } else if (nuevaComision.letraDesde.toUpperCase() >= nuevaComision.letraHasta.toUpperCase()) {
+      erroresTemp.letras = "La letra 'Desde' debe ser anterior a la letra 'Hasta'.";
       esValido = false;
     }
 
