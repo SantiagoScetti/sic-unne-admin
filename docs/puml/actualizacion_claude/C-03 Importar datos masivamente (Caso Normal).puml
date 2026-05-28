@@ -1,30 +1,32 @@
 @startuml
 
-title Diagrama de Secuencia: C-03 Importar datos masivamente (Caso Normal) - Arquitectura 3 capas
+title Diagrama de Secuencia: C-03 Importar datos masivamente (Caso Normal)
 
 skinparam style strictuml
-skinparam ParticipantPadding 40
-skinparam BoxPadding 20
+skinparam ParticipantPadding 30
+skinparam BoxPadding 12
 
 autonumber
 
 actor Administrador
 
-box "Capa de Presentacion" #LightBlue
-  participant "Sistema\n(Interfaz React)" as Interfaz
-  participant "csvParser.js" as Parser
+box "Presentacion" #LightBlue
+  participant "Sistema\n(EstructuraPage)" as Interfaz
+  participant "csvParser"                 as Parser
 end box
 
-box "Capa de Aplicacion (Cliente)" #LightYellow
-  participant "comision.service.js" as Service
+box "Servicios HTTP" #LightYellow
+  participant "comision.service" as Service
 end box
 
-box "Capa de Aplicacion (Servidor)" #LightGreen
-  participant "API Backend\n(/api/comisiones)" as API
+box "Controlador" #Lavender
+  participant "API\n(/api/comisiones)" as API
 end box
 
-box "Capa de Datos" #LightGray
-  database "Supabase\n(PostgreSQL)" as DB
+box "Dominio" #LightGreen
+  participant "Asignatura"       as Asignatura
+  participant "Comision"         as Comision
+  participant "ComisionProfesor" as ComisionProfesor
 end box
 
 Administrador -> Interfaz: Ingresa a estructura academica
@@ -72,41 +74,36 @@ deactivate Parser
 
 Interfaz -> Service: insertar(filas)
 activate Service
-Service -> API: fetch('/api/comisiones', POST)\nbody = { filas }
+Service -> API: POST /api/comisiones\n{ filas }
 activate API
 
 loop por cada fila del CSV
-    API -> DB: SELECT id_asignatura WHERE nombre = ...
-    activate DB
-    DB --> API: asignatura
-    deactivate DB
+  API -> Asignatura: obtenerPorNombre(nombre_asignatura)
+  activate Asignatura
+  Asignatura --> API: Asignatura encontrada
+  deactivate Asignatura
 
-    API -> DB: SELECT comision WHERE nombre + id_asignatura (idempotencia)
-    activate DB
-    DB --> API: existentes?
-    deactivate DB
+  API -> Comision: obtenerPorNombreYAsignatura(nombre, id_asignatura)
+  activate Comision
+  Comision --> API: existe?
+  deactivate Comision
 
-    alt comision no existe
-        API -> DB: INSERT INTO comision
-        activate DB
-        DB --> API: comision_creada
-        deactivate DB
-    end
+  alt comision no existe
+    API -> Comision: crear(nombre, id_asignatura, letraDesde, letraHasta)
+    activate Comision
+    Comision --> API: Comision creada
+    deactivate Comision
+  end
 
-    API -> DB: SELECT id_profesor WHERE documento = ...
-    activate DB
-    DB --> API: profesor
-    deactivate DB
-
-    API -> DB: UPSERT comision_profesor (id_comision, id_profesor)
-    activate DB
-    DB --> API: vinculo_ok
-    deactivate DB
+  API -> ComisionProfesor: vincular(id_comision, documento_profesor)
+  activate ComisionProfesor
+  ComisionProfesor --> API: Vinculo registrado
+  deactivate ComisionProfesor
 end
 
-API --> Service: 200 { data: [...], insertadas: N, errores: null }
+API --> Service: 200 { insertadas: N, errores: null }
 deactivate API
-Service --> Interfaz: resumen importacion
+Service --> Interfaz: Resumen importacion
 deactivate Service
 
 Interfaz --> Administrador: "Archivo importado con exito"

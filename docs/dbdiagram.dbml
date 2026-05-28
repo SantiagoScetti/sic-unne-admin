@@ -1,7 +1,7 @@
 // =============================================================================
 // SIC-UNNE — Diagrama Entidad Relación
 // Para usar: pegar este contenido en https://dbdiagram.io/d
-// Última actualización: 2026-05-04
+// Última actualización: 2026-05-28
 // Schema: public (Supabase / PostgreSQL)
 // =============================================================================
 
@@ -103,9 +103,16 @@ Table horario_comision {
 
 // ─── GRUPO 3: Usuarios y Flujo de Intercambio ────────────────────────────────
 
+// Campos verificados contra: UsuarioRepositorio.ts, authServerService.js,
+// /api/reportes/index.js (join emisor/receptor)
 Table usuario {
-  id_usuario integer [pk, increment]
-  auth_id    uuid    [unique, note: 'Referencia al usuario en Supabase Auth']
+  id_usuario             integer [pk, increment]
+  auth_id                uuid    [unique, note: 'Referencia al usuario en Supabase Auth']
+  nombre                 varchar [not null]
+  apellido               varchar [not null]
+  rol                    varchar [not null, note: 'Alumno | Administrador']
+  estado                 varchar [default: 'Activo', note: 'Activo | Suspendido | Bloqueado']
+  fecha_suspension_hasta date    [note: 'null = suspension indefinida']
 }
 
 Table inscripcion {
@@ -126,20 +133,20 @@ Table lista_espera {
 }
 
 Table propuesta {
-  id_propuesta    integer   [pk, increment]
-  fecha_alta      timestamp [not null]
-  estado          varchar   [not null, note: 'pendiente | aceptada | rechazada | cancelada']
-  id_listaespera_1 integer  [not null]
-  id_listaespera_2 integer  [not null]
+  id_propuesta     integer   [pk, increment]
+  fecha_alta       timestamp [not null]
+  estado           varchar   [not null, note: 'pendiente | aceptada | rechazada | cancelada']
+  id_listaespera_1 integer   [not null]
+  id_listaespera_2 integer   [not null]
 }
 
 Table respuesta_propuesta {
-  id_respuesta     integer   [pk, increment]
-  id_propuesta     integer   [not null]
-  id_usuario       integer   [not null]
-  decision         varchar   [not null, note: 'aceptada | rechazada']
-  motivo_rechazo   varchar
-  fecha            timestamp [not null]
+  id_respuesta   integer   [pk, increment]
+  id_propuesta   integer   [not null]
+  id_usuario     integer   [not null]
+  decision       varchar   [not null, note: 'aceptada | rechazada']
+  motivo_rechazo varchar
+  fecha          timestamp [not null]
 }
 
 Table comprobante {
@@ -159,35 +166,38 @@ Table constancia {
 
 // ─── GRUPO 4: Auditoría, Notificaciones y Reportes ───────────────────────────
 
+// tipo verificado contra NotificacionRepositorio.ts (TipoNotificacion)
 Table notificacion {
   id_notificacion integer   [pk, increment]
   id_usuario      integer   [not null]
-  tipo            varchar   [not null]
+  tipo            varchar   [not null, note: 'Propuesta | Reporte | Comprobante | Aviso | Aceptacion | Rechazo | Sistema | Bloqueo']
   mensaje         varchar   [not null]
   leido           boolean   [default: false]
   fecha           timestamp [not null]
 }
 
+// Campos verificados contra: ReporteRepositorio.ts, Reporte.ts, tipos.ts
+// ELIMINADO: resolucion_admin (campo obsoleto — no existe en ningún repo ni entidad de dominio)
 Table reporte {
-  id_reporte       integer   [pk, increment]
-  emisor_id        integer   [not null]
-  receptor_id      integer   [not null]
-  id_periodo       integer   [not null]
-  motivo           varchar   [not null]
-  estado           varchar   [not null, note: 'pendiente | resuelto | desestimado']
-  fecha_alta       timestamp [not null]
-  resolucion_admin text
-  accion_tomada    varchar
-  admin_id         integer
+  id_reporte    integer   [pk, increment]
+  emisor_id     integer   [note: 'null = reporte generado por el Sistema']
+  receptor_id   integer   [not null]
+  id_periodo    integer
+  motivo        varchar   [not null]
+  estado        varchar   [not null, note: 'Pendiente | Resuelto | Desestimado']
+  fecha_alta    timestamp [not null]
+  accion_tomada varchar   [note: 'Enviar aviso | Suspender Temporalmente | Suspender Indefinidamente']
+  admin_id      integer
 }
 
+// id_usuario_afectado es nullable — verificado en AuditoriaRepositorio.ts
 Table auditoria_administrativa {
-  id_log                integer   [pk, increment]
-  id_admin              integer   [not null]
-  id_usuario_afectado   integer   [not null]
-  accion                varchar   [not null]
-  detalles              json
-  fecha                 timestamp [not null]
+  id_log              integer   [pk, increment]
+  id_admin            integer   [not null]
+  id_usuario_afectado integer
+  accion              varchar   [not null]
+  detalles            json
+  fecha               timestamp [not null]
 }
 
 // =============================================================================
@@ -225,10 +235,10 @@ Ref: comprobante.id_usuario_2          > usuario.id_usuario
 Ref: constancia.id_usuario             > usuario.id_usuario
 
 // ── Auditoría, notificaciones y reportes ─────────────────────────────────────
-Ref: notificacion.id_usuario                     > usuario.id_usuario
-Ref: reporte.emisor_id                           > usuario.id_usuario
-Ref: reporte.receptor_id                         > usuario.id_usuario
-Ref: reporte.admin_id                            > usuario.id_usuario
-Ref: reporte.id_periodo                          > periodo.id_periodo
-Ref: auditoria_administrativa.id_admin           > usuario.id_usuario
+Ref: notificacion.id_usuario                      > usuario.id_usuario
+Ref: reporte.emisor_id                            > usuario.id_usuario
+Ref: reporte.receptor_id                          > usuario.id_usuario
+Ref: reporte.admin_id                             > usuario.id_usuario
+Ref: reporte.id_periodo                           > periodo.id_periodo
+Ref: auditoria_administrativa.id_admin            > usuario.id_usuario
 Ref: auditoria_administrativa.id_usuario_afectado > usuario.id_usuario

@@ -76,7 +76,6 @@ export const crear = async (data) => {
 
 export const actualizar = async (id, data) => {
   try {
-    // 1. Actualizar los campos propios de la asignatura
     const { data: result, error } = await supabase
       .from('asignatura')
       .update({
@@ -88,25 +87,6 @@ export const actualizar = async (id, data) => {
       .eq('id_asignatura', id)
       .select();
     if (error) throw error;
-
-    // 2. Si se envió un profesor, actualizar comision_profesor de la primera comisión
-    const nuevoProfesorId = data.profesores_ids?.[0];
-    if (nuevoProfesorId) {
-      // Obtener la primera comisión de esta asignatura
-      const { data: comisiones } = await supabase
-        .from('comision')
-        .select('id_comision')
-        .eq('id_asignatura', id)
-        .limit(1);
-
-      if (comisiones && comisiones.length > 0) {
-        const id_comision = comisiones[0].id_comision;
-        // Reemplazar todas las asignaciones de profesor en esa comisión
-        await supabase.from('comision_profesor').delete().eq('id_comision', id_comision);
-        await supabase.from('comision_profesor').insert({ id_comision, id_profesor: Number(nuevoProfesorId) });
-      }
-    }
-
     return { data: result ? result[0] : null, error: null };
   } catch (error) {
     console.error('Error actualizando asignatura id=' + id + ':', error.message);

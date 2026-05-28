@@ -1,0 +1,86 @@
+@startuml
+
+title Diagrama de Casos de Uso — SIC-UNNE (Panel Administrador)
+
+skinparam style strictuml
+skinparam ActorStyle awesome
+skinparam PackagePadding 15
+skinparam UsecasePadding 8
+skinparam ArrowColor #555555
+skinparam UsecaseBorderColor #336699
+skinparam UsecaseBackgroundColor #EEF4FB
+
+top to bottom direction
+
+actor Administrador as ADM
+
+rectangle "SISTEMA DE GESTIÓN ACADÉMICA" {
+
+  ' ═══════════════════════════════════════
+  ' Fila 1 — Casos de uso principales
+  ' ═══════════════════════════════════════
+  usecase "GESTIONAR\nREPORTE"           as C01
+  usecase "CREAR\nCOMISIÓN"             as C02
+  usecase "IMPORTAR DATOS\nMASIVAMENTE" as C03
+
+  ' ═══════════════════════════════════════
+  ' Fila 2 — Sub-casos de C-01
+  ' ═══════════════════════════════════════
+  usecase "SELECCIONAR\nREPORTE"         as C01_SEL
+  usecase "SELECCIONAR\nMEDIDA"          as C01_MED
+  usecase "DESESTIMAR\nREPORTE"          as C01_DES
+
+  ' ═══════════════════════════════════════
+  ' Fila 2 — Sub-casos de C-02
+  ' ═══════════════════════════════════════
+  usecase "INGRESAR /\nSELECCIONAR DATOS" as C02_DAT
+  usecase "REINGRESAR\nDATOS CORRECTOS"   as C02_REC
+
+  ' ═══════════════════════════════════════
+  ' Fila 2 — Sub-casos de C-03
+  ' ═══════════════════════════════════════
+  usecase "SUBIR ARCHIVO\nCSV"            as C03_CSV
+  usecase "REVISAR\nERRORES"              as C03_ERR
+
+  ' ═══════════════════════════════════════
+  ' Casos compartidos (columna derecha)
+  ' ═══════════════════════════════════════
+  usecase "CONFIRMAR\nOPERACIÓN" as CONFIRM
+  usecase "CANCELAR\nOPERACIÓN"  as CANCEL
+
+  ' ───────────────────────────────────────
+  ' Actor → casos principales
+  ' ───────────────────────────────────────
+  ADM --> C01
+  ADM --> C02
+  ADM --> C03
+
+  ' ───────────────────────────────────────
+  ' C-01 Gestionar Reporte
+  ' ───────────────────────────────────────
+  C01     ..> C01_SEL : <<include>>
+  C01_SEL ..> C01_MED : <<include>>
+  C01_SEL ..> C01_DES : <<extend>>
+  C01_MED ..> CONFIRM  : <<extend>>
+  C01_MED ..> CANCEL   : <<extend>>
+  C01_DES ..> CONFIRM  : <<extend>>
+  C01_DES ..> CANCEL   : <<extend>>
+
+  ' ───────────────────────────────────────
+  ' C-02 Crear Comision
+  ' ───────────────────────────────────────
+  C02     ..> C02_DAT : <<include>>
+  C02_DAT ..> C02_REC : <<extend>>
+  C02_DAT ..> CONFIRM  : <<extend>>
+  C02_DAT ..> CANCEL   : <<extend>>
+
+  ' ───────────────────────────────────────
+  ' C-03 Importar datos masivamente
+  ' ───────────────────────────────────────
+  C03     ..> C03_CSV : <<include>>
+  C03_CSV ..> C03_ERR : <<extend>>
+  C03_CSV ..> CONFIRM  : <<extend>>
+  C03_CSV ..> CANCEL   : <<extend>>
+}
+
+@enduml

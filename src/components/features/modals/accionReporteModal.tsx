@@ -12,15 +12,17 @@ type Usuario = {
 
 export type Reporte = {
   id_reporte: number;
+  emisor_id?: number | null;
+  receptor_id: number;
+  id_periodo?: number | null;
   motivo: string;
   estado: string;
   fecha_alta: string;
-  resolucion_admin?: string;
-  accion_tomada?: string;
-  emisor_id?: number | null;   // null = Sistema
-  receptor_id: number;
-  emisor?: Usuario | null;     // null = Sistema
+  accion_tomada?: string | null;
+  admin_id?: number | null;
+  emisor?: Usuario | null;
   receptor?: Usuario | null;
+  admin?: Usuario | null;
 };
 
 export type AccionReporte = {

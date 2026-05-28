@@ -1,26 +1,26 @@
 @startuml
 
-title Diagrama de Secuencia: C-03 Importar datos masivamente (Alt: CSV con errores) - Arquitectura 3 capas
+title Diagrama de Secuencia: C-03 Importar datos masivamente (Alt: CSV con errores)
 
 skinparam style strictuml
-skinparam ParticipantPadding 40
-skinparam BoxPadding 20
+skinparam ParticipantPadding 30
+skinparam BoxPadding 12
 
 autonumber
 
 actor Administrador
 
-box "Capa de Presentacion" #LightBlue
-  participant "Sistema\n(Interfaz React)" as Interfaz
-  participant "csvParser.js" as Parser
+box "Presentacion" #LightBlue
+  participant "Sistema\n(EstructuraPage)" as Interfaz
+  participant "csvParser"                 as Parser
 end box
 
-box "Capa de Aplicacion (Cliente)" #LightYellow
-  participant "comision.service.js" as Service
+box "Servicios HTTP" #LightYellow
+  participant "comision.service" as Service
 end box
 
-box "Capa de Aplicacion (Servidor)" #LightGreen
-  participant "API Backend\n(/api/comisiones)" as API
+box "Controlador" #Lavender
+  participant "API\n(/api/comisiones)" as API
 end box
 
 Administrador -> Interfaz: Ingresa a estructura academica
@@ -75,14 +75,13 @@ note right of Interfaz
 end note
 
 Interfaz --> Administrador: Muestra mensaje de error especifico
+deactivate Interfaz
 
 note over Service, API
   Como la validacion falla en
   la capa de Presentacion, las
-  capas de Aplicacion (Servidor)
-  y Datos no se involucran.
+  capas de Controlador y Dominio
+  no se involucran.
 end note
-
-deactivate Interfaz
 
 @enduml

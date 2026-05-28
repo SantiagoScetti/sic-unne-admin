@@ -1,25 +1,25 @@
 @startuml
 
-title Diagrama de Secuencia: C-02 Crear Comision (Alt: Datos invalidos) - Arquitectura 3 capas
+title Diagrama de Secuencia: C-02 Crear Comision (Alt: Datos de formulario invalidos)
 
 skinparam style strictuml
-skinparam ParticipantPadding 40
-skinparam BoxPadding 20
+skinparam ParticipantPadding 30
+skinparam BoxPadding 12
 
 autonumber
 
 actor Administrador
 
-box "Capa de Presentacion" #LightBlue
-  participant "Sistema\n(Interfaz React)" as Interfaz
+box "Presentacion" #LightBlue
+  participant "Sistema\n(ReportesPage)" as Interfaz
 end box
 
-box "Capa de Aplicacion (Cliente)" #LightYellow
-  participant "comision.service.js" as Service
+box "Servicios HTTP" #LightYellow
+  participant "comision.service" as Service
 end box
 
-box "Capa de Aplicacion (Servidor)" #LightGreen
-  participant "API Backend\n(/api/comisiones)" as API
+box "Controlador" #Lavender
+  participant "API\n(/api/comisiones)" as API
 end box
 
 Administrador -> Interfaz: Ingresa a estructura academica
@@ -31,7 +31,7 @@ Administrador -> Interfaz: Hace click en "Comisiones"
 activate Interfaz
 Interfaz -> Service: obtenerComisiones("Activos")
 activate Service
-Service -> API: fetch('/api/comisiones?filtroEstado=Activos', GET)
+Service -> API: GET /api/comisiones?filtroEstado=Activos
 activate API
 API --> Service: { data: [...], error: null }
 deactivate API
@@ -52,7 +52,8 @@ Interfaz -> Interfaz: validarCampos()
 
 note right of Interfaz
   Se detectan campos obligatorios
-  vacios o formatos incorrectos.
+  vacios o formatos incorrectos
+  (ej: letraDesde >= letraHasta).
   La validacion ocurre en cliente
   ANTES de llamar al backend.
 end note
@@ -67,7 +68,7 @@ Interfaz -> Interfaz: validarCampos()
 note right of Interfaz
   A partir de aqui, el flujo
   retoma el curso normal:
-  Service -> API -> DB.
+  Service -> API -> Comision.
 end note
 
 @enduml

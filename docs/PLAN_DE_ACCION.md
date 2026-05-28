@@ -17,16 +17,17 @@ Cliente-Servidor **en capas**, backend propio Next.js API Routes. **NO BaaS, NO 
 | Evaluación y justificación de arquitectura | ✅ | Cap. 3 actualizado a 3 capas (texto en `artifacts/seccion_arquitectura.md`) |
 | Herramientas (síntesis) | ✅ | Sec. 3.4 actualizada — React, Supabase, Next.js API Routes, Vitest (texto en `artifacts/seccion_herramientas.md`) |
 | Bibliografía | 🟡 | Solo 3 refs IEEE — **ampliar** |
-| Diagrama de Casos de Uso (refinado) | 🟡 | Figura 2 existe — refinar a la muestra implementada |
+| Diagrama de Casos de Uso (refinado) | ✅ | Figura refinada en `docs/uml/DiagramaCasosDeUso.puml` |
 | 6 Conversaciones | ✅ | En informe — C-01/C-02/C-03 normal+alt (Sec. 2.8) |
 | 6 Diagramas de Secuencia | ✅ | En informe + actualizados a 3 capas en `docs/puml/actualizacion_claude/` |
 | Contratos de operaciones críticas | ✅ | Ambos contratos alineados al código — `artifacts/contrato_1_importar.md` + `artifacts/contrato_2_resolver.md` |
 | Desarrollo de 1 funcionalidad básica | ✅ | Crear Comisión / Estructura Académica corriendo |
+| Grafico de arquitecturas | ✅ | Actualizado 
 
 ## SEGUNDA ENTREGA — checklist oficial
 | Ítem | Estado | Dónde está / qué falta |
 |---|---|---|
-| Mapeo a Modelo de BD Física | 🟡 | ER en informe (Fig. 1) + `docs/uml/diagrama_fisico.md` — falta **render final** desde `dbdiagram.dbml` |
+| Mapeo a Modelo de BD Física | ✅ | DER Actualizado en dbdiagram.dbml|
 | Diagrama de Clases | 🟡 | `docs/uml/diagrama_clases.md` (vista diseño con métodos + vista datos) — falta **renderizar e insertar en informe** |
 | Funcionalidad principal + trazabilidad | 🟡 | C-01 Gestionar Reporte ✅ en código; **falta reescribir** `TRAZABILIDAD_DIAGRAMAS.md` (apunta a rutas/Edge Functions viejas) |
 | Generación y ejecución de pruebas | ✅ | 33 tests (Vitest) en `tests/` (`npm test`) + `docs/plan_pruebas.md` con registro |

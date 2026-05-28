@@ -1,29 +1,30 @@
 @startuml
 
-title Diagrama de Secuencia: C-02 Crear Comision (Caso Normal) - Arquitectura 3 capas
+title Diagrama de Secuencia: C-02 Crear Comision (Caso Normal)
 
 skinparam style strictuml
-skinparam ParticipantPadding 40
-skinparam BoxPadding 20
+skinparam ParticipantPadding 30
+skinparam BoxPadding 12
 
 autonumber
 
 actor Administrador
 
-box "Capa de Presentacion" #LightBlue
-  participant "Sistema\n(Interfaz React)" as Interfaz
+box "Presentacion" #LightBlue
+  participant "Sistema\n(ReportesPage)" as Interfaz
 end box
 
-box "Capa de Aplicacion (Cliente)" #LightYellow
-  participant "comision.service.js" as Service
+box "Servicios HTTP" #LightYellow
+  participant "comision.service" as Service
 end box
 
-box "Capa de Aplicacion (Servidor)" #LightGreen
-  participant "API Backend\n(/api/comisiones)" as API
+box "Controlador" #Lavender
+  participant "API\n(/api/comisiones)" as API
 end box
 
-box "Capa de Datos" #LightGray
-  database "Supabase\n(PostgreSQL)" as DB
+box "Dominio" #LightGreen
+  participant "Comision"         as Comision
+  participant "ComisionProfesor" as ComisionProfesor
 end box
 
 Administrador -> Interfaz: Ingresa a estructura academica
@@ -35,12 +36,12 @@ Administrador -> Interfaz: Hace click en "Comisiones"
 activate Interfaz
 Interfaz -> Service: obtenerComisiones("Activos")
 activate Service
-Service -> API: fetch('/api/comisiones?filtroEstado=Activos', GET)
+Service -> API: GET /api/comisiones?filtroEstado=Activos
 activate API
-API -> DB: SELECT comision (+ asignatura, carrera, facultad, profesores)
-activate DB
-DB --> API: filas
-deactivate DB
+API -> Comision: obtenerTodas(filtroEstado)
+activate Comision
+Comision --> API: lista de comisiones
+deactivate Comision
 API --> Service: { data: [...], error: null }
 deactivate API
 Service --> Interfaz: lista normalizada
@@ -60,25 +61,26 @@ Interfaz -> Interfaz: validarCampos()
 
 Interfaz -> Service: crear(nombre, letraDesde, letraHasta, id_asignatura, profesores_ids)
 activate Service
-Service -> API: fetch('/api/comisiones', POST)\nbody = { nombre, letraDesde, letraHasta, id_asignatura, profesores_ids }
+Service -> API: POST /api/comisiones\n{ nombre, letraDesde, letraHasta, id_asignatura, profesores_ids }
 activate API
 
-API -> API: Valida campos requeridos
-API -> DB: INSERT INTO comision
-activate DB
-DB --> API: comision_creada (id_comision)
-deactivate DB
+API -> API: validarCamposRequeridos()
+
+API -> Comision: crear(nombre, letraDesde, letraHasta, id_asignatura)
+activate Comision
+Comision --> API: Comision creada
+deactivate Comision
 
 alt profesores_ids.length > 0
-    API -> DB: INSERT INTO comision_profesor (batch)
-    activate DB
-    DB --> API: vinculos_creados
-    deactivate DB
+  API -> ComisionProfesor: vincular(id_comision, profesores_ids)
+  activate ComisionProfesor
+  ComisionProfesor --> API: Vinculos creados
+  deactivate ComisionProfesor
 end
 
 API --> Service: 201 { data: comision, error: null }
 deactivate API
-Service --> Interfaz: comision creada
+Service --> Interfaz: Comision creada
 deactivate Service
 
 Interfaz --> Administrador: "Comision creada con exito"
