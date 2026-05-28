@@ -14,13 +14,13 @@ Cliente-Servidor **en capas**, backend propio Next.js API Routes. **NO BaaS, NO 
 | Ciclo de vida del proyecto | ✅ | En informe .docx — Scrum (Sec. 2.1) |
 | Planificación (tareas/recursos) | ✅ | En informe — 4 sprints (Sec. 2.2) |
 | Plan de Riesgos | ✅ | En informe — tabla (Sec. 2.3) |
-| Evaluación y justificación de arquitectura | 🟡 | El .docx dice "BaaS" → **reescribir a 3 capas** (Cap. 3) |
-| Herramientas (síntesis) | 🟡 | Sec. 3.2 — **agregar** Vitest + API Routes |
+| Evaluación y justificación de arquitectura | ✅ | Cap. 3 actualizado a 3 capas (texto en `artifacts/seccion_arquitectura.md`) |
+| Herramientas (síntesis) | ✅ | Sec. 3.4 actualizada — React, Supabase, Next.js API Routes, Vitest (texto en `artifacts/seccion_herramientas.md`) |
 | Bibliografía | 🟡 | Solo 3 refs IEEE — **ampliar** |
 | Diagrama de Casos de Uso (refinado) | 🟡 | Figura 2 existe — refinar a la muestra implementada |
 | 6 Conversaciones | ✅ | En informe — C-01/C-02/C-03 normal+alt (Sec. 2.8) |
 | 6 Diagramas de Secuencia | ✅ | En informe + actualizados a 3 capas en `docs/puml/actualizacion_claude/` |
-| Contratos de operaciones críticas | 🟡 | En informe (Sec. 2.10): `importarEstructuraAcademica` + `resolverReporte`. Alinear el 1ro al código (hoy solo importa comisiones) |
+| Contratos de operaciones críticas | ✅ | Ambos contratos alineados al código — `artifacts/contrato_1_importar.md` + `artifacts/contrato_2_resolver.md` |
 | Desarrollo de 1 funcionalidad básica | ✅ | Crear Comisión / Estructura Académica corriendo |
 
 ## SEGUNDA ENTREGA — checklist oficial
