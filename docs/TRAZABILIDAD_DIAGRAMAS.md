@@ -2,142 +2,136 @@
 
 ## C-01: Gestionar Reportes y Resolución de Conflictos
 
-### Figura 3 (caso normal)
+### Figura 3 — Caso Normal
 
-1: Ingresa al panel de reportes -> src/pages/ReportesPage.jsx
-2: obtenerReportes() -> src/services/reporte.service.js linea 14
-3: Verifica los reportes 
-4: Devuelve lista de reportes 
-5: Se muestra lista y opciones de filtrado -> ReportesPage.jsx linea 126 (render de controles de filtro)
-6: Selecciona filtro "Pendiente" -> ReportesPage.jsx linea 133 (onChange del select)
-7: obtenerReportesFiltrados("Pendiente") -> ReportesPage.jsx linea 88 (llamada a la función del servicio)
-8: Filtra por estado 
-9: Devuelve reportes filtrados 
-10: Se muestra lista filtrada -> ReportesPage.jsx linea 167 (mapeo del array reportes)
-11: Hace click en un reporte -> ReportesPage.jsx linea 187 (onClick del botón Abrir)
-12: obtenerDetalleReporte(id_reporte) -> src/services/reporte.service.js linea 83 (llamada desde Frontend pendiente de implementación)
-13: Devuelve detalle del reporte 
-14: Se muestra detalle completo (Pendiente implementación UI)
-15: Selecciona accion y resuelve (Pendiente implementación UI)
-16: actualizarEstado(id_reporte, "Resuelto", resolucion) -> src/services/reporte.service.js linea 115
-17: Procesa actualizacion 
-18: estado_actualizado
-19: actualizarFechaSuspension(receptor_id, duracion) -> src/services/usuario.service.js linea 16
-20: Registra suspension 
-21: fecha_actualizada 
-22: registrar(id_reporte, accion, admin_id) -> src/services/auditoriaAdministrativa.service.js linea 17
-23: auditoria_registrada 
-24: notificar(emisor_id, receptor_id) -> src/services/notificacion.service.js linea 16
-25: notificacion_enviada
-26: "Reporte actualizado" -> (Pendiente implementación UI)
+1: Selecciona reporte y elige accion --> ReportesPage.jsx
+2: resolverReporte(id, { estado, accion, fechaHasta, observaciones }) --> Linea 70 reporte.service.js
+3: PATCH /api/reportes/:id --> Linea 74 reporte.service.js
+4: resolver({ id, accion, fechaHasta, observaciones }) --> Linea 85 /api/reportes/[id].js
+5: obtenerPorId(id) --> Linea 126 ServicioResolucionReporte.ts / Linea 12 ReporteRepositorio.ts
+6: Reporte (estado = 'Pendiente') --> Linea 25 ReporteRepositorio.ts
+7: resolver(accion) --> Linea 71 ServicioResolucionReporte.ts / Linea 50 Reporte.ts
+8: Reporte resuelto --> Linea 50 Reporte.ts
+9: guardar() --> Linea 73 ServicioResolucionReporte.ts / Linea 28 ReporteRepositorio.ts
+10: Reporte guardado --> Linea 35 ReporteRepositorio.ts
+11: suspender(receptor_id, fechaHasta) --> Linea 77 ServicioResolucionReporte.ts / Linea 15 UsuarioRepositorio.ts
+12: Suspension aplicada --> Linea 22 UsuarioRepositorio.ts
+13: crearVarias(emisor_id, receptor_id, mensaje) --> Linea 84 ServicioResolucionReporte.ts / Linea 26 NotificacionRepositorio.ts
+14: Notificaciones creadas --> Linea 38 NotificacionRepositorio.ts
+15: registrar(admin_id, accion, id_reporte) --> Linea 84 ServicioResolucionReporte.ts / Linea 17 AuditoriaRepositorio.ts
+16: Auditoria registrada --> Linea 27 AuditoriaRepositorio.ts
+17: Reporte resuelto --> Linea 96 ServicioResolucionReporte.ts
+18: 200 { data: { estado:'Resuelto', accion_tomada } } --> Linea 87 /api/reportes/[id].js
+19: Reporte resuelto --> Linea 90 reporte.service.js
+20: "Accion aplicada con exito" --> ReportesPage.jsx
 
-### Figura 4 (caso alternativo)
+### Figura 4 — Caso Alternativo: Reporte ya gestionado
 
-1: Ingresa al panel de reportes -> src/pages/ReportesPage.jsx
-2: obtenerReportes() -> src/services/reporte.service.js linea 14
-3: Verifica los reportes 
-4: Devuelve lista de reportes 
-5: Se muestra lista y opciones de filtrado -> ReportesPage.jsx linea 126 (render de controles de filtro)
-6: Selecciona filtro "Pendiente" -> ReportesPage.jsx linea 133 (onChange del select)
-7: obtenerReportesFiltrados("Pendiente") -> ReportesPage.jsx linea 88 (llamada a la función del servicio)
-8: Filtra por estado 
-9: Devuelve reportes filtrados 
-10: Se muestra lista filtrada -> ReportesPage.jsx linea 167 (mapeo del array reportes)
-11: Hace click en un reporte -> ReportesPage.jsx linea 187 (onClick del botón Abrir)
-12: obtenerDetalleReporte(id_reporte) -> src/services/reporte.service.js linea 83 (llamada desde Frontend pendiente de implementación)
-13: Verifica estado actual -> (Lógica pendiente de implementación en servicio/BD)
-EL SISTEMA DETECTA QUE EL REPORTE YA NO ESTA PENDIENTE
-14: error_reporte_gestionado -> (Lógica pendiente de implementación en servicio: lanzar excepción)
-15: "Reporte ya gestionado" -> (Pendiente implementación UI)
+1: Intenta resolver un reporte ya gestionado --> ReportesPage.jsx
+2: resolverReporte(id, { estado:'Resuelto', accion }) --> Linea 70 reporte.service.js
+3: PATCH /api/reportes/:id --> Linea 74 reporte.service.js
+4: resolver({ id, accion }) --> Linea 85 /api/reportes/[id].js
+5: obtenerPorId(id) --> Linea 126 ServicioResolucionReporte.ts / Linea 12 ReporteRepositorio.ts
+6: Reporte (estado = 'Resuelto') --> Linea 25 ReporteRepositorio.ts
+7: resolver(accion) --> Linea 71 ServicioResolucionReporte.ts / Linea 50 Reporte.ts
+8: throw ReporteYaProcesadoError --> errores.ts (lanzado por EstadoResuelto)
+9: propaga ReporteYaProcesadoError --> ServicioResolucionReporte.ts (error no capturado)
+10: 409 Conflict { error, estadoActual } --> Linea 34 /api/reportes/[id].js
+11: throw error (409) --> Linea 82 reporte.service.js
+12: "Este reporte ya fue procesado por otro administrador" --> ReportesPage.jsx
 
-
-
+---
 
 ## C-02: Crear Comisión
 
-### Figura 5 (caso normal)
+### Figura 5 — Caso Normal
 
-1: Ingresa a estructura academica -> src/pages/EstructuraPage.jsx                                  
-2: Se muestran entidades existentes -> EstructuraPage.jsx linea 574                                  
-3: Hace click en "Comisiones" -> EstructuraPage.jsx linea 581
-4: Se muestra listado de comisiones y botones -> EstructuraPage.jsx linea 520
-5: Hace click en "Crear Comision" -> EstructuraPage.jsx linea 581
-6: Se muestra formulario para crear comision -> EstructuraPage.jsx linea 635
-7: Completa todos los campos y confirma -> addComisionModal.tsx linea 105
-8: validarCampos() -> addComisionModal.tsx linea 61
-9: verificarExistencia(id_asignatura) -> asignatura.service.js linea 16
-10: Verifica existencia 
-11: asignatura_verificada 
-12: crear(nombre, letraDesde, letraHasta, id_asignatura) -> comision.service.js linea 20
-13: Crea el registro 
-14: comision_creada 
-15: asignar(id_comision, profesores_ids) -> profesor.service.js linea 16
-16: Verifica disponibilidad 
-17: profesores_asignados 
-18: "Comision creada con exito" -> EstructuraPage.jsx linea 189
+1: Ingresa a estructura academica --> EstructuraPage.jsx
+2: Se muestran entidades existentes --> EstructuraPage.jsx (render de StatCards)
+3: Hace click en "Comisiones" --> EstructuraPage.jsx (onClickCard)
+4: obtenerComisiones("Activos") --> Linea 32 comision.service.js
+5: GET /api/comisiones?filtroEstado=Activos --> Linea 34 comision.service.js
+6: obtenerTodas(filtroEstado) --> /api/comisiones/index.js / Linea 35 ComisionRepositorio.ts
+7: lista de comisiones --> Linea 48 ComisionRepositorio.ts
+8: { data: [...], error: null } --> /api/comisiones/index.js
+9: lista normalizada --> Linea 42 comision.service.js
+10: Se muestra listado y botones --> EstructuraPage.jsx
+11: Hace click en "Crear Comision" --> EstructuraPage.jsx (onAdd)
+12: Se muestra addComisionModal --> addComisionModal.tsx
+13: Completa campos y confirma --> Linea 105 addComisionModal.tsx
+14: validarCampos() --> Linea 61 addComisionModal.tsx
+15: crear(nombre, letraDesde, letraHasta, id_asignatura, profesores_ids) --> Linea 74 comision.service.js
+16: POST /api/comisiones { nombre, letraDesde, letraHasta, id_asignatura, profesores_ids } --> Linea 75 comision.service.js
+17: validarCamposRequeridos() --> /api/comisiones/index.js (validacion interna)
+18: crear(nombre, letraDesde, letraHasta, id_asignatura) --> Linea 73 ComisionRepositorio.ts
+19: Comision creada --> Linea 81 ComisionRepositorio.ts
+20: vincular(id_comision, profesores_ids) [si hay profesores] --> Linea 84 ComisionRepositorio.ts
+21: Vinculos creados --> Linea 89 ComisionRepositorio.ts
+22: 201 { data: comision, error: null } --> /api/comisiones/index.js
+23: Comision creada --> Linea 91 comision.service.js
+24: "Comision creada con exito" --> EstructuraPage.jsx
 
+### Figura 6 — Caso Alternativo: Datos de formulario inválidos
 
-### Figura 6 (caso alternativo)
+1-10: (igual al caso normal — ingreso y listado de comisiones)
+11: Hace click en "Crear Comision" --> EstructuraPage.jsx
+12: Se muestra addComisionModal --> addComisionModal.tsx
+13: Completa campos y confirma --> Linea 105 addComisionModal.tsx
+14: validarCampos() --> Linea 61 addComisionModal.tsx
+SE DETECTAN CAMPOS VACIOS O FORMATOS INCORRECTOS
+15: Muestra avisos de validacion en los campos afectados --> Linea 89 addComisionModal.tsx (setErrores) / Linea 148 (render de mensajes)
+16: Corrige los datos y confirma --> Linea 105 addComisionModal.tsx
+17: validarCampos() --> Linea 61 addComisionModal.tsx
+A PARTIR DE AQUI EL FLUJO RETOMA EL CURSO NORMAL (ver paso 15 Figura 5)
 
-1: Ingresa a estructura academica -> src/pages/EstructuraPage.jsx                                  
-2: Se muestran entidades existentes -> EstructuraPage.jsx linea 574                                  
-3: Hace click en "Comisiones" -> EstructuraPage.jsx linea 581
-4: Se muestra listado de comisiones y botones -> EstructuraPage.jsx linea 520
-5: Hace click en "Crear Comision" -> EstructuraPage.jsx linea 581
-6: Se muestra formulario para crear comision -> EstructuraPage.jsx linea 635
-7: Completa todos los campos y confirma -> addComisionModal.tsx linea 105
-8: validarCampos() -> addComisionModal.tsx linea 61
-SE DETECTAN CAMPOS OBLIGATORIOS VACIOS O FORMATOS INCORRECTOS
-9: Muestra avisos de validacion en los campos afectados -> addComisionModal.tsx linea 89 (setErrores) y 148 (render de los mensajes)
-10: Corrige datos y confirma -> addComisionModal.tsx linea 105
-11: validarCampos() -> addComisionModal.tsx linea 61
-A PARTIR DE AQUI EL FLUJO RETOMA EL CURSO NORMAL -> ver linea 15 del documento actual
-
-
+---
 
 ## C-03: Importar Datos Masivamente
 
-### Figura 7 (caso normal)
+### Figura 7 — Caso Normal
 
-1: Ingresa a estructura academica -> src/pages/EstructuraPage.jsx
-2: Se muestran entidades y botones -> EstructuraPage.jsx linea 574 (render de tarjetas principales)
-3: Hace click en el boton "Importar CSV" -> EstructuraPage.jsx linea 595 (botón que abre el selector)
-4: Se abre explorador de archivos -> (Manejado por el SO nativo)
-5: Selecciona archivo CSV -> EstructuraPage.jsx linea 592 (evento onChange del input file)
-6: validarFormatoArchivo(archivo) -> src/services/csvParser.js linea 38
-7: parsearCSV(archivo) -> src/services/csvParser.js linea 48
-8: validarEsquema(filas) -> src/services/csvParser.js linea 64
-9: detectarDuplicados(filas) -> src/services/csvParser.js linea 90
-10: detectarIncompletos(filas) -> src/services/csvParser.js linea 116
-11: detectarFormatosInvalidos(filas) -> src/services/csvParser.js linea 140
-12: insertar(filas) -> src/services/edificio.service.js linea 16
-13: edificios_insertados -> 
-14: insertar(filas) -> src/services/facultad.service.js linea 16
-15: facultades_insertadas -> 
-16: insertar(filas) -> src/services/carrera.service.js linea 13
-17: carreras_insertadas -> 
-18: insertar(filas) -> src/services/periodo.service.js linea 14
-19: periodos_insertados -> 
-20: insertar(filas) -> src/services/asignatura.service.js linea 33
-21: asignaturas_insertadas -> 
-22: insertar(filas) -> src/services/profesor.service.js linea 32
-23: profesores_insertados -> 
-24: insertar(filas) -> src/services/comision.service.js linea 44
-25: comisiones_insertadas -> 
-26: "Importación de datos con éxito" -> EstructuraPage.jsx linea 350 (setMensajeExito)
+1: Ingresa a estructura academica --> EstructuraPage.jsx
+2: Se muestran entidades y botones --> EstructuraPage.jsx (render de tarjetas)
+3: Hace click en "Importar CSV" --> EstructuraPage.jsx (boton que abre el input file)
+4: Se abre explorador de archivos --> (manejado por el navegador, input[type=file])
+5: Selecciona archivo CSV --> EstructuraPage.jsx (onChange del input)
+6: validarFormatoArchivo(archivo) --> csvParser.js
+7: ok --> csvParser.js
+8: parsearCSV(archivo) --> csvParser.js
+9: filas[] --> csvParser.js
+10: validarEsquema(filas) --> csvParser.js
+11: sin errores --> csvParser.js
+12: detectarDuplicados(filas) --> csvParser.js
+13: sin errores --> csvParser.js
+14: detectarIncompletos(filas) --> csvParser.js
+15: sin errores --> csvParser.js
+16: detectarFormatosInvalidos(filas) --> csvParser.js
+17: sin errores --> csvParser.js
+18: insertar(filas) --> Linea 98 comision.service.js
+19: POST /api/comisiones { filas } --> Linea 99 comision.service.js
+20: obtenerPorNombre(nombre_asignatura) [loop por fila] --> Linea 124 ComisionRepositorio.ts
+21: Asignatura encontrada --> Linea 132 ComisionRepositorio.ts
+22: obtenerPorNombreYAsignatura(nombre, id_asignatura) --> Linea 135 ComisionRepositorio.ts
+23: existe? --> Linea 144 ComisionRepositorio.ts
+24: crear(nombre, id_asignatura, letraDesde, letraHasta) [si no existe] --> Linea 73 ComisionRepositorio.ts
+25: Comision creada --> Linea 81 ComisionRepositorio.ts
+26: upsertVinculo(id_comision, documento_profesor) --> Linea 158 ComisionRepositorio.ts
+27: Vinculo registrado --> Linea 166 ComisionRepositorio.ts
+28: 200 { insertadas: N, errores: null } --> /api/comisiones/index.js
+29: Resumen importacion --> Linea 115 comision.service.js
+30: "Archivo importado con exito" --> EstructuraPage.jsx
 
+### Figura 8 — Caso Alternativo: CSV con errores/duplicados
 
-### Figura 8 (caso alternativo)
-1: Ingresa a estructura academica -> src/pages/EstructuraPage.jsx
-2: Se muestran entidades y botones -> EstructuraPage.jsx linea 574 (render de tarjetas principales)
-3: Hace click en el boton "Importar CSV" -> EstructuraPage.jsx linea 595 (botón que abre el selector)
-4: Se abre explorador de archivos -> (Manejado por el SO nativo)
-5: Selecciona archivo CSV -> EstructuraPage.jsx linea 592 (evento onChange del input file)
-6: validarFormatoArchivo(archivo) -> src/services/csvParser.js linea 38
-7: parsearCSV(archivo) -> src/services/csvParser.js linea 48
-8: validarEsquema(filas) -> src/services/csvParser.js linea 64
-9: detectarDuplicados(filas) -> src/services/csvParser.js linea 90
-10: detectarIncompletos(filas) -> src/services/csvParser.js linea 116
-11: detectarFormatosInvalidos(filas) -> src/services/csvParser.js linea 140
+1-9: (igual al caso normal — ingreso, seleccion de archivo, parseo)
+10: validarEsquema(filas) --> csvParser.js
+11: errores_esquema[] --> csvParser.js
+12: detectarDuplicados(filas) --> csvParser.js
+13: errores_duplicados[] --> csvParser.js
+14: detectarIncompletos(filas) --> csvParser.js
+15: errores_incompletos[] --> csvParser.js
+16: detectarFormatosInvalidos(filas) --> csvParser.js
+17: errores_formato[] --> csvParser.js
 EL SISTEMA DETECTA DATOS INVALIDOS, INCOMPLETOS O DUPLICADOS
-12: "Mensaje de error específico del parser" -> EstructuraPage.jsx linea 568 (render del bloque de errorMessage, seteado mediante setErrorMessage en líneas 293, 302, 311 o 320 según corresponda el fallo)
+18: Muestra mensaje de error especifico --> EstructuraPage.jsx (setErrorMessage)
+LA VALIDACION FALLA EN PRESENTACION — Service y API no se invocan
