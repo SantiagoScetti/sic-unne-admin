@@ -1,54 +1,61 @@
 @startuml
-title Diagrama de Secuencia (DOO) - C-03 Importar Datos Masivamente (Alternativo: CSV con errores/duplicados)
 
-' La validacion ocurre en la presentacion, antes de tocar el dominio. Si el objeto
-' csvParser detecta errores de esquema, duplicados, incompletos o formatos invalidos,
-' la Interfaz informa y NO invoca a ServicioComision (no se realiza ninguna escritura).
+title Diagrama de Secuencia: C-03 Importar datos masivamente (Alt: CSV con errores)
 
 skinparam style strictuml
-skinparam sequenceMessageAlign center
-hide footbox
+skinparam ParticipantPadding 30
+skinparam BoxPadding 12
+
 autonumber
 
-actor Administrador as Admin
+actor Administrador
+participant "Sistema\n(EstructuraPage)" as Interfaz
+participant "csvParser"                 as Parser
+   
 
-participant "Sistema\n(Interfaz)"   as UI
-participant ":csvParser"           as Parser
 
-Admin -> UI : selecciona archivo CSV
-activate UI
 
-UI -> Parser : validarFormatoArchivo(archivo)
+Administrador -> Interfaz: Ingresa a estructura academica
+activate Interfaz
+Interfaz --> Administrador: Se muestran entidades y botones
+deactivate Interfaz
+
+Administrador -> Interfaz: Hace click en "Importar CSV"
+activate Interfaz
+Interfaz --> Administrador: Abre explorador de archivos
+deactivate Interfaz
+
+Administrador -> Interfaz: Selecciona archivo CSV
+activate Interfaz
+
+Interfaz -> Parser: validarFormatoArchivo(archivo)
 activate Parser
-Parser --> UI : ok
+Parser --> Interfaz: Formato de archivo validado
 deactivate Parser
 
-UI -> Parser : parsearCSV(archivo)
+Interfaz -> Parser: parsearCSV(archivo)
 activate Parser
-Parser --> UI : filas
+Parser --> Interfaz: Devuelve array de filas
 deactivate Parser
 
-UI -> Parser : validarEsquema(filas)
+Interfaz -> Parser: validarEsquema(filas)
 activate Parser
-Parser --> UI : errores_esquema
+Parser --> Interfaz: Esquema validado
 deactivate Parser
 
-UI -> Parser : detectarDuplicados(filas)
+Interfaz -> Parser: detectarDuplicados(filas)
 activate Parser
-Parser --> UI : errores_duplicados
+Parser --> Interfaz: Se detectaron duplicados
 deactivate Parser
 
-UI -> Parser : detectarIncompletos(filas)
-activate Parser
-Parser --> UI : errores_incompletos
-deactivate Parser
+note right of Interfaz
+  El sistema detecta datos
+  duplicados ANTES de invocar
+  al backend. 
+end note
 
-UI -> Parser : detectarFormatosInvalidos(filas)
-activate Parser
-Parser --> UI : errores_formato
-deactivate Parser
+Interfaz --> Administrador: "Se encontraron datos duplicados, por favor verifique el archivo"
+deactivate Interfaz
 
-UI --> Admin : muestra mensaje de error especifico (no se invoca el Servicio)
-deactivate UI
 
 @enduml

@@ -1,84 +1,105 @@
 @startuml
-title Diagrama de Secuencia (DOO) - C-03 Importar Datos Masivamente (Caso Normal)
 
-' La Interfaz valida y parsea el CSV con el objeto csvParser (validaciones de
-' presentacion). Con las filas validas invoca a ServicioComision.importarMasivo,
-' que procesa fila por fila, delegando busquedas y altas en el repositorio y la
-' validacion de negocio en la entidad Comision.
+title Diagrama de Secuencia: C-03 Importar datos masivamente (Caso Normal)
 
 skinparam style strictuml
-skinparam sequenceMessageAlign center
-hide footbox
+skinparam ParticipantPadding 30
+skinparam BoxPadding 12
+
 autonumber
 
-actor Administrador as Admin
+actor Administrador
+participant "Sistema\n(EstructuraPage)" as Interfaz
+participant "csvParser"                 as Parser
+participant "Edificio"
+participant "Facultad"
+participant "Carrera"
+participant "Periodo"
+participant "Asignatura"       
+participant "Profesor" 
+participant "Comision"        
 
-participant "Sistema\n(Interfaz)"     as UI
-participant ":csvParser"             as Parser
-participant ":ServicioComision"      as Serv
-participant "comision:Comision"      as Com
-participant ":ComisionRepositorio"   as Repo
 
-Admin -> UI : selecciona archivo CSV
-activate UI
 
-UI -> Parser : validarFormatoArchivo(archivo)
+Administrador -> Interfaz: Ingresa a estructura academica
+activate Interfaz
+Interfaz --> Administrador: Se muestran entidades y botones
+deactivate Interfaz
+
+Administrador -> Interfaz: Hace click en "Importar CSV"
+activate Interfaz
+Interfaz --> Administrador: Abre explorador de archivos
+deactivate Interfaz
+
+Administrador -> Interfaz: Selecciona archivo CSV
+activate Interfaz
+
+Interfaz -> Parser: validarFormatoArchivo(archivo)
 activate Parser
-Parser --> UI : ok
+Parser --> Interfaz: Formato de archivo validado
 deactivate Parser
 
-UI -> Parser : parsearCSV(archivo)
+Interfaz -> Parser: parsearCSV(archivo)
 activate Parser
-Parser --> UI : filas
+Parser --> Interfaz: Devuelve array de filas
 deactivate Parser
 
-UI -> Parser : validarEsquema(filas)
-UI -> Parser : detectarDuplicados(filas)
-UI -> Parser : detectarIncompletos(filas)
-UI -> Parser : detectarFormatosInvalidos(filas)
+Interfaz -> Parser: validarEsquema(filas)
 activate Parser
-Parser --> UI : sin errores
+Parser --> Interfaz: Esquema validado
 deactivate Parser
 
-UI -> Serv : importarMasivo(filas)
-activate Serv
+Interfaz -> Parser: detectarDuplicados(filas)
+activate Parser
+Parser --> Interfaz: No se detectaron duplicados
+deactivate Parser
 
-note over Serv, Repo : Por cada fila del CSV se repiten estos pasos.\nLa comision se crea solo si todavia no existe.
+Interfaz -> Parser: detectarIncompletos(filas)
+activate Parser
+Parser --> Interfaz: No se detectaron campos incompletos
+deactivate Parser
 
-Serv -> Repo : buscarIdAsignaturaPorNombre(asignatura_nombre)
-activate Repo
-Repo --> Serv : id_asignatura
-deactivate Repo
+Interfaz -> Parser: detectarFormatosInvalidos(filas)
+activate Parser
+Parser --> Interfaz: No se detectaron formatos invalidos
+deactivate Parser
+Interfaz -> Edificio: Solicita crear Edificio/s
+activate Edificio
+Edificio -> Edificio: insertar(filas)
+Edificio --> Interfaz: Edificio/s insertado 
+deactivate Edificio
+Interfaz -> Facultad: Solicita crear Facultad/es
+activate Facultad
+Facultad -> Facultad: insertar(filas)
+Facultad --> Interfaz: Facultad/es insertada/s
+deactivate Facultad
+Interfaz -> Carrera: Solicita crear Carrera/s
+activate Carrera
+Carrera -> Carrera: insertar(filas)
+Carrera --> Interfaz: Carrera/s insertada/s
+deactivate Carrera
+Interfaz -> Periodo: Solicita crear Periodo/s
+activate Periodo
+Periodo -> Periodo: insertar(filas)
+Periodo --> Interfaz: Periodo/s insertado/s
+deactivate Periodo
+Interfaz -> Asignatura: Solicita crear Asignatura/s
+activate Asignatura
+Asignatura -> Asignatura: insertar(filas)
+Asignatura --> Interfaz: Asignatura/s insertada/s
+deactivate Asignatura
+Interfaz -> Profesor: Solicita crear Profesor/es
+activate Profesor
+Profesor -> Profesor: insertar(filas)
+Profesor --> Interfaz: Profesor/es insertado/s
+deactivate Profesor
+Interfaz -> Comision: Solicita crear Comision/es
+activate Comision
+Comision -> Comision: insertar(filas)
+Comision --> Interfaz: Comision/es insertada/s
+deactivate Comision
 
-Serv -> Repo : buscarIdComision(comision_nombre, id_asignatura)
-activate Repo
-Repo --> Serv : id_comision
-deactivate Repo
-
-Serv -> Com : new Comision(comision_nombre, letraDesde, letraHasta, id_asignatura)
-activate Com
-Serv -> Com : validar()
-Com --> Serv : ok
-deactivate Com
-
-Serv -> Repo : crear(comision)
-activate Repo
-Repo --> Serv : id_comision
-deactivate Repo
-
-Serv -> Repo : buscarIdProfesorPorDocumento(profesor_documento)
-activate Repo
-Repo --> Serv : id_profesor
-deactivate Repo
-
-Serv -> Repo : upsertVinculo(id_comision, id_profesor)
-activate Repo
-Repo --> Serv : vinculo registrado
-deactivate Repo
-
-Serv --> UI : resultado(insertadas, errores)
-deactivate Serv
-UI --> Admin : "Archivo importado con exito"
-deactivate UI
+Interfaz --> Administrador: "Archivo importado con exito"
+deactivate Interfaz
 
 @enduml

@@ -1,0 +1,64 @@
+@startuml
+
+title Diagrama de Secuencia: C-02 Crear Comision (Alt: Datos de formulario invalidos)
+
+skinparam style strictuml
+skinparam ParticipantPadding 30
+skinparam BoxPadding 12
+
+autonumber
+
+actor Administrador
+participant "Sistema\n(ReportesPage)" as Interfaz
+participant "Comision"
+Administrador -> Interfaz: Ingresa a estructura academica
+activate Interfaz
+Interfaz --> Administrador: Se muestran entidades existentes
+deactivate Interfaz
+
+Administrador -> Interfaz: Hace click en "Comisiones"
+activate Interfaz
+Interfaz -> Comision: Solicita todas las Comisiones
+activate Comision
+Comision -> Comision: obtenerComisiones("Todos")
+Comision --> Interfaz: Devuelve lista de Comisiones
+deactivate Comision
+Interfaz --> Administrador: Muestra lista de Comisiones
+deactivate Interfaz
+Administrador -> Interfaz: Hace click en '+' (crear comision)
+activate Interfaz
+Interfaz -> Interfaz: setIsComisionModalOpen(true)
+Interfaz --> Administrador: Muestra modal de crear Comision
+deactivate Interfaz
+Administrador -> Interfaz: Completa correctamente los campos y hace click en crear
+activate Interfaz
+Interfaz -> Interfaz: validarCampos()
+
+note right of Interfaz
+  Se detectan campos obligatorios
+  vacios o formatos incorrectos
+  (ej: letraDesde >= letraHasta).
+  La validacion ocurre en cliente
+  ANTES de llamar al backend.
+end note
+
+Interfaz --> Administrador: Muestra avisos de validacion en los campos afectados
+deactivate Interfaz
+
+Administrador -> Interfaz: Corrige los datos y confirma
+activate Interfaz
+Interfaz -> Interfaz: validarCampos()
+Interfaz --> Administrador: Campos validados
+Interfaz -> Comision: Solicita crear Comision
+activate Comision
+Comision -> Comision: crear(nombre, letraDesde, letraHasta, id_asignatura, profesores_ids = [])
+Comision -> Profesor: Solicita vinculación de Profesores a la Comision
+activate Profesor
+Profesor -> Profesor: asignar(id_comision, profesores_ids)
+Profesor --> Comision: Profesores vinculados a la Comision
+deactivate Profesor
+Comision --> Interfaz: Comision creada
+deactivate Comision
+Interfaz --> Administrador: "Comisión creada con éxito"
+
+@enduml
