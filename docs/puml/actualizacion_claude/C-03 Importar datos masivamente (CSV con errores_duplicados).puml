@@ -1,87 +1,54 @@
 @startuml
+title Diagrama de Secuencia (DOO) - C-03 Importar Datos Masivamente (Alternativo: CSV con errores/duplicados)
 
-title Diagrama de Secuencia: C-03 Importar datos masivamente (Alt: CSV con errores)
+' La validacion ocurre en la presentacion, antes de tocar el dominio. Si el objeto
+' csvParser detecta errores de esquema, duplicados, incompletos o formatos invalidos,
+' la Interfaz informa y NO invoca a ServicioComision (no se realiza ninguna escritura).
 
 skinparam style strictuml
-skinparam ParticipantPadding 30
-skinparam BoxPadding 12
-
+skinparam sequenceMessageAlign center
+hide footbox
 autonumber
 
-actor Administrador
+actor Administrador as Admin
 
-box "Presentacion" #LightBlue
-  participant "Sistema\n(EstructuraPage)" as Interfaz
-  participant "csvParser"                 as Parser
-end box
+participant "Sistema\n(Interfaz)"   as UI
+participant ":csvParser"           as Parser
 
-box "Servicios HTTP" #LightYellow
-  participant "comision.service" as Service
-end box
+Admin -> UI : selecciona archivo CSV
+activate UI
 
-box "Controlador" #Lavender
-  participant "API\n(/api/comisiones)" as API
-end box
-
-Administrador -> Interfaz: Ingresa a estructura academica
-activate Interfaz
-Interfaz --> Administrador: Se muestran entidades y botones
-deactivate Interfaz
-
-Administrador -> Interfaz: Hace click en "Importar CSV"
-activate Interfaz
-Interfaz --> Administrador: Se abre explorador de archivos
-deactivate Interfaz
-
-Administrador -> Interfaz: Selecciona archivo CSV
-activate Interfaz
-
-Interfaz -> Parser: validarFormatoArchivo(archivo)
+UI -> Parser : validarFormatoArchivo(archivo)
 activate Parser
-Parser --> Interfaz: ok
+Parser --> UI : ok
 deactivate Parser
 
-Interfaz -> Parser: parsearCSV(archivo)
+UI -> Parser : parsearCSV(archivo)
 activate Parser
-Parser --> Interfaz: filas[]
+Parser --> UI : filas
 deactivate Parser
 
-Interfaz -> Parser: validarEsquema(filas)
+UI -> Parser : validarEsquema(filas)
 activate Parser
-Parser --> Interfaz: errores_esquema[]
+Parser --> UI : errores_esquema
 deactivate Parser
 
-Interfaz -> Parser: detectarDuplicados(filas)
+UI -> Parser : detectarDuplicados(filas)
 activate Parser
-Parser --> Interfaz: errores_duplicados[]
+Parser --> UI : errores_duplicados
 deactivate Parser
 
-Interfaz -> Parser: detectarIncompletos(filas)
+UI -> Parser : detectarIncompletos(filas)
 activate Parser
-Parser --> Interfaz: errores_incompletos[]
+Parser --> UI : errores_incompletos
 deactivate Parser
 
-Interfaz -> Parser: detectarFormatosInvalidos(filas)
+UI -> Parser : detectarFormatosInvalidos(filas)
 activate Parser
-Parser --> Interfaz: errores_formato[]
+Parser --> UI : errores_formato
 deactivate Parser
 
-note right of Interfaz
-  El sistema detecta datos
-  invalidos, incompletos o
-  duplicados ANTES de invocar
-  al backend. No se realiza
-  ninguna llamada a la API.
-end note
-
-Interfaz --> Administrador: Muestra mensaje de error especifico
-deactivate Interfaz
-
-note over Service, API
-  Como la validacion falla en
-  la capa de Presentacion, las
-  capas de Controlador y Dominio
-  no se involucran.
-end note
+UI --> Admin : muestra mensaje de error especifico (no se invoca el Servicio)
+deactivate UI
 
 @enduml

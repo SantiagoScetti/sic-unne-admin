@@ -1,38 +1,64 @@
-# Diagramas actualizados — Arquitectura 3 capas
+# Diagramas de Secuencia (DOO) — versión orientada a objetos
 
-Esta carpeta contiene la **nueva versión** de los Diagramas de Secuencia, reescritos para reflejar la arquitectura **Cliente-Servidor en 3 capas con backend propio (Next.js API Routes)** que se está construyendo según [PLAN_DE_ACCION.md](../../PLAN_DE_ACCION.md) (Fase 1).
+Esta carpeta contiene los Diagramas de Secuencia reescritos en **estilo Diseño
+Orientado a Objetos (DOO)**, según las correcciones de la cátedra (Prof. Ferraro,
+clases del 28-04 y foros del 03/04-05-2026).
 
-Los archivos originales en `docs/puml/` **no fueron modificados** — quedan como referencia histórica de la arquitectura BaaS previa. Una vez que la migración esté completa y el profe la valide, se podrán reemplazar.
+## La regla de oro: el diagrama tiene que COINCIDIR con el código
 
-## Cambios estructurales respecto a los originales
+La profe evalúa dos cosas: que el diagrama sea OO y que **se corresponda con las
+funciones del código**. De sus correcciones se desprende esta convención:
 
-| Original (BaaS) | Nuevo (3 capas) |
+| ❌ NO hacer (estilo rechazado) | ✅ SÍ hacer (estilo pedido) |
 |---|---|
-| Líneas de vida `Asignatura`, `Profesor`, `Comision` como objetos del dominio que se autollaman | Eliminadas — se reemplazan por una sola línea de vida `API Backend (/api/comisiones)` |
-| `Interfaz` llamaba directamente a Edge Functions / Supabase | `Interfaz` llama a `comision.service.js`, que hace `fetch('/api/comisiones', ...)` |
-| Validaciones y SQL mezclados sin capa explícita | Validaciones de cliente en `csvParser.js`, validaciones de negocio en `API`, persistencia en `Supabase` |
-| Sin separación visual de capas | Cajas (`box`) coloreadas que agrupan participantes por capa: Presentación, Aplicación-Cliente, Aplicación-Servidor, Datos |
+| Líneas de vida `Frontend / Backend / DB` | Líneas de vida = **objetos del dominio** (`:Reporte`, `:Comision`, `:ServicioComision`, repositorios) |
+| Mensajes `POST /api/...`, `SELECT`, `INSERT`, `UPDATE` | Mensajes = **métodos en español con parámetros** (`obtenerPorId(id_reporte)`, `suspender(receptor_id, fechaHasta)`) |
+| Un "backend" que hace todo de corrido | Un **orquestador que delega** a cada objeto (responsabilidad única) |
+| Mostrar un método privado como mensaje externo | Método privado/interno → **flecha a sí mismo** (self-call) |
+
+### Decisiones de modelado aplicadas
+
+1. **No se dibuja el salto HTTP.** En un DS de diseño OO, la transmisión por red es
+   plomería. La flecha `Sistema (Interfaz) → :ServicioResolucionReporte` **se realiza en
+   el código** mediante `reporteApi.resolverReporte()` (fetch) → handler de la API Route
+   → `servicio.resolver()`. Los ejemplos que la profe aprobó ocultan el HTTP igual.
+2. **El orquestador delega.** `:ServicioResolucionReporte` y `:ServicioComision` no hacen
+   el trabajo: lo reparten entre la entidad (`Reporte`/`Comision`) y los repositorios.
+   (Es justo lo que la profe le pidió a Nazareno: que el controlador *delegue*, no que
+   ejecute las N funciones él mismo.)
+3. **Sin recuadros (`alt`/`opt`/`loop`/`group`).** Los diagramas se entienden de forma
+   lineal. Los flujos alternativos (409, datos inválidos, CSV con errores) están en
+   **diagramas separados**. La iteración de C-03 se indica con una nota breve.
+4. **El patrón NO se marca en el diagrama de secuencia.** El recuadro que identifica el
+   patrón Estado va **solo en el Diagrama de Clases (UML)**. Acá los objetos
+   `:EstadoPendiente`/`:EstadoResuelto` y la delegación `reporte.resolver() → estado.resolver()`
+   aparecen simplemente porque así funciona el código (polimorfismo real).
+5. **Self-calls** para lo interno: `validarCampos()` de la Interfaz.
 
 ## Archivos
 
-| Archivo | Caso de uso | Flujo |
+| Archivo | CU | Flujo |
 |---|---|---|
-| `C-01 Gestionar Reporte (Caso Normal).puml` | C-01 | **Funcionalidad principal.** Resolución con los 3 patrones: Estado → Estrategia → Observador |
-| `C-01 Gestionar Reporte (Reporte ya gestionado).puml` | C-01 | Alt: el patrón Estado detecta transición inválida → HTTP 409, sin escrituras |
-| `C-02 Crear Comision (Caso Normal).puml` | C-02 | Camino feliz: validación cliente → POST → ServicioComision (valida + crea + vincula) |
-| `C-02 Crear Comision (Datos de formulario invalidos).puml` | C-02 | Alt: validación falla en cliente, no se llama al backend |
-| `C-03 Importar datos masivamente (Caso Normal).puml` | C-03 | Bulk: parser cliente → POST con `{ filas }` → loop server-side |
-| `C-03 Importar datos masivamente (CSV con errores_duplicados).puml` | C-03 | Alt: el parser detecta errores antes del fetch, no se llama al backend |
+| `C-01 Gestionar Reporte (Caso Normal).puml` | C-01 | Funcionalidad principal. Resolución con **patrón Estado** + delegación a repositorios |
+| `C-01 Gestionar Reporte (Reporte ya gestionado).puml` | C-01 | Alt: `EstadoResuelto` rechaza la transición → `ReporteYaProcesadoError` |
+| `C-02 Crear Comision (Caso Normal).puml` | C-02 | `ServicioComision` valida (entidad) + crea + vincula (repositorio) |
+| `C-02 Crear Comision (Datos de formulario invalidos).puml` | C-02 | Alt: validación de presentación o `validar()` de la entidad lanza `ComisionInvalidaError` |
+| `C-03 Importar datos masivamente (Caso Normal).puml` | C-03 | `csvParser` valida; `importarMasivo()` procesa cada fila (nota "por cada fila") |
+| `C-03 Importar datos masivamente (CSV con errores_duplicados).puml` | C-03 | Alt: el `csvParser` detecta errores; no se invoca al dominio |
 
-> **C-01** es la funcionalidad principal y donde viven los **3 patrones de diseño** (Estado, Estrategia, Observador). Ver `docs/uml/patrones_diseno.md`.
+## Trazabilidad diagrama ↔ código
 
-## Trazabilidad código ↔ diagrama (post-migración)
+La correspondencia **paso por paso** (cada flecha → archivo y línea, para los 6 diagramas)
+está en **[trazabilidaddeDiagramas.md](./trazabilidaddeDiagramas.md)**. Ahí está la tabla
+que permite decir en la defensa "esta flecha = esta función".
 
-- `Interfaz` → `src/pages/EstructuraPage.jsx` + `src/components/features/modals/addComisionModal.tsx`
-- `comision.service.js` → `src/services/academico/comision.service.js`
-- `API Backend (/api/comisiones)` → `src/pages/api/comisiones/index.js` y `[id].js`
-- `Supabase` → tablas `comision`, `comision_profesor`, `asignatura`, `profesor` (PostgreSQL gestionado por Supabase, accedido vía service_role desde `src/pages/api/_lib/supabaseServer.js`)
+> **Estado del código:** ya se dejó **un solo patrón (Estado)**. La suspensión, la
+> notificación y la auditoría se invocan **directo desde `ServicioResolucionReporte`**
+> (los patrones Estrategia y Observador fueron *inlineados*; las carpetas `acciones/` y
+> `eventos/` se eliminaron). Por eso el diagrama y el código coinciden 1:1. Los 23 tests
+> (`npm test`) siguen pasando.
 
-## Por qué C-01 (Reportes) todavía no está acá
+## Cómo renderizar
 
-C-01 está pendiente de migración en **Fase 3** del plan. Sus DS originales en `docs/puml/` siguen siendo válidos para describir el estado **previo** del código (que toca Supabase directo desde el cliente). Cuando se ejecute Fase 3, se agregará a esta carpeta el equivalente actualizado.
+- PlantText: https://www.planttext.com/ (pegar el contenido del `.puml`)
+- VSCode: extensión *PlantUML* (Alt+D para previsualizar, exportar a PNG/SVG)

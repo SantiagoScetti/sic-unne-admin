@@ -1,112 +1,84 @@
 @startuml
+title Diagrama de Secuencia (DOO) - C-03 Importar Datos Masivamente (Caso Normal)
 
-title Diagrama de Secuencia: C-03 Importar datos masivamente (Caso Normal)
+' La Interfaz valida y parsea el CSV con el objeto csvParser (validaciones de
+' presentacion). Con las filas validas invoca a ServicioComision.importarMasivo,
+' que procesa fila por fila, delegando busquedas y altas en el repositorio y la
+' validacion de negocio en la entidad Comision.
 
 skinparam style strictuml
-skinparam ParticipantPadding 30
-skinparam BoxPadding 12
-
+skinparam sequenceMessageAlign center
+hide footbox
 autonumber
 
-actor Administrador
+actor Administrador as Admin
 
-box "Presentacion" #LightBlue
-  participant "Sistema\n(EstructuraPage)" as Interfaz
-  participant "csvParser"                 as Parser
-end box
+participant "Sistema\n(Interfaz)"     as UI
+participant ":csvParser"             as Parser
+participant ":ServicioComision"      as Serv
+participant "comision:Comision"      as Com
+participant ":ComisionRepositorio"   as Repo
 
-box "Servicios HTTP" #LightYellow
-  participant "comision.service" as Service
-end box
+Admin -> UI : selecciona archivo CSV
+activate UI
 
-box "Controlador" #Lavender
-  participant "API\n(/api/comisiones)" as API
-end box
-
-box "Dominio" #LightGreen
-  participant "Asignatura"       as Asignatura
-  participant "Comision"         as Comision
-  participant "ComisionProfesor" as ComisionProfesor
-end box
-
-Administrador -> Interfaz: Ingresa a estructura academica
-activate Interfaz
-Interfaz --> Administrador: Se muestran entidades y botones
-deactivate Interfaz
-
-Administrador -> Interfaz: Hace click en "Importar CSV"
-activate Interfaz
-Interfaz --> Administrador: Se abre explorador de archivos
-deactivate Interfaz
-
-Administrador -> Interfaz: Selecciona archivo CSV
-activate Interfaz
-
-Interfaz -> Parser: validarFormatoArchivo(archivo)
+UI -> Parser : validarFormatoArchivo(archivo)
 activate Parser
-Parser --> Interfaz: ok
+Parser --> UI : ok
 deactivate Parser
 
-Interfaz -> Parser: parsearCSV(archivo)
+UI -> Parser : parsearCSV(archivo)
 activate Parser
-Parser --> Interfaz: filas[]
+Parser --> UI : filas
 deactivate Parser
 
-Interfaz -> Parser: validarEsquema(filas)
+UI -> Parser : validarEsquema(filas)
+UI -> Parser : detectarDuplicados(filas)
+UI -> Parser : detectarIncompletos(filas)
+UI -> Parser : detectarFormatosInvalidos(filas)
 activate Parser
-Parser --> Interfaz: sin errores
+Parser --> UI : sin errores
 deactivate Parser
 
-Interfaz -> Parser: detectarDuplicados(filas)
-activate Parser
-Parser --> Interfaz: sin errores
-deactivate Parser
+UI -> Serv : importarMasivo(filas)
+activate Serv
 
-Interfaz -> Parser: detectarIncompletos(filas)
-activate Parser
-Parser --> Interfaz: sin errores
-deactivate Parser
+note over Serv, Repo : Por cada fila del CSV se repiten estos pasos.\nLa comision se crea solo si todavia no existe.
 
-Interfaz -> Parser: detectarFormatosInvalidos(filas)
-activate Parser
-Parser --> Interfaz: sin errores
-deactivate Parser
+Serv -> Repo : buscarIdAsignaturaPorNombre(asignatura_nombre)
+activate Repo
+Repo --> Serv : id_asignatura
+deactivate Repo
 
-Interfaz -> Service: insertar(filas)
-activate Service
-Service -> API: POST /api/comisiones\n{ filas }
-activate API
+Serv -> Repo : buscarIdComision(comision_nombre, id_asignatura)
+activate Repo
+Repo --> Serv : id_comision
+deactivate Repo
 
-loop por cada fila del CSV
-  API -> Asignatura: obtenerPorNombre(nombre_asignatura)
-  activate Asignatura
-  Asignatura --> API: Asignatura encontrada
-  deactivate Asignatura
+Serv -> Com : new Comision(comision_nombre, letraDesde, letraHasta, id_asignatura)
+activate Com
+Serv -> Com : validar()
+Com --> Serv : ok
+deactivate Com
 
-  API -> Comision: obtenerPorNombreYAsignatura(nombre, id_asignatura)
-  activate Comision
-  Comision --> API: existe?
-  deactivate Comision
+Serv -> Repo : crear(comision)
+activate Repo
+Repo --> Serv : id_comision
+deactivate Repo
 
-  alt comision no existe
-    API -> Comision: crear(nombre, id_asignatura, letraDesde, letraHasta)
-    activate Comision
-    Comision --> API: Comision creada
-    deactivate Comision
-  end
+Serv -> Repo : buscarIdProfesorPorDocumento(profesor_documento)
+activate Repo
+Repo --> Serv : id_profesor
+deactivate Repo
 
-  API -> ComisionProfesor: vincular(id_comision, documento_profesor)
-  activate ComisionProfesor
-  ComisionProfesor --> API: Vinculo registrado
-  deactivate ComisionProfesor
-end
+Serv -> Repo : upsertVinculo(id_comision, id_profesor)
+activate Repo
+Repo --> Serv : vinculo registrado
+deactivate Repo
 
-API --> Service: 200 { insertadas: N, errores: null }
-deactivate API
-Service --> Interfaz: Resumen importacion
-deactivate Service
-
-Interfaz --> Administrador: "Archivo importado con exito"
-deactivate Interfaz
+Serv --> UI : resultado(insertadas, errores)
+deactivate Serv
+UI --> Admin : "Archivo importado con exito"
+deactivate UI
 
 @enduml

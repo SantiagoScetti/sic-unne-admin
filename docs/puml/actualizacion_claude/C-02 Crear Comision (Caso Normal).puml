@@ -1,89 +1,53 @@
 @startuml
+title Diagrama de Secuencia (DOO) - C-02 Crear Comision (Caso Normal)
 
-title Diagrama de Secuencia: C-02 Crear Comision (Caso Normal)
+' La Interfaz valida los campos del formulario (llamada interna: validarCampos()).
+' El ServicioComision orquesta: delega la validacion de negocio en la entidad
+' Comision y la persistencia en el repositorio.
 
 skinparam style strictuml
-skinparam ParticipantPadding 30
-skinparam BoxPadding 12
-
+skinparam sequenceMessageAlign center
+hide footbox
 autonumber
 
-actor Administrador
+actor Administrador as Admin
 
-box "Presentacion" #LightBlue
-  participant "Sistema\n(ReportesPage)" as Interfaz
-end box
+participant "Sistema\n(Interfaz)"        as UI
+participant ":ServicioComision"          as Serv
+participant "comision:Comision"          as Com
+participant ":ComisionRepositorio"       as Repo
 
-box "Servicios HTTP" #LightYellow
-  participant "comision.service" as Service
-end box
+Admin -> UI : completa el formulario y confirma "Crear Comision"
+activate UI
+UI -> UI : validarCampos()
 
-box "Controlador" #Lavender
-  participant "API\n(/api/comisiones)" as API
-end box
+UI -> Serv : crear(nombre, letraDesde, letraHasta, id_asignatura, profesores_ids)
+activate Serv
 
-box "Dominio" #LightGreen
-  participant "Comision"         as Comision
-  participant "ComisionProfesor" as ComisionProfesor
-end box
+Serv -> Com : new Comision(nombre, letraDesde, letraHasta, id_asignatura, profesores_ids)
+activate Com
+Serv -> Com : validar()
+Com --> Serv : ok
+deactivate Com
 
-Administrador -> Interfaz: Ingresa a estructura academica
-activate Interfaz
-Interfaz --> Administrador: Se muestran entidades existentes
-deactivate Interfaz
+Serv -> Repo : existeAsignatura(id_asignatura)
+activate Repo
+Repo --> Serv : true
+deactivate Repo
 
-Administrador -> Interfaz: Hace click en "Comisiones"
-activate Interfaz
-Interfaz -> Service: obtenerComisiones("Activos")
-activate Service
-Service -> API: GET /api/comisiones?filtroEstado=Activos
-activate API
-API -> Comision: obtenerTodas(filtroEstado)
-activate Comision
-Comision --> API: lista de comisiones
-deactivate Comision
-API --> Service: { data: [...], error: null }
-deactivate API
-Service --> Interfaz: lista normalizada
-deactivate Service
-Interfaz --> Administrador: Se muestra listado y botones
-deactivate Interfaz
+Serv -> Repo : crear(comision)
+activate Repo
+Repo --> Serv : id_comision
+deactivate Repo
 
-Administrador -> Interfaz: Hace click en "Crear Comision"
-activate Interfaz
-Interfaz --> Administrador: Se muestra addComisionModal
-deactivate Interfaz
+Serv -> Repo : vincularProfesores(id_comision, profesores_ids)
+activate Repo
+Repo --> Serv : vinculos creados
+deactivate Repo
 
-Administrador -> Interfaz: Completa campos y confirma
-activate Interfaz
-
-Interfaz -> Interfaz: validarCampos()
-
-Interfaz -> Service: crear(nombre, letraDesde, letraHasta, id_asignatura, profesores_ids)
-activate Service
-Service -> API: POST /api/comisiones\n{ nombre, letraDesde, letraHasta, id_asignatura, profesores_ids }
-activate API
-
-API -> API: validarCamposRequeridos()
-
-API -> Comision: crear(nombre, letraDesde, letraHasta, id_asignatura)
-activate Comision
-Comision --> API: Comision creada
-deactivate Comision
-
-alt profesores_ids.length > 0
-  API -> ComisionProfesor: vincular(id_comision, profesores_ids)
-  activate ComisionProfesor
-  ComisionProfesor --> API: Vinculos creados
-  deactivate ComisionProfesor
-end
-
-API --> Service: 201 { data: comision, error: null }
-deactivate API
-Service --> Interfaz: Comision creada
-deactivate Service
-
-Interfaz --> Administrador: "Comision creada con exito"
-deactivate Interfaz
+Serv --> UI : comision creada
+deactivate Serv
+UI --> Admin : "Comision creada con exito"
+deactivate UI
 
 @enduml

@@ -1,104 +1,77 @@
 @startuml
+title Diagrama de Secuencia (DOO) - C-01 Gestionar Reporte y Resolucion de Conflictos (Caso Normal)
 
-title Diagrama de Secuencia: C-01 Gestionar Reporte (Caso Normal)
+' Estilo orientado a objetos: lineas de vida = objetos del dominio.
+' No se muestran capas tecnicas (frontend/backend/DB) ni HTTP ni SQL.
+' La flecha Interfaz -> ServicioResolucionReporte se realiza en el codigo via
+' reporteApi.resolverReporte() + API Route + servicio.resolver() (plomeria, no se dibuja).
 
 skinparam style strictuml
-skinparam ParticipantPadding 30
-skinparam BoxPadding 12
-
+skinparam sequenceMessageAlign center
+hide footbox
 autonumber
 
-actor Administrador
+actor Administrador as Admin
 
-box "Presentacion" #LightBlue
-  participant "Sistema\n(ReportesPage)" as Interfaz
-end box
+participant "Sistema\n(Interfaz)"            as UI
+participant ":ServicioResolucionReporte"     as Serv
+participant "reporte:Reporte"                as Rep
+participant "estado:EstadoPendiente"         as Est
+participant ":ReporteRepositorio"            as RepoR
+participant ":UsuarioRepositorio"            as RepoU
+participant ":NotificacionRepositorio"       as RepoN
+participant ":AuditoriaRepositorio"          as RepoA
 
-box "Servicios HTTP" #LightYellow
-  participant "reporte.service" as Service
-end box
+Admin -> UI : selecciona reporte y elige accion
+activate UI
+UI -> Serv : resolver(id_reporte, accion, fechaHasta, observaciones)
+activate Serv
 
-box "Controlador" #Lavender
-  participant "API\n(/api/reportes/[id])" as API
-end box
+Serv -> RepoR : obtenerPorId(id_reporte)
+activate RepoR
+RepoR --> Serv : reporte
+deactivate RepoR
 
-box "Dominio" #LightGreen
-  participant "ServicioResolucionReporte" as Servicio
-  participant "Reporte"                   as Reporte
-  participant "Usuario"                   as Usuario
-  participant "AuditoriaAdministrativa"   as Auditoria
-  participant "Notificacion"              as Notificacion
-end box
+Serv -> RepoU : obtenerAdminPorDefecto()
+activate RepoU
+RepoU --> Serv : id_admin
+deactivate RepoU
 
-Administrador -> Interfaz: Selecciona reporte y elige accion
-activate Interfaz
-Interfaz -> Service: resolverReporte(id, { estado:'Resuelto', accion, fechaHasta, observaciones })
-activate Service
-Service -> API: PATCH /api/reportes/:id\n{ estado, accion, fechaHasta, observaciones }
-activate API
-API -> Servicio: resolver({ id, accion, fechaHasta, observaciones })
-activate Servicio
+Serv -> Rep : resolver(accion)
+activate Rep
+Rep -> Est : resolver(reporte, accion)
+activate Est
+Est -> Rep : registrarAccion(accion)
+Est -> Rep : transicionarA(EstadoResuelto)
+Est --> Rep
+deactivate Est
+Rep --> Serv : reporte resuelto
+deactivate Rep
 
-Servicio -> Reporte: obtenerPorId(id)
-activate Reporte
-Reporte --> Servicio: Reporte (estado = 'Pendiente')
-deactivate Reporte
+Serv -> Rep : asignarAdmin(id_admin)
+Serv -> RepoR : guardar(reporte)
+activate RepoR
+RepoR --> Serv : reporte guardado
+deactivate RepoR
 
-note right of Reporte
-  (Patron Estado)
-  Valida que el estado actual
-  permita la transicion.
-  Registra la accion tomada
-  y transiciona a 'Resuelto'.
-end note
+Serv -> RepoU : suspender(receptor_id, fechaHasta)
+activate RepoU
+RepoU --> Serv : usuario suspendido
+deactivate RepoU
 
-Servicio -> Reporte: resolver(accion)
-activate Reporte
-Reporte --> Servicio: Reporte resuelto
-deactivate Reporte
+Serv -> RepoN : crearVarias(notificaciones)
+activate RepoN
+RepoN --> Serv : notificaciones creadas
+deactivate RepoN
 
-Servicio -> Reporte: guardar()
-activate Reporte
-Reporte --> Servicio: Reporte guardado
-deactivate Reporte
+Serv -> RepoA : registrar(id_admin, accion, id_reporte)
+activate RepoA
+RepoA --> Serv : auditoria registrada
+deactivate RepoA
 
-note right of Servicio
-  (Patron Estrategia)
-  Selecciona el efecto concreto
-  segun la accion elegida:
-  Enviar aviso / Suspender
-  Temporalmente / Indefinidamente.
-end note
-
-Servicio -> Usuario: suspender(receptor_id, fechaHasta)
-activate Usuario
-Usuario --> Servicio: Suspencion aplicada
-deactivate Usuario
-
-note right of Servicio
-  (Patron Observador)
-  Publica ReporteResueltoEvent.
-  Los listeners notifican a los
-  usuarios y registran la auditoria.
-end note
-
-Servicio -> Notificacion: crearVarias(emisor_id, receptor_id, mensaje)
-activate Notificacion
-Notificacion --> Servicio: Notificaciones creadas
-deactivate Notificacion
-
-Servicio -> Auditoria: registrar(admin_id, accion, id_reporte)
-activate Auditoria
-Auditoria --> Servicio: Auditoria registrada
-deactivate Auditoria
-
-Servicio --> API: Reporte resuelto
-deactivate Servicio
-API --> Service: 200 { data: { estado:'Resuelto', accion_tomada } }
-deactivate API
-Service --> Interfaz: Reporte resuelto
-deactivate Service
-Interfaz --> Administrador: "Accion aplicada con exito"
-deactivate Interfaz
+Serv --> UI : reporte resuelto
+deactivate Serv
+UI --> Admin : "Accion aplicada con exito"
+deactivate UI
 
 @enduml

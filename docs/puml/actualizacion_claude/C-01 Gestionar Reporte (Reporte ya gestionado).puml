@@ -1,66 +1,44 @@
 @startuml
+title Diagrama de Secuencia (DOO) - C-01 Gestionar Reporte (Alternativo: reporte ya gestionado)
 
-title Diagrama de Secuencia: C-01 Gestionar Reporte (Alt: Reporte ya gestionado)
+' El reporte llega en estado Resuelto: su objeto-estado (EstadoResuelto) no permite
+' la transicion y lanza ReporteYaProcesadoError, que se propaga hasta la interfaz.
 
 skinparam style strictuml
-skinparam ParticipantPadding 30
-skinparam BoxPadding 12
-
+skinparam sequenceMessageAlign center
+hide footbox
 autonumber
 
-actor Administrador
+actor Administrador as Admin
 
-box "Presentacion" #LightBlue
-  participant "Sistema\n(ReportesPage)" as Interfaz
-end box
+participant "Sistema\n(Interfaz)"            as UI
+participant ":ServicioResolucionReporte"     as Serv
+participant "reporte:Reporte"                as Rep
+participant "estado:EstadoResuelto"          as Est
+participant ":ReporteRepositorio"            as RepoR
 
-box "Servicios HTTP" #LightYellow
-  participant "reporte.service" as Service
-end box
+Admin -> UI : intenta resolver un reporte ya gestionado
+activate UI
+UI -> Serv : resolver(id_reporte, accion)
+activate Serv
 
-box "Controlador" #Lavender
-  participant "API\n(/api/reportes/[id])" as API
-end box
+Serv -> RepoR : obtenerPorId(id_reporte)
+activate RepoR
+RepoR --> Serv : reporte (estado = Resuelto)
+deactivate RepoR
 
-box "Dominio" #LightGreen
-  participant "ServicioResolucionReporte" as Servicio
-  participant "Reporte"                   as Reporte
-end box
+Serv -> Rep : resolver(accion)
+activate Rep
+Rep -> Est : resolver(reporte, accion)
+activate Est
+Est --> Rep : throw ReporteYaProcesadoError
+deactivate Est
+Rep --> Serv : throw ReporteYaProcesadoError
+deactivate Rep
 
-Administrador -> Interfaz: Intenta resolver un reporte ya gestionado
-activate Interfaz
-Interfaz -> Service: resolverReporte(id, { estado:'Resuelto', accion })
-activate Service
-Service -> API: PATCH /api/reportes/:id\n{ estado:'Resuelto', accion }
-activate API
-API -> Servicio: resolver({ id, accion })
-activate Servicio
-
-Servicio -> Reporte: obtenerPorId(id)
-activate Reporte
-Reporte --> Servicio: Reporte (estado = 'Resuelto')
-deactivate Reporte
-
-note right of Reporte
-  (Patron Estado)
-  EstadoResuelto es terminal:
-  rechaza la transicion y lanza
-  ReporteYaProcesadoError.
-  No se realiza ninguna escritura.
-end note
-
-Servicio -> Reporte: resolver(accion)
-activate Reporte
-Reporte --> Servicio: throw ReporteYaProcesadoError
-deactivate Reporte
-
-Servicio --> API: propaga ReporteYaProcesadoError
-deactivate Servicio
-API --> Service: 409 Conflict\n{ error: 'El reporte ya fue procesado', estadoActual }
-deactivate API
-Service --> Interfaz: throw error (409)
-deactivate Service
-Interfaz --> Administrador: "Este reporte ya fue procesado por otro administrador"
-deactivate Interfaz
+Serv --> UI : ReporteYaProcesadoError (estadoActual = Resuelto)
+deactivate Serv
+UI --> Admin : "Este reporte ya fue procesado por otro administrador"
+deactivate UI
 
 @enduml

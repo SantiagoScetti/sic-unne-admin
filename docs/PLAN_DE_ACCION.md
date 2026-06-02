@@ -30,7 +30,7 @@ Cliente-Servidor **en capas**, backend propio Next.js API Routes. **NO BaaS, NO 
 | Mapeo a Modelo de BD Física | ✅ | DER Actualizado en dbdiagram.dbml|
 | Diagrama de Clases | 🟡 | `docs/uml/diagrama_clases.md` (vista diseño con métodos + vista datos) — falta **renderizar e insertar en informe** |
 | Funcionalidad principal + trazabilidad | 🟡 | C-01 Gestionar Reporte ✅ en código; **falta reescribir** `TRAZABILIDAD_DIAGRAMAS.md` (apunta a rutas/Edge Functions viejas) |
-| Generación y ejecución de pruebas | ✅ | 33 tests (Vitest) en `tests/` (`npm test`) + `docs/plan_pruebas.md` con registro |
+| Generación y ejecución de pruebas | ✅ | tests (Vitest) en `tests/` (`npm test`) + `docs/plan_pruebas.md` con registro |
 | Documentación Técnica + Manual de Usuario | ❌ | **Falta crear** `docs/manual_tecnico.md` (instalación/despliegue) y `docs/manual_usuario.md` (capturas de los flujos) |
 | Bibliografía consultada | 🟡 | Ampliar |
 

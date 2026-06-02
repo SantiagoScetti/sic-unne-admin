@@ -5,7 +5,9 @@ import { Reporte } from '@/src/domain/reporte/Reporte';
 import type { ReporteData } from '@/src/domain/reporte/tipos';
 
 // =============================================================================
-// Servicio de aplicación C-01 — orquesta Estado + Estrategia + Observador.
+// Servicio de aplicación C-01 — orquestador del caso de uso.
+// Delega: valida la transición (patrón Estado en la entidad Reporte), aplica la
+// sanción (usuarioRepo), notifica (notificacionRepo) y audita (auditoriaRepo).
 // Se prueba con repositorios FALSOS inyectados (sin base de datos).
 // =============================================================================
 
@@ -38,7 +40,7 @@ function build(reporteInicial: Reporte) {
 }
 
 describe('ServicioResolucionReporte — resolver()', () => {
-  it('resuelve un reporte pendiente con suspensión temporal (los 3 patrones)', async () => {
+  it('resuelve un reporte pendiente con suspensión temporal (delega cada paso)', async () => {
     const { servicio, reporteRepo, usuarioRepo, notificacionRepo, auditoriaRepo } = build(mkReporte());
 
     const r = await servicio.resolver({
@@ -49,11 +51,11 @@ describe('ServicioResolucionReporte — resolver()', () => {
       admin_id: 2,
     });
 
-    expect(r.estado).toBe('Resuelto');                              // (1) Estado
+    expect(r.estado).toBe('Resuelto');                              // transición (patrón Estado)
     expect(reporteRepo.guardar).toHaveBeenCalledTimes(1);
-    expect(usuarioRepo.suspender).toHaveBeenCalledWith(20, '2026-12-31'); // (2) Estrategia
-    expect(notificacionRepo.crearVarias).toHaveBeenCalledTimes(1);  // (3) Observador
-    expect(auditoriaRepo.registrar).toHaveBeenCalledTimes(1);       // (3) Observador
+    expect(usuarioRepo.suspender).toHaveBeenCalledWith(20, '2026-12-31'); // efecto de la acción
+    expect(notificacionRepo.crearVarias).toHaveBeenCalledTimes(1);  // notificación
+    expect(auditoriaRepo.registrar).toHaveBeenCalledTimes(1);       // auditoría
     expect(auditoriaRepo.registrar.mock.calls[0][0].id_admin).toBe(2);
   });
 
