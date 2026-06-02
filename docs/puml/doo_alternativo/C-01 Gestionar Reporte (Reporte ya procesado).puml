@@ -1,0 +1,28 @@
+@startuml
+title Diagrama de Secuencia DOO: C-01 Gestionar Reporte (Alternativo: Reporte ya gestionado)
+
+skinparam style strictuml
+skinparam ParticipantPadding 30
+skinparam BoxPadding 12
+autonumber
+
+actor Administrador
+participant "Sistema (Interfaz)" as Sistema
+participant "reporte : Reporte"  as Reporte
+
+Administrador -> Sistema : selecciona accion y confirma
+activate Sistema
+Sistema -> Reporte : resolver(accion)
+activate Reporte
+note right of Reporte
+  El reporte ya esta en un estado TERMINAL
+  ('Resuelto' o 'Desestimado'). El comportamiento
+  por defecto del PATRON ESTADO rechaza la transicion.
+end note
+Reporte -> Reporte : transicion invalida
+Reporte --> Sistema : ReporteYaProcesadoError\n(codigo: CONFLIC_ALREADY_PROCESSED)
+deactivate Reporte
+Sistema --> Administrador : "Hubo un error al resolver el reporte.\nReporte ya gestionado."
+deactivate Sistema
+
+@enduml

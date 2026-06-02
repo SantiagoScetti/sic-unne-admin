@@ -1,0 +1,45 @@
+@startuml
+title Diagrama de Secuencia DOO: C-03 Importar datos masivamente (Alternativo: CSV con errores/duplicados)
+
+skinparam style strictuml
+skinparam ParticipantPadding 30
+skinparam BoxPadding 12
+autonumber
+
+actor Administrador
+participant "Sistema (Interfaz)" as Sistema
+participant "csvParser"          as Parser
+
+Administrador -> Sistema : "Importar CSV" y selecciona el archivo
+activate Sistema
+
+Sistema -> Parser : validarFormatoArchivo(archivo)
+activate Parser
+Parser --> Sistema : formato OK
+deactivate Parser
+
+Sistema -> Parser : parsearCSV(archivo)
+activate Parser
+Parser --> Sistema : filas
+deactivate Parser
+
+Sistema -> Parser : validarEsquema(filas)
+activate Parser
+Parser --> Sistema : esquema OK
+deactivate Parser
+
+Sistema -> Parser : detectarDuplicados(filas)
+activate Parser
+Parser --> Sistema : se detectaron duplicados
+deactivate Parser
+
+note right of Sistema
+  La validacion ocurre en el CLIENTE, ANTES de
+  invocar al backend. Al detectar errores, se corta
+  el flujo: NO se llama a insertar() de ninguna entidad.
+end note
+
+Sistema --> Administrador : "Se encontraron datos duplicados,\npor favor verifique el archivo"
+deactivate Sistema
+
+@enduml

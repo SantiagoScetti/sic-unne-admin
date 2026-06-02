@@ -15,15 +15,12 @@ export interface RegistroAuditoria {
 
 export class AuditoriaRepositorio {
   async registrar(registro: RegistroAuditoria): Promise<void> {
-    const supabase = getSupabaseServer();
-    const { error } = await supabase.from('auditoria_administrativa').insert({
-      id_admin: registro.id_admin,
-      id_usuario_afectado: registro.id_usuario_afectado,
-      accion: registro.accion,
-      detalles: registro.detalles,
-      fecha: new Date().toISOString(),
-    });
-
-    if (error) throw new Error(error.message);
+    // Simplificación de base de datos: La tabla 'auditoria_administrativa' fue eliminada
+    // por simplificación del alcance. Se simula para mantener la trazabilidad OO.
+    console.log(
+      `[Auditoría simulada] Admin #${registro.id_admin} ejecutó acción "${registro.accion}" ` +
+      `sobre Usuario Afectado #${registro.id_usuario_afectado}. Detalles:`,
+      registro.detalles
+    );
   }
 }

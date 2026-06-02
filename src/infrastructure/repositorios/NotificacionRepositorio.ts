@@ -26,16 +26,11 @@ export class NotificacionRepositorio {
   async crearVarias(notificaciones: NuevaNotificacion[]): Promise<void> {
     if (notificaciones.length === 0) return;
 
-    const supabase = getSupabaseServer();
-    const filas = notificaciones.map((n) => ({
-      id_usuario: n.id_usuario,
-      tipo: n.tipo,
-      mensaje: n.mensaje,
-      leido: false,
-      fecha: new Date().toISOString(),
-    }));
-
-    const { error } = await supabase.from('notificacion').insert(filas);
-    if (error) throw new Error(error.message);
+    // Simplificación de base de datos: La tabla 'notificacion' fue eliminada del backend
+    // por simplificación del alcance. Se simula para mantener la trazabilidad OO.
+    console.log(
+      `[Notificación simulada] Creando ${notificaciones.length} notificaciones:`,
+      notificaciones.map((n) => `Usuario #${n.id_usuario} (${n.tipo}): "${n.mensaje}"`)
+    );
   }
 }

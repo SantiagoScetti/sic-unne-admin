@@ -1,21 +1,13 @@
 # Trazabilidad de Diagramas ↔ Código (DOO)
 
-Este documento te deja **seguir cada diagrama de secuencia paso por paso y ver dónde
-está ese paso en el código**. Es la herramienta para defender en la exposición que
-"cada flecha del diagrama es una función real" — que es lo que la cátedra pide.
+Este documento te deja **seguir cada diagrama de secuencia paso por paso y ver dónde está ese paso en el código**. Es la herramienta para defender en la exposición que "cada flecha del diagrama es una función real".
 
 ## Cómo leer un diagrama como si fuera el código
 
-1. **Cada línea de vida = una clase/archivo.** El "orquestador" (la columna que envía
-   la mayoría de las flechas) es el `Servicio…`.
+1. **Cada línea de vida = una clase/archivo.** El "orquestador" (la columna que envía la mayoría de las flechas) es el `Servicio…`.
 2. **Cada flecha = una llamada a un método** que existe en la clase de destino.
-3. **Recorrer el diagrama = leer el método del orquestador de arriba hacia abajo.** Para
-   C-01, abrí `ServicioResolucionReporte.resolver()` y seguilo línea por línea: vas a ver
-   los mensajes en el mismo orden que el diagrama.
-4. **La primera flecha `Sistema (Interfaz) → Servicio` no muestra el salto HTTP.** En el
-   código esa flecha se realiza en 3 saltos de plomería: el cliente HTTP hace `fetch`, la
-   API Route recibe, y recién ahí se llama al Servicio. El diagrama OO abstrae eso (igual
-   que los ejemplos que la profe aprobó).
+3. **Recorrer el diagrama = leer el método del orquestador de arriba hacia abajo.** Para C-01, abrí `ServicioResolucionReporte.resolver()` y seguilo línea por línea: vas a ver los mensajes en el mismo orden que el diagrama.
+4. **La primera flecha `Sistema (Interfaz) → Servicio` no muestra el salto HTTP.** En el código esa flecha se realiza en 3 saltos de plomería: el cliente HTTP hace `fetch`, la API Route recibe, y recién ahí se llama al Servicio. El diagrama OO abstrae eso.
 
 ## Mapa de capas → carpetas → objetos del diagrama
 
@@ -23,38 +15,31 @@ está ese paso en el código**. Es la herramienta para defender en la exposició
 |---|---|---|
 | Presentación | `src/pages/*.jsx`, `src/components/`, `src/services/*` (cliente HTTP) | `Sistema (Interfaz)`, `:csvParser` |
 | Dominio (orquestador + entidad) | `src/domain/` | `:ServicioResolucionReporte`, `:ServicioComision`, `reporte:Reporte`, `comision:Comision`, `estado:EstadoPendiente/Resuelto` |
-| Persistencia | `src/infrastructure/repositorios/` | `:ReporteRepositorio`, `:UsuarioRepositorio`, `:NotificacionRepositorio`, `:AuditoriaRepositorio`, `:ComisionRepositorio` |
+| Persistencia | `src/infrastructure/repositorios/` | `:ReporteRepositorio`, `:UsuarioRepositorio`, `:ComisionRepositorio` |
 
-> El **patrón Estado** NO se marca en estos diagramas (se marca con un recuadro en el
-> Diagrama de Clases / UML). Acá los objetos `estado:EstadoPendiente` y la delegación
-> `reporte → estado.resolver()` aparecen simplemente porque **así funciona el código**.
+> El **patrón Estado** NO se marca en estos diagramas (se marca con un recuadro en el Diagrama de Clases / UML). Acá los objetos `estado:EstadoPendiente` y la delegación `reporte → estado.resolver()` aparecen simplemente porque **así funciona el código**.
 
 ---
 
 ## C-01 · Gestionar Reporte (Caso Normal)
 
-> Archivo de código central: `src/domain/reporte/ServicioResolucionReporte.ts`
-> (método `resolver()`, línea 76). Leelo de arriba a abajo: es el diagrama.
+> Archivo de código central: `src/domain/reporte/ServicioResolucionReporte.ts` (método `resolver()`, línea 51).
 
 | # | Mensaje del diagrama | Dónde está en el código |
 |---|---|---|
-| 2 | `Interfaz → resolver(...)` | `ReportesPage.jsx` → `resolverReporte()` `src/services/reportes/reporte.service.js:70` → `src/pages/api/reportes/[id].js:69` → `ServicioResolucionReporte.resolver()` `ServicioResolucionReporte.ts:76` |
-| 3 | `obtenerPorId(id_reporte)` | `resolver()` llama a `cargar()` `:206` → `ReporteRepositorio.obtenerPorId()` `src/infrastructure/repositorios/ReporteRepositorio.ts:12` |
-| 5 | `obtenerAdminPorDefecto()` *(solo si no se envió admin_id)* | `resolverAdminId()` `:212` → `UsuarioRepositorio.obtenerAdminPorDefecto()` `UsuarioRepositorio.ts:30` |
-| 7 | `reporte.resolver(accion)` | `ServicioResolucionReporte.ts:81` → `Reporte.resolver()` `src/domain/reporte/Reporte.ts:50` |
+| 2 | `Interfaz → resolver(...)` | `ReportesPage.jsx` → `resolverReporte()` `src/services/reportes/reporte.service.js:70` → `src/pages/api/reportes/[id].js:69` → `ServicioResolucionReporte.resolver()` `ServicioResolucionReporte.ts:51` |
+| 3 | `obtenerPorId(id_reporte)` | `resolver()` llama a `cargar()` `:104` → `ReporteRepositorio.obtenerPorId()` `src/infrastructure/repositorios/ReporteRepositorio.ts:12` |
+| 5 | `obtenerAdminPorDefecto()` *(solo si no se envió admin_id)* | `resolverAdminId()` `:110` → `UsuarioRepositorio.obtenerAdminPorDefecto()` `UsuarioRepositorio.ts:30` |
+| 7 | `reporte.resolver(accion)` | `ServicioResolucionReporte.ts:56` → `Reporte.resolver()` `src/domain/reporte/Reporte.ts:50` |
 | 8 | `estado.resolver(reporte, accion)` | `Reporte.ts:50` delega en `this._estado` → `EstadoPendiente.resolver()` `src/domain/reporte/estados/EstadoPendiente.ts:17` |
 | 9 | `registrarAccion(accion)` | `EstadoPendiente.ts:18` → `Reporte.registrarAccion()` `Reporte.ts:46` |
 | 10 | `transicionarA(EstadoResuelto)` | `EstadoPendiente.ts:19` → `Reporte.transicionarA()` `Reporte.ts:45` |
-| 13 | `asignarAdmin(id_admin)` | `ServicioResolucionReporte.ts:82` → `Reporte.asignarAdmin()` `Reporte.ts:54` |
-| 14 | `guardar(reporte)` | `ServicioResolucionReporte.ts:83` → `ReporteRepositorio.guardar()` `ReporteRepositorio.ts:28` |
-| 16 | `suspender(receptor_id, fechaHasta)` | helper interno `aplicarEfecto()` `:119` → `UsuarioRepositorio.suspender()` `UsuarioRepositorio.ts:15` |
-| 18 | `crearVarias(notificaciones)` | helper interno `notificar()` `:164` → `NotificacionRepositorio.crearVarias()` `NotificacionRepositorio.ts:26` |
-| 20 | `registrar(id_admin, accion, id_reporte)` | helper interno `auditar()` `:186` → `AuditoriaRepositorio.registrar()` `AuditoriaRepositorio.ts:17` |
-| 22 | `200 → reporte resuelto` | `/api/reportes/[id].js:86` (respuesta) → `reporte.service.js:90` |
+| 13 | `asignarAdmin(id_admin)` | `ServicioResolucionReporte.ts:57` → `Reporte.asignarAdmin()` `Reporte.ts:54` |
+| 14 | `guardar(reporte)` | `ServicioResolucionReporte.ts:58` → `ReporteRepositorio.guardar()` `ReporteRepositorio.ts:28` |
+| 16 | `suspender(receptor_id, fechaHasta)` | helper interno `aplicarEfecto()` `:71` → `UsuarioRepositorio.suspender()` `UsuarioRepositorio.ts:15` |
+| 18 | `200 → reporte resuelto` | `/api/reportes/[id].js:86` (respuesta) → `reporte.service.js:90` |
 
-> Los pasos 16/18/20 ocurren dentro de los métodos privados `aplicarEfecto()`,
-> `notificar()` y `auditar()` del Servicio (antes eran los patrones Estrategia y
-> Observador; ahora son llamadas directas, **idénticas al diagrama**).
+---
 
 ## C-01 · Gestionar Reporte (Alternativo: reporte ya gestionado)
 
@@ -94,8 +79,7 @@ está ese paso en el código**. Es la herramienta para defender en la exposició
 
 ## C-03 · Importar Datos Masivamente (Caso Normal)
 
-> Código central: `src/domain/comision/ServicioComision.ts` (método `importarMasivo()`,
-> línea 122). El bucle del diagrama es el `for (const f of filas)` de ese método.
+> Código central: `src/domain/comision/ServicioComision.ts` (método `importarMasivo()`, línea 122).
 
 | # | Mensaje del diagrama | Dónde está en el código |
 |---|---|---|
@@ -120,15 +104,4 @@ está ese paso en el código**. Es la herramienta para defender en la exposició
 | # | Mensaje del diagrama | Dónde está en el código |
 |---|---|---|
 | 6-9 | `validarEsquema / detectarDuplicados / detectarIncompletos / detectarFormatosInvalidos` devuelven errores | `csvParser.js:64 / 90 / 116 / 140` |
-| final | `muestra error, NO invoca al Servicio` | `EstructuraPage.jsx` corta el flujo antes de `insertar()` — el dominio no se toca |
-
----
-
-## Cambios de código aplicados (para que diagrama ≡ código)
-
-- Se dejó **un solo patrón en el código: Estado** (`src/domain/reporte/estados/`).
-- Se **eliminaron** del código los patrones Estrategia (`acciones/`) y Observador
-  (`eventos/`); su lógica quedó **inline** en `ServicioResolucionReporte` como llamadas
-  directas (`aplicarEfecto`, `notificar`, `auditar`). Por eso el diagrama muestra al
-  Servicio llamando directo a `suspender`, `crearVarias` y `registrar`.
-- Los 23 tests (`npm test`) siguen pasando.
+| final | `muestra error, NO invoca al Servicio` | `EstructuraPage.jsx` corta el flujo antes de `insertar()` |

@@ -1,0 +1,71 @@
+@startuml
+title Diagrama de Secuencia DOO: C-01 Gestionar Reporte y Resolucion de Conflictos (Caso Normal)
+
+skinparam style strictuml
+skinparam ParticipantPadding 30
+skinparam BoxPadding 12
+autonumber
+
+' ─────────────────────────────────────────────────────────────────────────────
+' Lineas de vida = objetos que colaboran (DOO). NO Frontend/Backend/DB.
+' "Sistema (Interfaz)" actua como ORQUESTADOR: invoca a cada entidad y evalua el
+' resultado feliz, delegando el trabajo (no lo hace el mismo).
+' Cada mensaje = un metodo REAL del codigo, en espanol y con sus parametros.
+' ─────────────────────────────────────────────────────────────────────────────
+
+actor Administrador
+participant "Sistema (Interfaz)"   as Sistema
+participant "reporte : Reporte"    as Reporte
+participant "usuario : Usuario"    as Usuario
+
+Administrador -> Sistema : ingresa al panel y abre "Reportes"
+activate Sistema
+Sistema -> Reporte : obtenerReportes(filtroEstado)
+activate Reporte
+Reporte --> Sistema : listaReportes
+deactivate Reporte
+Sistema --> Administrador : muestra el listado de reportes
+deactivate Sistema
+
+Administrador -> Sistema : selecciona un reporte ("Abrir")
+activate Sistema
+Sistema -> Reporte : obtenerDetalle(id_reporte)
+activate Reporte
+Reporte --> Sistema : datosReporte
+deactivate Reporte
+Sistema --> Administrador : muestra el modal de resolucion
+deactivate Sistema
+
+Administrador -> Sistema : selecciona accion y confirma\n(accion, fechaHasta, observaciones, admin_id)
+activate Sistema
+
+Sistema -> Reporte : resolver(accion)
+activate Reporte
+note right of Reporte
+  PATRON ESTADO: solo un reporte 'Pendiente'
+  acepta resolver(). La entidad delega en su
+  objeto-estado actual.
+end note
+Reporte -> Reporte : registrarAccion(accion)
+Reporte -> Reporte : transicionarA(EstadoResuelto)
+Reporte --> Sistema : ok
+deactivate Reporte
+
+Sistema -> Reporte : asignarAdmin(admin_id)
+Sistema -> Reporte : guardar()
+
+alt accion = "Suspender Temporalmente" o "Suspender Indefinidamente"
+  Sistema -> Usuario : suspender(fechaHasta)
+  activate Usuario
+  note right of Usuario
+    Suspende al usuario receptor y persiste
+    el cambio (estado = 'Suspendido').
+  end note
+  Usuario --> Sistema : ok
+  deactivate Usuario
+end
+
+Sistema --> Administrador : "Accion aplicada con exito"
+deactivate Sistema
+
+@enduml

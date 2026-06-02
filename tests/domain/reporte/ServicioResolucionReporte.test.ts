@@ -28,20 +28,16 @@ const mkReporte = (over: Partial<ReporteData> = {}) =>
 function build(reporteInicial: Reporte) {
   const reporteRepo = { obtenerPorId: vi.fn(async () => reporteInicial), guardar: vi.fn() };
   const usuarioRepo = { suspender: vi.fn(), obtenerAdminPorDefecto: vi.fn(async () => 1) };
-  const notificacionRepo = { crearVarias: vi.fn() };
-  const auditoriaRepo = { registrar: vi.fn() };
   const servicio = new ServicioResolucionReporte(
     reporteRepo as any,
     usuarioRepo as any,
-    notificacionRepo as any,
-    auditoriaRepo as any,
   );
-  return { servicio, reporteRepo, usuarioRepo, notificacionRepo, auditoriaRepo };
+  return { servicio, reporteRepo, usuarioRepo };
 }
 
 describe('ServicioResolucionReporte — resolver()', () => {
   it('resuelve un reporte pendiente con suspensión temporal (delega cada paso)', async () => {
-    const { servicio, reporteRepo, usuarioRepo, notificacionRepo, auditoriaRepo } = build(mkReporte());
+    const { servicio, reporteRepo, usuarioRepo } = build(mkReporte());
 
     const r = await servicio.resolver({
       id_reporte: 7,
@@ -54,20 +50,16 @@ describe('ServicioResolucionReporte — resolver()', () => {
     expect(r.estado).toBe('Resuelto');                              // transición (patrón Estado)
     expect(reporteRepo.guardar).toHaveBeenCalledTimes(1);
     expect(usuarioRepo.suspender).toHaveBeenCalledWith(20, '2026-12-31'); // efecto de la acción
-    expect(notificacionRepo.crearVarias).toHaveBeenCalledTimes(1);  // notificación
-    expect(auditoriaRepo.registrar).toHaveBeenCalledTimes(1);       // auditoría
-    expect(auditoriaRepo.registrar.mock.calls[0][0].id_admin).toBe(2);
   });
 
   it('usa el administrador por defecto cuando no se pasa admin_id', async () => {
-    const { servicio, usuarioRepo, auditoriaRepo } = build(mkReporte());
+    const { servicio, usuarioRepo } = build(mkReporte());
     await servicio.resolver({ id_reporte: 7, accion: 'Enviar aviso' });
     expect(usuarioRepo.obtenerAdminPorDefecto).toHaveBeenCalledTimes(1);
-    expect(auditoriaRepo.registrar.mock.calls[0][0].id_admin).toBe(1);
   });
 
   it('rechaza con error de conflicto si el reporte ya fue procesado y NO escribe nada', async () => {
-    const { servicio, reporteRepo, usuarioRepo, notificacionRepo, auditoriaRepo } = build(
+    const { servicio, reporteRepo, usuarioRepo } = build(
       mkReporte({ estado: 'Resuelto' }),
     );
 
@@ -77,17 +69,14 @@ describe('ServicioResolucionReporte — resolver()', () => {
 
     expect(reporteRepo.guardar).not.toHaveBeenCalled();
     expect(usuarioRepo.suspender).not.toHaveBeenCalled();
-    expect(notificacionRepo.crearVarias).not.toHaveBeenCalled();
-    expect(auditoriaRepo.registrar).not.toHaveBeenCalled();
   });
 });
 
 describe('ServicioResolucionReporte — desestimar()', () => {
-  it('desestima un reporte pendiente sin aplicar sanción, pero auditando', async () => {
-    const { servicio, usuarioRepo, auditoriaRepo } = build(mkReporte());
+  it('desestima un reporte pendiente sin aplicar sanción', async () => {
+    const { servicio, usuarioRepo } = build(mkReporte());
     const r = await servicio.desestimar({ id_reporte: 7, observaciones: 'no corresponde' });
     expect(r.estado).toBe('Desestimado');
     expect(usuarioRepo.suspender).not.toHaveBeenCalled();
-    expect(auditoriaRepo.registrar).toHaveBeenCalledTimes(1);
   });
 });

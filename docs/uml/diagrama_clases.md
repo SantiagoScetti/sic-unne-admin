@@ -1,30 +1,20 @@
-# Diagrama de Clases del Dominio — SIC-UNNE
+## 1. Diagrama de Clases del DOMINIO (Puro DOO - Vista Conceptual)
 
-Este documento contiene dos vistas complementarias:
-
-1. **Diagrama de Clases de Diseño** (sección 0): las clases reales del código `src/domain/`, con sus **métodos** y la jerarquía del **único patrón de diseño implementado: Estado**. Es la vista que demuestra el Diseño Orientado a Objetos.
-2. **Diagrama de Clases de Datos / Entidades** (secciones 1-2): el mapeo de las tablas (atributos), útil como referencia del modelo persistente.
-
-Se presentan en **Mermaid** (visualización nativa en GitHub/VSCode) y **PlantUML** (sintaxis académica estándar).
-
----
-
-## 0. Diagrama de Clases de DISEÑO (dominio Reporte + Comisión)
-
-> Esta es la vista que refleja el código y el **único patrón de diseño implementado (Estado)**, marcado con un recuadro. Los patrones **Estrategia** y **Observador** quedan como **candidatos documentados** (se describe dónde *podrían* aplicarse) en `docs/uml/patrones_diseno.md`; **no** están en el código.
+> **Esta vista es independiente de la arquitectura y la persistencia.** Contiene **únicamente las entidades del dominio** y sus relaciones de colaboración conceptuales, tal como exige la cátedra para el modelado puramente DOO (sin controladores, servicios de aplicación, repositorios ni detalles tecnológicos).
 
 ```plantuml
 @startuml
 skinparam classAttributeIconSize 0
-title Clases de Diseno - Dominio Reporte (patron Estado) y Comision
+title Diagrama de Clases del Dominio (Puro DOO) - SIC-UNNE
 
-' ───────────── Entidad Reporte (Contexto del patron Estado) ─────────────
-class Reporte <<Context>> {
+' ─── Entidad Reporte y su Maquina de Estados ───
+class Reporte {
   + id_reporte: int
   + emisor_id: int?
   + receptor_id: int
   + id_periodo: int?
   + motivo: string
+  + fecha_alta: string?
   - _estado: EstadoReporte
   - _accionTomada: AccionTomada?
   - _adminId: int?
@@ -35,69 +25,52 @@ class Reporte <<Context>> {
   + transicionarA(e: EstadoReporte): void
   + esPendiente(): boolean
   + emisorEsSistema(): boolean
-  + aFilaPersistible(): object
 }
 
-' ═════════ PATRON DE DISENO IMPLEMENTADO: ESTADO (marcado con recuadro) ═════════
-package "Patron Estado (State)" <<Rectangle>> #LightYellow {
-  abstract class EstadoReporte <<State>> {
-    + {abstract} nombre: string
-    + resolver(r: Reporte, a: AccionTomada): void
-    + desestimar(r: Reporte): void
-  }
-  class EstadoPendiente {
-    + nombre: string
-    + resolver(r: Reporte, a: AccionTomada): void
-    + desestimar(r: Reporte): void
-  }
-  class EstadoResuelto {
-    + nombre: string
-  }
-  class EstadoDesestimado {
-    + nombre: string
-  }
-  EstadoReporte <|-- EstadoPendiente
-  EstadoReporte <|-- EstadoResuelto
-  EstadoReporte <|-- EstadoDesestimado
-}
-Reporte o--> EstadoReporte : estado actual
-
-note bottom of EstadoReporte
-  resolver() y desestimar() de la clase base lanzan
-  ReporteYaProcesadoError (HTTP 409).
-  * EstadoPendiente los SOBRESCRIBE para permitir la transicion.
-  * EstadoResuelto y EstadoDesestimado son terminales:
-    solo definen nombre y HEREDAN el comportamiento que
-    rechaza (por eso no agregan metodos propios).
-end note
-
-' ───────────── Servicio de aplicacion (ORQUESTADOR: delega, no ejecuta) ─────────────
-class ServicioResolucionReporte <<Service>> {
-  + resolver(params): Reporte
-  + desestimar(params): Reporte
-  - aplicarEfecto(reporte, accion, fechaHasta)
-  - notificar(reporte, tipo, mensaje): void
-  - auditar(reporte, accion, adminId, obs, detalle): void
+abstract class EstadoReporte {
+  + {abstract} nombre: string
+  + resolver(r: Reporte, a: AccionTomada): void
+  + desestimar(r: Reporte): void
 }
 
-' ───────────── Repositorios (persistencia) ─────────────
-class ReporteRepositorio <<Repository>> {
-  + obtenerPorId(id): Reporte?
-  + guardar(r: Reporte): void
-}
-class UsuarioRepositorio <<Repository>> {
-  + suspender(id, fechaHasta): void
-  + obtenerAdminPorDefecto(): int?
-}
-class NotificacionRepositorio <<Repository>> {
-  + crearVarias(notificaciones): void
-}
-class AuditoriaRepositorio <<Repository>> {
-  + registrar(registro): void
+class EstadoPendiente {
+  + nombre: string
+  + resolver(r: Reporte, a: AccionTomada): void
+  + desestimar(r: Reporte): void
 }
 
-' ───────────── Dominio Comision (entidad + servicio + repositorio) ─────────────
-class Comision <<Entity>> {
+class EstadoResuelto {
+  + nombre: string
+}
+
+class EstadoDesestimado {
+  + nombre: string
+}
+
+EstadoReporte <|-- EstadoPendiente
+EstadoReporte <|-- EstadoResuelto
+EstadoReporte <|-- EstadoDesestimado
+Reporte "1" o--> "1" EstadoReporte : estado actual
+
+' ─── Entidades de Usuario ───
+class Usuario {
+  + id_usuario: int
+  + nombre: string
+  + apellido: string
+  + documento: int
+  + correo: string
+  + rol: string
+  + suspendido_hasta: date?
+  + suspender(fechaHasta: date?): void
+}
+
+' Relaciones conceptuales de Reporte y Usuario
+Reporte "many" --> "1" Usuario : "reporta a (receptor)"
+Reporte "many" --> "1" Usuario : "creado por (emisor)"
+Reporte "many" --> "1" Usuario : "gestionado por (admin)"
+
+' ─── Entidades del Dominio Academico (Comision) ───
+class Comision {
   + id_comision: int?
   + nombre: string
   + letraDesde: char
@@ -106,49 +79,29 @@ class Comision <<Entity>> {
   + estado: boolean
   + profesoresIds: int[]
   + validar(): void
-  + aFilaPersistible(): object
-}
-class ServicioComision <<Service>> {
-  + listar(filtro): Comision[]
-  + contarActivas(): int
-  + crear(datos): Comision
-  + actualizar(id, datos): Comision
-  + cambiarEstado(id, estado): void
-  + importarMasivo(filas): ResultadoImportacion
-}
-class ComisionRepositorio <<Repository>> {
-  + listar(filtro): Comision[]
-  + existeAsignatura(id): boolean
-  + crear(comision): Comision
-  + vincularProfesores(idComision, ids): void
-  + buscarIdAsignaturaPorNombre(nombre): int?
-  + buscarIdComision(nombre, idAsignatura): int?
-  + buscarIdProfesorPorDocumento(documento): int?
-  + upsertVinculo(idComision, idProfesor): void
 }
 
-' ───────────── Infraestructura compartida (PATRON SINGLETON) ─────────────
-class SupabaseServer <<Singleton>> {
-  + getSupabaseServer(): SupabaseClient
+class Asignatura {
+  + id_asignatura: int
+  + nombre: string
+  + anio_dictado: string
+  + id_periodo: int?
+  + id_carrera: int
 }
 
-' ═════════ Relaciones (SOLO las que existen de verdad en el codigo) ═════════
-ServicioResolucionReporte ..> Reporte
-ServicioResolucionReporte ..> ReporteRepositorio
-ServicioResolucionReporte ..> UsuarioRepositorio
-ServicioResolucionReporte ..> NotificacionRepositorio
-ServicioResolucionReporte ..> AuditoriaRepositorio
-ReporteRepositorio ..> Reporte : reconstruye / persiste
+class Profesor {
+  + id_profesor: int
+  + nombre: string
+  + apellido: string
+  + documento: int
+  + correo: string
+  + estado: boolean
+}
 
-ServicioComision ..> Comision
-ServicioComision ..> ComisionRepositorio
-ComisionRepositorio ..> Comision : crea / persiste
+Comision "many" --> "1" Asignatura : "pertenece a"
+Comision "many" <--> "many" Profesor : "dictada por"
 
-' Todos los repositorios comparten la MISMA instancia (Singleton) -> conecta el grafo
-ReporteRepositorio ..> SupabaseServer
-UsuarioRepositorio ..> SupabaseServer
-NotificacionRepositorio ..> SupabaseServer
-AuditoriaRepositorio ..> SupabaseServer
-ComisionRepositorio ..> SupabaseServer
 @enduml
 ```
+
+1. **Diagrama de Clases del Dominio (Sección 1):** Es la vista conceptual abstracta (DOO Puro). Representa las entidades de negocio, sus atributos y sus colaboraciones conceptuales directas (por ejemplo, que un `Reporte` se asocia con un `Usuario` emisor y receptor, y delega su comportamiento de estado en un `EstadoReporte`). No sabe nada de bases de datos, APIs de Next.js, ni de cómo se persisten los objetos.
