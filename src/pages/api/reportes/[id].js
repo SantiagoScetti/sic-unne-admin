@@ -47,7 +47,7 @@ export default async function handler(req, res) {
 }
 
 // ─── GET: detalle ───────────────────────────────────────────────────────────
-async function handleGet(id_reporte, res) {
+async function handleGet(id_reporte, res) { // C-01: consulta al backend para obtener detalle de un reporte específico, incluyendo datos de emisor y receptor.
   const supabase = getSupabaseServer();
   const { data, error } = await supabase
     .from('reporte')

@@ -64,7 +64,7 @@ const ReportesPage = () => {
       try {
         setError(null);
         setLoading(true);
-        const data = await obtenerReportes();
+        const data = await obtenerReportes(); // C-01: llamada al servicio HTTP para obtener reportes.
         setReportes(data || []);
       } catch (err) {
         console.error("Failed to load reportes", err);
@@ -77,7 +77,6 @@ const ReportesPage = () => {
     fetchReportes();
   }, []);
 
-  // Calculate summary stats
   const totalReportes = reportes.length;
   const pendientesCount = reportes.filter(r => r.estado === 'Pendiente').length;
   const resueltosCount = reportes.filter(r => r.estado === 'Resuelto').length;
@@ -93,7 +92,7 @@ const ReportesPage = () => {
     }
   };
 
-  const handleAbrirModal = (reporte) => {
+  const handleAbrirModal = (reporte) => { // C-01: al abrir modal, se setea el reporte seleccionado para mostrar su detalle.
     setReporteSeleccionado(reporte);
     setIsModalOpen(true);
   };
@@ -109,9 +108,8 @@ const ReportesPage = () => {
     if (!reporteSeleccionado) return;
     setIsSaving(true);
     try {
-      // Una sola llamada: el backend orquesta estado + sanción + auditoría +
-      // notificaciones (patrones Estado, Estrategia y Observador).
-      await resolverReporte(reporteSeleccionado.id_reporte, {
+      // Una sola llamada: el backend orquesta estado + sanción
+      await resolverReporte(reporteSeleccionado.id_reporte, { // C-01: llamada al servicio HTTP para resolver o desestimar un reporte.
         estado: 'Resuelto',
         accion,
         fechaHasta,
@@ -120,7 +118,7 @@ const ReportesPage = () => {
 
       setIsModalOpen(false);
       setReporteSeleccionado(null);
-      setSuccessMsg(`Acción "${accion}" aplicada con éxito`);
+      setSuccessMsg(`Acción "${accion}" aplicada con éxito`); // C-01: mensaje de éxito específico según la acción tomada.
       setTimeout(() => setSuccessMsg(''), 3500);
       await refrescarLista();
     } catch (err) {

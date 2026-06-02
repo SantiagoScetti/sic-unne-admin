@@ -8,7 +8,7 @@
  * obtenerReportes — C-01, paso 1.
  * Devuelve todos los reportes con datos de emisor y receptor.
  */
-export const obtenerReportes = async () => {
+export const obtenerReportes = async () => { // C-01: llamada al backend a través de API Route.
   const res = await fetch('/api/reportes');
   const result = await res.json();
   
@@ -38,7 +38,7 @@ export const obtenerReportesFiltrados = async (estado) => {
  * obtenerDetalleReporte — C-01, paso de detalle.
  * Devuelve un único reporte por ID con todos sus datos relacionados.
  */
-export const obtenerDetalleReporte = async (id_reporte) => {
+export const obtenerDetalleReporte = async (id_reporte) => { // C-01: llamada al backend a través de API Route para obtener detalle de un reporte específico.
   const res = await fetch(`/api/reportes/${id_reporte}`);
   const result = await res.json();
 
@@ -67,7 +67,7 @@ export const obtenerDetalleReporte = async (id_reporte) => {
  * @param {string} [payload.observaciones]
  * @param {number} [payload.admin_id]      - opcional; el server resuelve un admin por defecto
  */
-export const resolverReporte = async (
+export const resolverReporte = async ( // C-01: llamada al backend a través de API Route para resolver o desestimar un reporte.
   id_reporte,
   { estado, accion, fechaHasta, observaciones, admin_id } = {}
 ) => {
