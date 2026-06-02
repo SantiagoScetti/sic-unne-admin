@@ -126,6 +126,9 @@ const ReportesPage = () => {
     } catch (err) {
       if (err.message === 'CONFLIC_ALREADY_PROCESSED') {
         setError("Este reporte ya ha sido procesado por otro administrador. Por favor, recargá la página.");
+        setIsModalOpen(false);
+        setReporteSeleccionado(null);
+        await refrescarLista();
       } else {
         setError(`Error al guardar la acción: ${err.message}`);
       }
@@ -150,6 +153,9 @@ const ReportesPage = () => {
     } catch (err) {
       if (err.message === 'CONFLIC_ALREADY_PROCESSED') {
         setError("Este reporte ya ha sido procesado por otro administrador. Por favor, recargá la página.");
+        setIsModalOpen(false);
+        setReporteSeleccionado(null);
+        await refrescarLista();
       } else {
         setError(`Error al desestimar el reporte: ${err.message}`);
       }
