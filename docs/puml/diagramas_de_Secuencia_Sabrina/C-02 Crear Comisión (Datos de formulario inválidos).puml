@@ -9,7 +9,7 @@ skinparam BoxPadding 12
 autonumber
 
 actor Administrador
-participant "Sistema\n(DenunciasPage)" as Interfaz
+participant "Sistema\n(EstructuraPage)" as Interfaz
 participant "Comision"
 Administrador -> Interfaz: Ingresa a estructura academica
 activate Interfaz
@@ -18,15 +18,25 @@ deactivate Interfaz
 
 Administrador -> Interfaz: Hace click en "Comisiones"
 activate Interfaz
-Interfaz -> Comision: Solicita todas las Comisiones
+Interfaz -> Comision: Solicita lista de Comisiones
 activate Comision
-Comision -> Comision: obtenerComisiones("Todos")
+Comision -> Profesor: Solicita datos de profesores
+activate Profesor
+Profesor -> Profesor: obtenerProfesores(filtroEstado="Activos")
+Profesor --> Comision: Devuelve lista de Profesores
+deactivate Profesor
+Comision -> Comision: obtenerComisiones(filtroEstado="Todos")
 Comision --> Interfaz: Devuelve lista de Comisiones
 deactivate Comision
 Interfaz --> Administrador: Muestra lista de Comisiones
 deactivate Interfaz
 Administrador -> Interfaz: Hace click en '+' (crear comision)
 activate Interfaz
+Interfaz -> Profesor: Solicita lista de Profesores
+activate Profesor
+Profesor -> Profesor: obtenerProfesores(filtroEstado="Activos")
+Profesor --> Interfaz: Devuelve lista de Profesores
+deactivate Profesor
 Interfaz -> Interfaz: setIsComisionModalOpen(true)
 Interfaz --> Administrador: Muestra modal de crear Comision
 deactivate Interfaz

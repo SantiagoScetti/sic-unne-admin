@@ -12,21 +12,37 @@ autonumber
 actor Administrador
 participant "Sistema\n(DenunciasPage)" as Interfaz
 participant "Denuncia"                   as Denuncia
+participant "Usuario"
 
 
 Administrador -> Interfaz: Ingresa al panel administrativo y hace click en "Denuncias"
 activate Interfaz
-Interfaz -> Denuncia: obtenerDenuncias()
+Interfaz -> Denuncia: Solicita lista de Denuncias
 activate Denuncia
+Denuncia -> Denuncia: obtenerDenuncias()
+Denuncia -> Usuario: Solicita datos de receptor_id
+activate Usuario
+Usuario -> Usuario: obtenerPorId(receptor_id)
+Usuario --> Denuncia: Devuelve datos de receptor_id
+deactivate Usuario
 Denuncia --> Interfaz: Devuelve lista de Denuncias
 deactivate Denuncia
 Interfaz --> Administrador: Muestra listado de Denuncias
 deactivate Interfaz
 Administrador -> Interfaz: Hace click en "Abrir" de un Denuncia
 activate Interfaz
-Interfaz -> Denuncia: Solicita detalle del Denuncia
+Interfaz -> Denuncia: Solicita detalle de la Denuncia
 activate Denuncia
 Denuncia -> Denuncia: obtenerDetalleDenuncia(id_denuncia)
+Denuncia -> Usuario: Solicita datos del emisor
+activate Usuario
+Usuario -> Usuario: obtenerPorId(emisor_id)
+Usuario --> Denuncia: Devuelve datos del emisor
+Denuncia -> Usuario: Solicita datos del receptor
+Usuario -> Usuario: obtenerPorId(receptor_id)
+Usuario --> Denuncia: Devuelve datos del receptor
+deactivate Usuario
+
 Denuncia --> Interfaz: Devuelve detalle del Denuncia
 deactivate Denuncia
 Interfaz -> Interfaz: setIsDenunciaModalOpen(true)
@@ -37,9 +53,14 @@ activate Interfaz
 Interfaz -> Denuncia: Solicita resolver Denuncia
 activate Denuncia
 Denuncia -> Denuncia: resolverDenuncia(id_denuncia, {estado, accion, fechaHasta, observaciones, admin_id})
-Denuncia --> Interfaz: Denuncia resuelto
+Denuncia -> Usuario: Solicita id_admin que resuelve la denuncia
+activate Usuario
+Usuario -> Usuario: obtenerAdminPorDefecto()
+Usuario --> Denuncia: Devuelve admin_id
+deactivate Usuario
+Denuncia --> Interfaz: Denuncia resuelta
 deactivate Denuncia
-Interfaz --> Administrador: "Denuncia resuelto con éxito. Se ha notificado a los usuarios"
+Interfaz --> Administrador: "Denuncia resuelta con éxito. Se ha notificado a los usuarios"
 
 deactivate Interfaz
 
