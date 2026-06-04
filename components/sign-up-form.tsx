@@ -42,7 +42,7 @@ export function SignUpForm({
       await signUpUser({
         email,
         password,
-        redirectUrl: `${window.location.origin}/admin/reportes`,
+        redirectUrl: `${window.location.origin}/admin/denuncias`,
       });
       router.push("/auth/sign-up-success");
     } catch (error: unknown) {

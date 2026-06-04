@@ -1,0 +1,44 @@
+@startuml
+
+title Diagrama de Secuencia: C-01 Gestionar Denuncia (Alt: Denuncia ya gestionado)
+
+skinparam style strictuml
+skinparam ParticipantPadding 30
+skinparam BoxPadding 12
+
+autonumber
+
+actor Administrador
+participant "Sistema\n(DenunciasPage)" as Interfaz
+participant "Denuncia"                   as Denuncia
+
+Administrador -> Interfaz: Ingresa al panel administrativo y hace click en "Denuncias"
+activate Interfaz
+Interfaz -> Denuncia: obtenerDenuncias()
+activate Denuncia
+Denuncia --> Interfaz: Devuelve lista de Denuncias
+deactivate Denuncia
+Interfaz --> Administrador: Muestra listado de Denuncias
+deactivate Interfaz
+Administrador -> Interfaz: Hace click en "Abrir" de un Denuncia
+activate Interfaz
+Interfaz -> Denuncia: Solicita detalle del Denuncia
+activate Denuncia
+Denuncia -> Denuncia: obtenerDetalleDenuncia(id_denuncia)
+Denuncia --> Interfaz: Devuelve detalle del Denuncia
+deactivate Denuncia
+Interfaz -> Interfaz: setIsDenunciaModalOpen(true)
+Interfaz --> Administrador: Muestra modal para resolver el Denuncia
+deactivate Interfaz
+Administrador -> Interfaz: Selecciona acción y hace click en "Confirmar"
+activate Interfaz
+Interfaz -> Denuncia: Solicita resolver Denuncia
+activate Denuncia
+Denuncia -> Denuncia: resolverDenuncia(id_denuncia, {estado="Resuelto", accion, fechaHasta, observaciones, admin_id})
+Denuncia --> Interfaz: Error: Denuncia ya gestionado
+deactivate Denuncia
+Interfaz --> Administrador: "Hubo un error al resolver el denuncia. Denuncia ya gestionado."
+
+deactivate Interfaz
+
+@enduml

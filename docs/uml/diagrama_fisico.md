@@ -23,8 +23,8 @@ erDiagram
         date fecha_suspension_hasta
     }
 
-    reporte {
-        integer id_reporte PK
+    denuncia {
+        integer id_denuncia PK
         integer emisor_id FK
         integer receptor_id FK
         integer id_periodo FK
@@ -190,14 +190,14 @@ erDiagram
     usuario ||--o{ comprobante : "id_usuario_1"
     usuario ||--o{ comprobante : "id_usuario_2"
 
-    usuario ||--o{ reporte : "emisor_id"
-    usuario ||--o{ reporte : "receptor_id"
-    usuario ||--o{ reporte : "admin_id"
+    usuario ||--o{ denuncia : "emisor_id"
+    usuario ||--o{ denuncia : "receptor_id"
+    usuario ||--o{ denuncia : "admin_id"
 
     usuario ||--o{ auditoria_administrativa : "id_admin"
     usuario ||--o{ auditoria_administrativa : "id_usuario_afectado"
 
-    periodo ||--o{ reporte : "id_periodo"
+    periodo ||--o{ denuncia : "id_periodo"
     periodo ||--o{ asignatura : "id_periodo"
 
     edificio ||--o{ facultad : "id_edificio"

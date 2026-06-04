@@ -9,7 +9,7 @@ skinparam BoxPadding 12
 autonumber
 
 actor Administrador
-participant "Sistema\n(ReportesPage)" as Interfaz
+participant "Sistema\n(DenunciasPage)" as Interfaz
 participant "Comision"
 participant "Profesor"
 

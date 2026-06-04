@@ -37,7 +37,7 @@ const AdminLayout = ({ adminEmail, children }) => {
         <div>
           <h2 style={{ marginBottom: '40px', paddingLeft: '8px', fontSize: '1.5rem', fontWeight: 'bold' }}>SIC-UNNE</h2>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <Link href="/admin/reportes" style={getLinkStyle('/admin/reportes')}>Reportes</Link>
+            <Link href="/admin/denuncias" style={getLinkStyle('/admin/denuncias')}>Denuncias</Link>
             <Link href="/admin/estructura" style={getLinkStyle('/admin/estructura')}>Estructura Académica</Link>
           </nav>
         </div>

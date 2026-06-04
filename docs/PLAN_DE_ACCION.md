@@ -1,12 +1,12 @@
 # Plan de Acción — SIC-UNNE (Grupo 50)
 
-> Estado al **2026-05-28**. Funcionalidades en alcance: **Crear Comisión (C-02)**, **Importar CSV (C-03)**, **Gestionar Reporte (C-01)**.
+> Estado al **2026-05-28**. Funcionalidades en alcance: **Crear Comisión (C-02)**, **Importar CSV (C-03)**, **Gestionar Denuncia (C-01)**.
 > Leyenda: ✅ listo · 🟡 existe pero hay que actualizar/renderizar · ❌ falta.
 
 ## Arquitectura (decidida)
 Cliente-Servidor **en capas**, backend propio Next.js API Routes. **NO BaaS, NO MVC.** Supabase = solo PostgreSQL + Auth.
 `React (src/app, src/pages/*.jsx) → Servicios HTTP (src/services) → Controladores (src/pages/api) → Dominio (src/domain) → Repositorios (src/infrastructure) → Supabase`
-**3 patrones** (dominio de Reporte, C-01): **Estado** (`domain/reporte/estados`), **Estrategia** (`acciones`), **Observador** (`eventos`). Auxiliares: **Singleton** + **Repositorios** (`src/infrastructure`).
+**3 patrones** (dominio de Denuncia, C-01): **Estado** (`domain/denuncia/estados`), **Estrategia** (`acciones`), **Observador** (`eventos`). Auxiliares: **Singleton** + **Repositorios** (`src/infrastructure`).
 
 ## PRIMER AVANCE — checklist oficial
 | Ítem | Estado | Dónde está / qué falta |
@@ -29,13 +29,13 @@ Cliente-Servidor **en capas**, backend propio Next.js API Routes. **NO BaaS, NO 
 |---|---|---|
 | Mapeo a Modelo de BD Física | ✅ | DER Actualizado en dbdiagram.dbml|
 | Diagrama de Clases | 🟡 | `docs/uml/diagrama_clases.md` (vista diseño con métodos + vista datos) — falta **renderizar e insertar en informe** |
-| Funcionalidad principal + trazabilidad | 🟡 | C-01 Gestionar Reporte ✅ en código; **falta reescribir** `TRAZABILIDAD_DIAGRAMAS.md` (apunta a rutas/Edge Functions viejas) |
+| Funcionalidad principal + trazabilidad | 🟡 | C-01 Gestionar Denuncia ✅ en código; **falta reescribir** `TRAZABILIDAD_DIAGRAMAS.md` (apunta a rutas/Edge Functions viejas) |
 | Generación y ejecución de pruebas | ✅ | tests (Vitest) en `tests/` (`npm test`) + `docs/plan_pruebas.md` con registro |
 | Documentación Técnica + Manual de Usuario | ❌ | **Falta crear** `docs/manual_tecnico.md` (instalación/despliegue) y `docs/manual_usuario.md` (capturas de los flujos) |
 | Bibliografía consultada | 🟡 | Ampliar |
 
 ## ✅ Hecho a nivel código (resumen)
-- **C-01** resolver/desestimar en 1 llamada (`PATCH /api/reportes/[id]`) con los 3 patrones; caso "ya gestionado" → 409.
+- **C-01** resolver/desestimar en 1 llamada (`PATCH /api/denuncias/[id]`) con los 3 patrones; caso "ya gestionado" → 409.
 - **C-02** Crear Comisión en 3 capas (`POST /api/comisiones`): valida asignatura + crea + vincula profesores; validación estricta de letras (Desde < Hasta).
 - **C-03** Importar CSV: la parte de comisiones va por el API.
 - Dominio en TypeScript con inyección de dependencias; `tsc --noEmit` sin errores; 33 tests verdes.
@@ -49,5 +49,5 @@ Cliente-Servidor **en capas**, backend propio Next.js API Routes. **NO BaaS, NO 
 
 ## Notas técnicas
 - Requiere `SUPABASE_SERVICE_ROLE_KEY` en `.env.local` (sin `NEXT_PUBLIC_`), usada server-side.
-- Hallazgos del schema ya corregidos en código: `reporte` no tiene `resolucion_admin` (obs. van a `auditoria.detalles`); `reporte.estado` ∈ {Pendiente, Resuelto, Desestimado}; `notificacion.tipo` válidos {Reporte, Aviso, Bloqueo, ...}; `auditoria.id_admin` NOT NULL.
+- Hallazgos del schema ya corregidos en código: `denuncia` no tiene `resolucion_admin` (obs. van a `auditoria.detalles`); `denuncia.estado` ∈ {Pendiente, Resuelto, Desestimado}; `notificacion.tipo` válidos {Denuncia, Aviso, Bloqueo, ...}; `auditoria.id_admin` NOT NULL.
 - **TODO**: la auditoría usa un admin por defecto si el front no manda `admin_id`; reemplazar por el admin de la sesión real al cablear auth en las API Routes.

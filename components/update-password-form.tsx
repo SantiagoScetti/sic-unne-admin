@@ -32,7 +32,7 @@ export function UpdatePasswordForm({
     try {
       await updateUserPassword(password);
       // Update this route to redirect to an authenticated route. The user already has an active session.
-      router.push("/admin/reportes");
+      router.push("/admin/denuncias");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {

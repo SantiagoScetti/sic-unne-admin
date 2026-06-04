@@ -2,7 +2,7 @@
 
 Mapa de carpetas y archivos para no perderte. La app es **un solo proyecto Next.js**
 (no es un monorepo). La lógica de las 2 funcionalidades que demostramos
-(**Comisión** y **Reporte**) está organizada en **3 capas**.
+(**Comisión** y **Denuncia**) está organizada en **3 capas**.
 
 ## Las 3 capas (lo más importante)
 
@@ -25,7 +25,7 @@ matchinggrupo50/
 │   ├── app/                      [Capa 1] Next.js App Router = LAS RUTAS REALES
 │   │   ├── admin/
 │   │   │   ├── estructura/page.tsx   Ruta /admin/estructura → monta <EstructuraPage/>
-│   │   │   └── reportes/page.tsx     Ruta /admin/reportes  → monta <ReportesPage/>
+│   │   │   └── denuncias/page.tsx     Ruta /admin/denuncias  → monta <DenunciasPage/>
 │   │   ├── auth/                     Login, registro, recupero (rutas /auth/*)
 │   │   ├── layout.tsx               Layout raíz
 │   │   ├── page.tsx                 Home: redirige a /auth/login
@@ -36,31 +36,31 @@ matchinggrupo50/
 │   │   │   ├── comisiones/index.js     POST/GET comisiones (C-02 y C-03)
 │   │   │   ├── comisiones/[id].js      PUT/PATCH una comisión
 │   │   │   ├── comisiones/contar-activas.js
-│   │   │   ├── reportes/index.js       GET reportes
-│   │   │   ├── reportes/[id].js        PATCH resolver/desestimar (C-01)
+│   │   │   ├── denuncias/index.js       GET denuncias
+│   │   │   ├── denuncias/[id].js        PATCH resolver/desestimar (C-01)
 │   │   │   └── _lib/supabaseServer.js  Cliente Supabase del servidor (para las API)
-│   │   ├── ReportesPage.jsx     [Capa 1] Pantalla grande de reportes (C-01)
+│   │   ├── DenunciasPage.jsx     [Capa 1] Pantalla grande de denuncias (C-01)
 │   │   └── EstructuraPage.jsx   [Capa 1] Pantalla grande de estructura académica (C-02/C-03)
 │   │
 │   ├── layouts/AdminLayout.jsx  [Capa 1] Marco visual del panel admin
 │   │
 │   ├── components/features/modals/   [Capa 1] Los formularios modales
 │   │   ├── addComisionModal.tsx       (C-02: crear comisión)
-│   │   ├── accionReporteModal.tsx     (C-01: elegir acción del reporte)
+│   │   ├── accionDenunciaModal.tsx     (C-01: elegir acción de la denuncia)
 │   │   └── add{Asignatura,Carrera,Edificio,Facultad,Periodo,Profesor}Modal.tsx
 │   │
 │   ├── domain/                  [Capa 2] DOMINIO — reglas de negocio (sin SQL)
-│   │   ├── reporte/                   ← Funcionalidad principal (C-01)
-│   │   │   ├── Reporte.ts             Entidad rica (Contexto del patrón Estado)
-│   │   │   ├── ServicioResolucionReporte.ts   ORQUESTADOR: delega cada paso
+│   │   ├── denuncia/                   ← Funcionalidad principal (C-01)
+│   │   │   ├── Denuncia.ts             Entidad rica (Contexto del patrón Estado)
+│   │   │   ├── ServicioResolucionDenuncia.ts   ORQUESTADOR: delega cada paso
 │   │   │   ├── estados/               ★ PATRÓN ESTADO (el único implementado)
-│   │   │   │   ├── EstadoReporte.ts        (base abstracta)
+│   │   │   │   ├── EstadoDenuncia.ts        (base abstracta)
 │   │   │   │   ├── EstadoPendiente.ts      (permite resolver/desestimar)
 │   │   │   │   ├── EstadoResuelto.ts       (terminal → 409)
 │   │   │   │   ├── EstadoDesestimado.ts    (terminal → 409)
 │   │   │   │   └── index.ts                (fábrica crearEstado)
-│   │   │   ├── errores.ts             ReporteYaProcesadoError
-│   │   │   └── tipos.ts               Tipos (EstadoReporteNombre, AccionTomada)
+│   │   │   ├── errores.ts             DenunciaYaProcesadaError
+│   │   │   └── tipos.ts               Tipos (EstadoDenunciaNombre, AccionTomada)
 │   │   └── comision/                  ← C-02 y C-03
 │   │       ├── Comision.ts            Entidad (valida sus reglas)
 │   │       ├── ServicioComision.ts    Orquestador (crear / importarMasivo)
@@ -68,7 +68,7 @@ matchinggrupo50/
 │   │
 │   ├── infrastructure/         [Capa 3] PERSISTENCIA — único lugar con acceso a Supabase
 │   │   ├── repositorios/
-│   │   │   ├── ReporteRepositorio.ts        obtenerPorId / guardar
+│   │   │   ├── DenunciaRepositorio.ts        obtenerPorId / guardar
 │   │   │   ├── UsuarioRepositorio.ts        suspender / obtenerAdminPorDefecto
 │   │   │   ├── NotificacionRepositorio.ts   crearVarias
 │   │   │   ├── AuditoriaRepositorio.ts      registrar
@@ -76,7 +76,7 @@ matchinggrupo50/
 │   │   └── supabaseServer.ts        Cliente Supabase del servidor (Singleton)
 │   │
 │   └── services/               ⚠ Carpeta MIXTA (tres cosas distintas):
-│       ├── reportes/reporte.service.js     [Capa 1] CLIENTE HTTP de C-01 (hace fetch a /api)
+│       ├── denuncias/denuncia.service.js     [Capa 1] CLIENTE HTTP de C-01 (hace fetch a /api)
 │       ├── academico/
 │       │   ├── comision.service.js         [Capa 1] CLIENTE HTTP de C-02/C-03 (fetch a /api)
 │       │   └── periodo/edificio/facultad/  [BaaS] Catálogo: pegan DIRECTO a Supabase
@@ -93,7 +93,7 @@ matchinggrupo50/
 │   ├── puml/actualizacion_claude/   Diagramas de secuencia DOO + trazabilidad
 │   ├── uml/                          Diagrama de clases, modelo físico, patrones
 │   └── *.md                          Plan de acción, plan de simplificación, etc.
-├── tests/                       Pruebas Vitest (dominio Reporte y Comisión)
+├── tests/                       Pruebas Vitest (dominio Denuncia y Comisión)
 ├── supabase/                    Config del CLI de Supabase (las Edge Functions se eliminaron)
 ├── proxy.ts                     Middleware de Next 15 (protege rutas /admin)
 └── package.json, tsconfig.json, vitest.config.ts, ...   Configuración
@@ -103,15 +103,15 @@ matchinggrupo50/
 
 ## Recorrido de una funcionalidad (para explicar en la exposición)
 
-**C-01 Resolver un reporte** atraviesa las 3 capas así:
+**C-01 Resolver un denuncia** atraviesa las 3 capas así:
 
 ```
-ReportesPage.jsx                         (1 Presentación: el admin elige acción)
-  → reporte.service.js  resolverReporte()  (1 Presentación: cliente HTTP, fetch)
-  → api/reportes/[id].js                    (2 Dominio: controlador, recibe el PATCH)
-  → ServicioResolucionReporte.resolver()    (2 Dominio: ORQUESTADOR)
-       → Reporte.resolver() → EstadoPendiente   (2 Dominio: PATRÓN ESTADO)
-       → ReporteRepositorio / UsuarioRepositorio / ... (3 Persistencia)
+DenunciasPage.jsx                         (1 Presentación: el admin elige acción)
+  → denuncia.service.js  resolverDenuncia()  (1 Presentación: cliente HTTP, fetch)
+  → api/denuncias/[id].js                    (2 Dominio: controlador, recibe el PATCH)
+  → ServicioResolucionDenuncia.resolver()    (2 Dominio: ORQUESTADOR)
+       → Denuncia.resolver() → EstadoPendiente   (2 Dominio: PATRÓN ESTADO)
+       → DenunciaRepositorio / UsuarioRepositorio / ... (3 Persistencia)
   → Supabase (PostgreSQL)                   (datos)
 ```
 
@@ -127,12 +127,12 @@ El detalle paso a paso (qué línea de código es cada flecha del diagrama) est�
 - Boilerplate del starter sin usar: `components/hero.tsx`, `next-logo.tsx`,
   `supabase-logo.tsx`, `deploy-button.tsx`, `env-var-warning.tsx`, `auth-button.tsx`,
   `components/tutorial/`.
-- Patrones Estrategia (`src/domain/reporte/acciones/`) y Observador
-  (`src/domain/reporte/eventos/`): se dejó **solo el patrón Estado** en el código.
+- Patrones Estrategia (`src/domain/denuncia/acciones/`) y Observador
+  (`src/domain/denuncia/eventos/`): se dejó **solo el patrón Estado** en el código.
 
 **Mejoras opcionales (no urgentes, para cuando quieras pulir):**
 - Renombrar los *clientes HTTP* para que no se confundan con los *servicios de dominio*:
-  `reporte.service.js → reporteApi.js`, `comision.service.js → comisionApi.js`.
+  `denuncia.service.js → /api/denuncias`, `comision.service.js → comisionApi.js`.
 - Unificar los clientes Supabase (hoy hay varios: `src/infrastructure/supabaseServer.ts`,
   `src/pages/api/_lib/supabaseServer.js`, `lib/supabase/*`, `src/services/supabaseClient.js`).
 - `src/pages/*.jsx` no son rutas; podrían vivir en `src/views/` para evitar la confusión

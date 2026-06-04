@@ -33,7 +33,7 @@ export function LoginForm({
 
     try {
       await signInWithPassword({ email, password });
-      router.push("/admin/reportes");
+      router.push("/admin/denuncias");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "Ocurrió un error");
     } finally {

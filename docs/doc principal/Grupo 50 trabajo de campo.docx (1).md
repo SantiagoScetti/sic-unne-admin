@@ -8,7 +8,7 @@ INGENIERÍA DEL SOFTWARE II
 
 **Sistema de Intercambio de Comisiones (SIC-UNNE)**
 
-Módulo de Administración, Reportes y Resolución de Conflictos
+Módulo de Administración, Denuncias y Resolución de Conflictos
 
 **Integrantes:**
 
@@ -24,7 +24,7 @@ Turtola, Sabrina — D.N.I.: 44.000.850
 
 **Resumen**
 
-En el presente apartado se sintetiza el desarrollo del **Módulo de Administración, Reportes y Resolución de Conflictos** dentro del **Sistema de Intercambio de Comisiones (SIC-UNNE)**.
+En el presente apartado se sintetiza el desarrollo del **Módulo de Administración, Denuncias y Resolución de Conflictos** dentro del **Sistema de Intercambio de Comisiones (SIC-UNNE)**.
 
 El **SIC-UNNE** surge para **digitalizar** y **optimizar** el intercambio de comisiones entre estudiantes de la Universidad Nacional del Nordeste, reemplazando métodos informales y poco eficientes. Este módulo específico está diseñado para proporcionar al personal administrativo y a los administradores del sistema **herramientas** de supervisión, gestión de usuarios y análisis de actividad.
 
@@ -36,7 +36,7 @@ Los **resultados** obtenidos incluyen un panel funcional que permite la gestión
 
 **Prólogo**
 
-El crecimiento de la comunidad estudiantil en la **Facultad de Ciencias Exactas y Naturales y Agrimensura** ha traído consigo retos logísticos que los métodos tradicionales de comunicación no logran cubrir eficientemente. El presente trabajo no solo busca ofrecer una solución técnica al intercambio de comisiones, sino establecer un precedente en la gestión administrativa transparente y basada en datos. A través del **Módulo de Administración**, **Reportes** y **Resolución de Conflictos**, transformamos el caos de los mensajes informales en un flujo de trabajo auditable y seguro, devolviendo el control a la institución y brindando previsibilidad a los docentes.
+El crecimiento de la comunidad estudiantil en la **Facultad de Ciencias Exactas y Naturales y Agrimensura** ha traído consigo retos logísticos que los métodos tradicionales de comunicación no logran cubrir eficientemente. El presente trabajo no solo busca ofrecer una solución técnica al intercambio de comisiones, sino establecer un precedente en la gestión administrativa transparente y basada en datos. A través del **Módulo de Administración**, **Denuncias** y **Resolución de Conflictos**, transformamos el caos de los mensajes informales en un flujo de trabajo auditable y seguro, devolviendo el control a la institución y brindando previsibilidad a los docentes.
 
 **Agradecimientos**
 
@@ -84,7 +84,7 @@ Al personal administrativo y a los estudiantes que participaron en las entrevist
 
 [Nombre: Asignatura	9](#nombre:-asignatura)
 
-[Nombre: Reporte	10](#nombre:-reporte)
+[Nombre: Denuncia	10](#nombre:-denuncia)
 
 [**2.7. Casos de uso	11**](#heading=)
 
@@ -98,9 +98,9 @@ Al personal administrativo y a los estudiantes que participaron en las entrevist
 
 [2.9. Diagramas de secuencia	17](#2.9.-diagramas-de-secuencia)
 
-[**2.9.1. Gestionar Reportes y Resolución de Conflictos	17**](#heading=)
+[**2.9.1. Gestionar Denuncias y Resolución de Conflictos	17**](#heading=)
 
-[2.9.2 Gestionar Reportes (Flujo Alternativo: Reporte ya gestionado)	17](#2.9.2-gestionar-reportes-\(flujo-alternativo:-reporte-ya-gestionado\))
+[2.9.2 Gestionar Denuncias (Flujo Alternativo: Denuncia ya gestionado)	17](#2.9.2-gestionar-denuncias-\(flujo-alternativo:-denuncia-ya-gestionado\))
 
 [**2.9.3  Crear Comisión	17**](#heading=)
 
@@ -114,7 +114,7 @@ Al personal administrativo y a los estudiantes que participaron en las entrevist
 
 [**2.10.1. Contrato 1: \[importarEstructuraAcademica\]	19**](#heading=)
 
-[**2.10.2. Contrato 2: \[resolverReporte\]	22**](#heading=)
+[**2.10.2. Contrato 2: \[resolverDenuncia\]	22**](#heading=)
 
 [2.11. Desarrollo de  la funcionalidad básica	25](#heading=h.b644fxfkc21x)
 
@@ -246,13 +246,13 @@ Este módulo busca **transformar** la resolución de conflictos de un proceso bu
 
 ## **1.2. Objetivos**
 
-El objetivo principal de este trabajo es desarrollar e implementar el **Módulo de Administración, Reportes y Resolución de Conflictos del Sistema de Intercambio de Comisiones (SIC-UNNE)**.
+El objetivo principal de este trabajo es desarrollar e implementar el **Módulo de Administración, Denuncias y Resolución de Conflictos del Sistema de Intercambio de Comisiones (SIC-UNNE)**.
 
 Los **objetivos** específicos son:
 
 * **Desarrollar** el panel de control administrativo para la gestión académica y de usuarios e intercambios.
 
-* **Implementar** el flujo completo de gestión de reportes, desde la recepción hasta la resolución.
+* **Implementar** el flujo completo de gestión de denuncias, desde la recepción hasta la resolución.
 
 * **Desarrollar** una herramienta de *creación/edición* e *importación masiva* de datos para estructurar la oferta académica oficial (facultades, carreras, materias y comisiones) de forma centralizada y libre de duplicados.
 
@@ -293,14 +293,14 @@ Para el desarrollo de este módulo se adoptó la metodología ágil Scrum, dado 
 
 * **UI/UX Designer:** Mantiene su rol de diseñadora de interfaces, asegurando que el panel administrativo sea intuitivo.  
 * **Frontend Developer (Especialista en React):** Encargada de transformar los diseños en componentes funcionales, consumir la API de Supabase y gestionar el estado de la aplicación en el cliente.  
-* **QA / Tester:** Responsable de validar que las funcionalidades de administración y reportes operen sin errores antes de cada entrega.
+* **QA / Tester:** Responsable de validar que las funcionalidades de administración y denuncias operen sin errores antes de cada entrega.
 
 **Eventos Scrum:** 
 
 * **Sprint Planning**: Al inicio de cada uno de los 4 sprints definidos, nos reunimos para seleccionar las historias de usuario del *Backlog* que Santiago (Product Owner) priorizó, definiendo el objetivo del sprint.  
 * **Sprints**: Se establecieron iteraciones de 2 semanas de duración para asegurar entregas continuas de valor en el panel administrativo.  
 * **Daily Scrum**: Reuniones breves de sincronización para identificar bloqueos técnicos, especialmente en la integración de políticas de seguridad (RLS) en Supabase.  
-* **Sprint Review & Retrospective**: Al finalizar cada sprint, validamos las funcionalidades (como el CRUD de estudiantes o los gráficos de reportes) y ajustamos nuestros procesos de trabajo colaborativo.
+* **Sprint Review & Retrospective**: Al finalizar cada sprint, validamos las funcionalidades (como el CRUD de estudiantes o los gráficos de denuncias) y ajustamos nuestros procesos de trabajo colaborativo.
 
 ## **2.2. Planificación realizada**
 
@@ -339,7 +339,7 @@ Este sprint se enfoca en la capacidad de alimentar el sistema con información r
 * Diseño y desarrollo de formularios de gestión de usuarios y tablas interactivas en React para visualizar la oferta académica cargada.  
 * Implementación de un procesador de archivos `.csv` en el cliente (React) para pre-validar la estructura de los datos antes de enviarlos a la base de datos, optimizando el rendimiento de la red.
 
-**Sprint 3: Dashboard de reportes y Visualización de datos**  
+**Sprint 3: Dashboard de denuncias y Visualización de datos**  
 El foco aquí es transformar los datos en información útil para la toma de decisiones institucionales.  
 **Tiempo estimado:** 5  días.  
 **Tareas Backend:**
@@ -356,11 +356,11 @@ El sprint final aborda la lógica más compleja: intervenir cuando el proceso au
 **Tiempo estimado:** 5 días.  
 **Tareas Backend:**
 
-* Implementar la lógica de negocio para gestionar reportes y permitir la intervención manual en "matches" fallidos o conflictivos.
+* Implementar la lógica de negocio para gestionar denuncias y permitir la intervención manual en "matches" fallidos o conflictivos.
 
 **Tareas Frontend:**
 
-* Refinamiento de la interfaz de usuario (UI) para la gestión de reportes.  
+* Refinamiento de la interfaz de usuario (UI) para la gestión de denuncias.  
 * Ejecución del plan de pruebas (QA/Testing) para asegurar que no existan errores críticos antes del despliegue.
 
 ## **2.3. Plan de riesgos** {#2.3.-plan-de-riesgos}
@@ -468,22 +468,22 @@ Para efectuar la identificación de los riesgos críticos del sistema SIC-UNNE, 
 | id\_periodo | periodo |
 | id\_carrera | carrera |
 
-#### **Nombre: Reporte** {#nombre:-reporte}
+#### **Nombre: Denuncia** {#nombre:-denuncia}
 
-**Descripción:** Registra los reportes generados por usuarios hacia otros usuarios dentro del sistema, incluyendo el estado de resolución y la intervención administrativa.
+**Descripción:** Registra los denuncias generados por usuarios hacia otros usuarios dentro del sistema, incluyendo el estado de resolución y la intervención administrativa.
 
 | Campo | Tipo | Long | Significado |
 | ----- | ----- | ----- | ----- |
-| id\_reporte | integer | — | Identificador único del reporte |
-| emisor\_id | integer | — | Usuario que genera el reporte |
+| id\_reporte | integer | — | Identificador único del denuncia |
+| emisor\_id | integer | — | Usuario que genera el denuncia |
 | receptor\_id | integer | — | Usuario que es reportado |
-| id\_periodo | integer | — | Período académico en que ocurre el reporte |
-| motivo | character varying | — | Descripción del motivo del reporte |
+| id\_periodo | integer | — | Período académico en que ocurre el denuncia |
+| motivo | character varying | — | Descripción del motivo del denuncia |
 | estado | character varying | — | Estado actual: Pendiente, En Revisión, Resuelto o Desestimado |
-| fecha\_alta | timestamp | — | Fecha y hora en que se generó el reporte |
+| fecha\_alta | timestamp | — | Fecha y hora en que se generó el denuncia |
 | resolucion\_admin | text | — | Descripción textual de la resolución tomada por el administrador |
 | accion\_tomada | character varying | — | Acción aplicada: Advertencia, Suspensión o Desestimado |
-| admin\_id | integer | — | Administrador que gestionó el reporte |
+| admin\_id | integer | — | Administrador que gestionó el denuncia |
 
 ###### Tabla 4 {#tabla-4}
 
@@ -524,16 +524,16 @@ Para efectuar la identificación de los riesgos críticos del sistema SIC-UNNE, 
 
 | Acción | Curso Normal | Curso Alternativo |
 | :---- | :---- | :---- |
-| **1\. A:** Accede al panel de reportes |  |  |
-| **2\. S:** Muestra lista de reportes y opciones de filtrado | **2.1** Lista desplegada |  |
-| **3\. A:** Selecciona el filtro "Pendiente" | **3.1** Filtro aplicado | **3.1.1 S:** Detecta que el reporte ya no está pendiente. **3.1.2 S:** Muestra mensaje "Reporte ya gestionado". **3.1.3** Fin del caso de uso. |
-| **4\. A:** Selecciona un reporte específico |  |  |
-| **5\. S:** Muestra el detalle completo del reporte | **5.1** Datos visibles |  |
+| **1\. A:** Accede al panel de denuncias |  |  |
+| **2\. S:** Muestra lista de denuncias y opciones de filtrado | **2.1** Lista desplegada |  |
+| **3\. A:** Selecciona el filtro "Pendiente" | **3.1** Filtro aplicado | **3.1.1 S:** Detecta que el denuncia ya no está pendiente. **3.1.2 S:** Muestra mensaje "Denuncia ya gestionado". **3.1.3** Fin del caso de uso. |
+| **4\. A:** Selecciona un denuncia específico |  |  |
+| **5\. S:** Muestra el detalle completo del denuncia | **5.1** Datos visibles |  |
 | **6\. A:** Analiza la información y decide resolver |  |  |
 | **7\. S:** Solicita la acción a realizar | **7.1** Opciones mostradas |  |
 | **8\. A:** Selecciona acción y registra resolución | **8.1** Resolución registrada | **8.1.1 A:** Selecciona "Desestimar". Ir a 9\. **8.1.2 A:** Selecciona "Suspender". **S:** solicita duración.  **A:** Ingresa tiempo. Ir a 9\. **8.1.3 A:** Selecciona “Advertir Usuario”. Ir a 9\. **8.1.4** Error de sistema/BD.  **S:** muestra mensaje de error. No hay cambios. Fin del caso de uso. |
 | **9\. S:** Actualiza estado, guarda auditoría y notifica. | **9.1** Procesamiento exitoso |  |
-| **10\. S:** Muestra mensaje "Reporte actualizado" |  |   |
+| **10\. S:** Muestra mensaje "Denuncia actualizado" |  |   |
 
 ###### Tabla 5 {#tabla-5}
 
@@ -579,13 +579,13 @@ Para efectuar la identificación de los riesgos críticos del sistema SIC-UNNE, 
 
 ## **2.9. Diagramas de secuencia** {#2.9.-diagramas-de-secuencia}
 
-### **2.9.1. Gestionar Reportes y Resolución de Conflictos**
+### **2.9.1. Gestionar Denuncias y Resolución de Conflictos**
 
 ### **![][image3]**
 
 ##### Figura 3 {#figura-3}
 
-### **2.9.2 Gestionar Reportes (Flujo Alternativo: Reporte ya gestionado)**  {#2.9.2-gestionar-reportes-(flujo-alternativo:-reporte-ya-gestionado)}
+### **2.9.2 Gestionar Denuncias (Flujo Alternativo: Denuncia ya gestionado)**  {#2.9.2-gestionar-denuncias-(flujo-alternativo:-denuncia-ya-gestionado)}
 
 ### **![][image4]**
 
@@ -644,18 +644,18 @@ Esta operación es vital para la carga inicial de datos y debe garantizar que no
 
 ###### Tabla 8 {#tabla-8}
 
-### **2.10.2. Contrato 2: \[resolverReporte\]**
+### **2.10.2. Contrato 2: \[resolverDenuncia\]**
 
 Esta operación gestiona la moderación y convivencia dentro del sistema, asegurando la trazabilidad de las acciones administrativas.
 
 | Campo | Descripción |
 | :---- | :---- |
-| **Operación** | **resolverReporte(id\_reporte: int, accion: varchar, fechaHasta?: date, observaciones?: text, admin\_id?: int): void** |
-| **Referencias Cruzadas** | C.U. Gestionar Reportes y Resolución de Conflictos (C-01). Ruta: PATCH /api/reportes/\[id\] con body { estado: 'Resuelto', accion, fechaHasta?, observaciones?, admin\_id? }. Servicio de dominio: src/domain/reporte/ServicioResolucionReporte.ts. |
-| **Responsabilidades** | **Validar** que el reporte esté en estado **'Pendiente'** (**patrón Estado**), **ejecutar** el efecto concreto de la **acción administrativa** sobre el usuario reportado (**patrón Estrategia**) y **publicar un evento de dominio** para que los **observadores** registren la **auditoría** y envíen las **notificaciones** correspondientes (**patrón Observador**). |
-| **Excepciones** | Si id\_reporte no es un número válido, el controlador retorna **HTTP 400** con "**ID de reporte inválido**". Si el reporte con id\_reporte no existe en la tabla reporte, el dominio lanza **ReporteNoEncontradoError** y el controlador retorna **HTTP 404**. Si el reporte ya tiene estado 'Resuelto' o 'Desestimado', el dominio lanza **ReporteYaProcesadoError** y el controlador retorna **HTTP 409** con "**El reporte ya ha sido procesado por otro administrador**.", incluyendo el estado actual. Si el campo accion no se incluye en el body, el controlador retorna HTTP 400 con "**Para resolver el reporte se requiere 'accion'.**" y **cancela la operación**. Si accion \= '**Suspender Temporalmente**' pero fechaHasta no es una fecha posterior a hoy, la **estrategia rechaza la ejecución**. Si admin\_id es nulo o no se envía, el servicio consulta automáticamente el **primer administrador disponible** en usuario. Si no existe ninguno, lanza una excepción y cancela. Si falla la **persistencia en la base de datos** (error de red, violación de restricción), la excepción se propaga al controlador que retorna **HTTP 500**. |
-| **Precondiciones** | El administrador se encuentra **autenticado en su sesión**. El sistema está **conectado a la base de datos** a través de la capa de infraestructura (**repositorios con cliente service\_role**). El reporte con id\_reporte **existe** en la tabla reporte y tiene **estado 'Pendiente'**. Los usuarios con emisor\_id y receptor\_id **existen** en la tabla usuario. El campo accion contiene uno de los **valores válidos** según la restricción CHECK de la BD: '**Enviar aviso**', '**Suspender Temporalmente**' o '**Suspender Indefinidamente**'. Si accion \= 'Suspender Temporalmente': el campo **fechaHasta debe ser una fecha posterior a la fecha actual**. |
-| **Postcondiciones** | El atributo **estado** de la instancia **Reporte** con id\_reporte fue modificado a **'Resuelto'**. El atributo **accion\_tomada** del reporte fue **actualizado** con el valor de accion. El atributo **admin\_id** del reporte fue **asociado al administrador** que ejecutó la acción. Si accion \= **'Suspender Temporalmente'**: el campo **suspendido\_hasta** del usuario receptor fue actualizado con la fecha indicada en **fechaHasta**. Si accion \= **'Suspender Indefinidamente'**: el usuario receptor queda **suspendido sin fecha de fin**. Se crearon instancias en la tabla **notificacion** para el receptor y, si el emisor no es el Sistema, también para el emisor, con el **tipo y mensaje** correspondientes a la acción aplicada. Se creó una instancia en **auditoria\_administrativa** con id\_admin, la **acción tomada** y los **detalles de la resolución**. El controlador retorna **HTTP 200** con { id\_reporte, estado: 'Resuelto', accion\_tomada }. El sistema mostró el mensaje **"Acción aplicada con éxito"** en pantalla. |
+| **Operación** | **resolverDenuncia(id\_reporte: int, accion: varchar, fechaHasta?: date, observaciones?: text, admin\_id?: int): void** |
+| **Referencias Cruzadas** | C.U. Gestionar Denuncias y Resolución de Conflictos (C-01). Ruta: PATCH /api/denuncias/\[id\] con body { estado: 'Resuelto', accion, fechaHasta?, observaciones?, admin\_id? }. Servicio de dominio: src/domain/denuncia/ServicioResolucionDenuncia.ts. |
+| **Responsabilidades** | **Validar** que el denuncia esté en estado **'Pendiente'** (**patrón Estado**), **ejecutar** el efecto concreto de la **acción administrativa** sobre el usuario reportado (**patrón Estrategia**) y **publicar un evento de dominio** para que los **observadores** registren la **auditoría** y envíen las **notificaciones** correspondientes (**patrón Observador**). |
+| **Excepciones** | Si id\_reporte no es un número válido, el controlador retorna **HTTP 400** con "**ID de denuncia inválido**". Si el denuncia con id\_reporte no existe en la tabla denuncia, el dominio lanza **DenunciaNoEncontradaError** y el controlador retorna **HTTP 404**. Si el denuncia ya tiene estado 'Resuelto' o 'Desestimado', el dominio lanza **DenunciaYaProcesadaError** y el controlador retorna **HTTP 409** con "**El denuncia ya ha sido procesado por otro administrador**.", incluyendo el estado actual. Si el campo accion no se incluye en el body, el controlador retorna HTTP 400 con "**Para resolver el denuncia se requiere 'accion'.**" y **cancela la operación**. Si accion \= '**Suspender Temporalmente**' pero fechaHasta no es una fecha posterior a hoy, la **estrategia rechaza la ejecución**. Si admin\_id es nulo o no se envía, el servicio consulta automáticamente el **primer administrador disponible** en usuario. Si no existe ninguno, lanza una excepción y cancela. Si falla la **persistencia en la base de datos** (error de red, violación de restricción), la excepción se propaga al controlador que retorna **HTTP 500**. |
+| **Precondiciones** | El administrador se encuentra **autenticado en su sesión**. El sistema está **conectado a la base de datos** a través de la capa de infraestructura (**repositorios con cliente service\_role**). El denuncia con id\_reporte **existe** en la tabla denuncia y tiene **estado 'Pendiente'**. Los usuarios con emisor\_id y receptor\_id **existen** en la tabla usuario. El campo accion contiene uno de los **valores válidos** según la restricción CHECK de la BD: '**Enviar aviso**', '**Suspender Temporalmente**' o '**Suspender Indefinidamente**'. Si accion \= 'Suspender Temporalmente': el campo **fechaHasta debe ser una fecha posterior a la fecha actual**. |
+| **Postcondiciones** | El atributo **estado** de la instancia **Denuncia** con id\_reporte fue modificado a **'Resuelto'**. El atributo **accion\_tomada** del denuncia fue **actualizado** con el valor de accion. El atributo **admin\_id** del denuncia fue **asociado al administrador** que ejecutó la acción. Si accion \= **'Suspender Temporalmente'**: el campo **suspendido\_hasta** del usuario receptor fue actualizado con la fecha indicada en **fechaHasta**. Si accion \= **'Suspender Indefinidamente'**: el usuario receptor queda **suspendido sin fecha de fin**. Se crearon instancias en la tabla **notificacion** para el receptor y, si el emisor no es el Sistema, también para el emisor, con el **tipo y mensaje** correspondientes a la acción aplicada. Se creó una instancia en **auditoria\_administrativa** con id\_admin, la **acción tomada** y los **detalles de la resolución**. El controlador retorna **HTTP 200** con { id\_reporte, estado: 'Resuelto', accion\_tomada }. El sistema mostró el mensaje **"Acción aplicada con éxito"** en pantalla. |
 
 ###### Tabla 9 {#tabla-9}
 
@@ -663,25 +663,25 @@ Esta operación gestiona la moderación y convivencia dentro del sistema, asegur
 
 ## **2.11. Desarrollo de las Funcionalidades Básicas**
 
-### **2.11.1. C-01: Gestionar Reporte y Resolución de Conflictos**
+### **2.11.1. C-01: Gestionar Denuncia y Resolución de Conflictos**
 
 **Descripción de la funcionalidad**
 
-La funcionalidad **C-01** permite al **administrador** revisar los **reportes** entre alumnos, seleccionar una **acción disciplinaria** (enviar aviso, suspender temporalmente o suspender indefinidamente) y **resolver** o **desestimar** el caso en una **única operación**. El sistema garantiza que un reporte no pueda ser **procesado dos veces** de forma concurrente, devolviendo un **error 409** si otro administrador ya lo gestionó.
+La funcionalidad **C-01** permite al **administrador** revisar los **denuncias** entre alumnos, seleccionar una **acción disciplinaria** (enviar aviso, suspender temporalmente o suspender indefinidamente) y **resolver** o **desestimar** el caso en una **única operación**. El sistema garantiza que un denuncia no pueda ser **procesado dos veces** de forma concurrente, devolviendo un **error 409** si otro administrador ya lo gestionó.
 
 Esta funcionalidad es la de **mayor complejidad** del sistema: concentra los **tres patrones de diseño** del proyecto (**Estado, Estrategia y Observador**) en un **único punto de coordinación**.
 
 **Fragmentos de código relevantes**
 
-**Entidad de dominio Reporte — Patrón Estado**
+**Entidad de dominio Denuncia — Patrón Estado**
 
-La clase Reporte delega cada transición en su objeto de estado actual. Esto impide que un reporte ya resuelto vuelva a ser procesado sin necesidad de condicionales en el servicio.
+La clase Denuncia delega cada transición en su objeto de estado actual. Esto impide que un denuncia ya resuelto vuelva a ser procesado sin necesidad de condicionales en el servicio.
 
 ![][image9]![][image10]
 
 ##### Figura 9
 
-**ServicioResolucionReporte — Orquestación de los 3 patrones**
+**ServicioResolucionDenuncia — Orquestación de los 3 patrones**
 
 **![][image11]**
 
@@ -693,7 +693,7 @@ La clase Reporte delega cada transición en su objeto de estado actual. Esto imp
 
 ##### Figura 11
 
-**Controlador API — /api/reportes/\[id\]**
+**Controlador API — /api/denuncias/\[id\]**
 
 **![][image13]**
 
@@ -703,12 +703,12 @@ La clase Reporte delega cada transición en su objeto de estado actual. Esto imp
 
 El flujo sigue la arquitectura de 3 capas definida en el proyecto:
 
-* **Presentación:** El administrador selecciona un reporte desde ReportesPage, elige una acción y confirma. La capa de presentación invoca resolverReporte() del servicio HTTP cliente.  
-* **Aplicación (cliente):** reporte.service.js realiza un único PATCH /api/reportes/:id enviando el estado, la acción y los parámetros opcionales (fecha de suspensión, observaciones).  
-* **Controlador:** La API Route \[id\].js recibe la petición, instancia ServicioResolucionReporte y delega la orquestación al dominio.  
-* **Dominio:** El servicio carga el Reporte desde el repositorio, aplica la transición de estado (Patrón Estado), ejecuta la acción disciplinaria correspondiente (Patrón Estrategia) y publica un evento (Patrón Observador) que activa dos listeners: uno que crea las notificaciones y otro que registra la auditoría administrativa.  
-* **Infraestructura:** Los repositorios (ReporteRepositorio, UsuarioRepositorio, NotificacionRepositorio, AuditoriaRepositorio) traducen las operaciones de dominio en consultas SQL sobre Supabase/PostgreSQL.  
-* **Respuesta:** El controlador devuelve 200 con el nuevo estado, o 409 si el reporte ya fue procesado por otro administrador.
+* **Presentación:** El administrador selecciona un denuncia desde DenunciasPage, elige una acción y confirma. La capa de presentación invoca resolverDenuncia() del servicio HTTP cliente.  
+* **Aplicación (cliente):** denuncia.service.js realiza un único PATCH /api/denuncias/:id enviando el estado, la acción y los parámetros opcionales (fecha de suspensión, observaciones).  
+* **Controlador:** La API Route \[id\].js recibe la petición, instancia ServicioResolucionDenuncia y delega la orquestación al dominio.  
+* **Dominio:** El servicio carga el Denuncia desde el repositorio, aplica la transición de estado (Patrón Estado), ejecuta la acción disciplinaria correspondiente (Patrón Estrategia) y publica un evento (Patrón Observador) que activa dos listeners: uno que crea las notificaciones y otro que registra la auditoría administrativa.  
+* **Infraestructura:** Los repositorios (DenunciaRepositorio, UsuarioRepositorio, NotificacionRepositorio, AuditoriaRepositorio) traducen las operaciones de dominio en consultas SQL sobre Supabase/PostgreSQL.  
+* **Respuesta:** El controlador devuelve 200 con el nuevo estado, o 409 si el denuncia ya fue procesado por otro administrador.
 
 ### 
 
@@ -779,7 +779,7 @@ El diseño del sistema SIC-UNNE se fundamenta en un enfoque arquitectónico que 
 ### **3.1.1 Arquitectura Lógica: Patrón Cliente \- Servidor en Capas** {#3.1.1-arquitectura-lógica:-patrón-cliente---servidor-en-capas}
 
    
- La organización interna del software sigue un patrón **Cliente-Servidor en capas** (Presentación, Aplicación, Dominio, Infraestructura y Datos), desplegado íntegramente sobre **Next.js**. Para las operaciones con lógica de negocio (Comisiones y Reportes), el cliente (navegador) nunca accede directamente a la base de datos: la validación y la escritura pasan por el servidor.
+ La organización interna del software sigue un patrón **Cliente-Servidor en capas** (Presentación, Aplicación, Dominio, Infraestructura y Datos), desplegado íntegramente sobre **Next.js**. Para las operaciones con lógica de negocio (Comisiones y Denuncias), el cliente (navegador) nunca accede directamente a la base de datos: la validación y la escritura pasan por el servidor.
 
 | Capa | Ubicación en el código | Responsabilidad |
 | :---- | :---- | :---- |
@@ -802,43 +802,43 @@ Componente React
 
 Se optó por una arquitectura de diseño **orientada a capas** en lugar de un modelo puramente **Backend-as-a-Service (BaaS)** debido a las siguientes ventajas:
 
-* **Correlación técnica con el modelado:** Existe una equivalencia exacta entre los objetos de los diagramas de secuencia (Sistema/Interfaz \= ReportesPage, *ServicioResolucionReporte*, *ReporteRepositorio*…) y la estructura de archivos del proyecto.  
+* **Correlación técnica con el modelado:** Existe una equivalencia exacta entre los objetos de los diagramas de secuencia (Sistema/Interfaz \= DenunciasPage, *ServicioResolucionDenuncia*, *DenunciaRepositorio*…) y la estructura de archivos del proyecto.  
 * **Neutralidad tecnológica:** Al centralizar las reglas de negocio en la carpeta *src/domain/* de forma agnóstica a los SDK de Supabase, se facilita una eventual migración de base de datos, requiriendo únicamente la actualización de la capa de repositorios.  
 * **Seguridad centralizada en el servidor:** El uso de API Routes permite gestionar de forma segura la clave **service\_role**, validando la sesión del usuario antes de procesar solicitudes y evitando su exposición en el lado del cliente.
 
 ## **3.2 Patrones de Diseño aplicados en el Dominio** {#3.2-patrones-de-diseño-aplicados-en-el-dominio}
 
-El proyecto implementa **un** único patrón de diseño del catálogo GoF: **Estado** (caso **C-01: Gestionar Reporte**), marcado con un recuadro en el diagrama de clases. Se documentan además **dos patrones candidatos** —Estrategia y Observador—, indicando dónde *podrían* aplicarse, aunque **no** están implementados en el código. Como soporte de la arquitectura en capas se emplean **dos patrones auxiliares**: Repositorio y Singleton.
+El proyecto implementa **un** único patrón de diseño del catálogo GoF: **Estado** (caso **C-01: Gestionar Denuncia**), marcado con un recuadro en el diagrama de clases. Se documentan además **dos patrones candidatos** —Estrategia y Observador—, indicando dónde *podrían* aplicarse, aunque **no** están implementados en el código. Como soporte de la arquitectura en capas se emplean **dos patrones auxiliares**: Repositorio y Singleton.
 
 ### **3.2.1 Patrón Estado (State)** {#3.2.1-patrón-estado-(state)}
 
-Este patrón permite **encapsular** el comportamiento de un objeto en función de su estado, eliminando condicionales (if/switch) dispersos en el código. Para ello, la entidad **Reporte** (src/domain/reporte/Reporte.ts) **delega** la **validación de transiciones** en objetos de estado concretos:
+Este patrón permite **encapsular** el comportamiento de un objeto en función de su estado, eliminando condicionales (if/switch) dispersos en el código. Para ello, la entidad **Denuncia** (src/domain/denuncia/Denuncia.ts) **delega** la **validación de transiciones** en objetos de estado concretos:
 
 | Clase | Archivo | Estado que representa |
 | :---- | :---- | :---- |
-| **EstadoPendiente** | estados/EstadoPendiente.ts  | Reporte recién creado, pendiente de revisión. |
-| **EstadoResuelto** | estados/EstadoResuelto.ts | Reporte con acción administrativa aplicada. |
-| **EstadoDesestimado** | estados/EstadoDesestimado.ts | Reporte descartado por el administrador. |
+| **EstadoPendiente** | estados/EstadoPendiente.ts  | Denuncia recién creado, pendiente de revisión. |
+| **EstadoResuelto** | estados/EstadoResuelto.ts | Denuncia con acción administrativa aplicada. |
+| **EstadoDesestimado** | estados/EstadoDesestimado.ts | Denuncia descartado por el administrador. |
 
 ###### Tabla 11
 
-Cuando se intenta resolver un reporte que ya fue gestionado, el estado terminal (**EstadoResuelto** o **EstadoDesestimado**) hereda el comportamiento por defecto de la clase base y lanza la excepción **ReporteYaProcesadoError**, que el controlador convierte en una respuesta HTTP 409, sin necesidad de lógica condicional en la capa de aplicación.
+Cuando se intenta resolver un denuncia que ya fue gestionado, el estado terminal (**EstadoResuelto** o **EstadoDesestimado**) hereda el comportamiento por defecto de la clase base y lanza la excepción **DenunciaYaProcesadaError**, que el controlador convierte en una respuesta HTTP 409, sin necesidad de lógica condicional en la capa de aplicación.
 
 ### **3.2.2 Patrón Estrategia (Strategy) — candidato** {#3.2.2-patrón-estrategia-(strategy)}
 
-Patrón **candidato** (no implementado en el código actual). Sería aplicable a las **tres acciones administrativas** que puede tomar el administrador al resolver un reporte: *Enviar aviso*, *Suspender Temporalmente* y *Suspender Indefinidamente*. Cada una podría encapsularse como una **estrategia intercambiable** bajo una interfaz común (p. ej. `AccionResolucion.aplicar(contexto)`), eligiéndose en tiempo de ejecución sin que el servicio conozca su implementación concreta. Esto cumpliría el principio **Abierto/Cerrado**: agregar una acción nueva no obligaría a modificar el servicio.
+Patrón **candidato** (no implementado en el código actual). Sería aplicable a las **tres acciones administrativas** que puede tomar el administrador al resolver un denuncia: *Enviar aviso*, *Suspender Temporalmente* y *Suspender Indefinidamente*. Cada una podría encapsularse como una **estrategia intercambiable** bajo una interfaz común (p. ej. `AccionResolucion.aplicar(contexto)`), eligiéndose en tiempo de ejecución sin que el servicio conozca su implementación concreta. Esto cumpliría el principio **Abierto/Cerrado**: agregar una acción nueva no obligaría a modificar el servicio.
 
-En la **implementación actual**, por simplicidad, esas tres acciones se resuelven con una estructura condicional dentro de **`ServicioResolucionReporte`** (método `aplicarEfecto`), ya que su número es fijo y acotado. El patrón se reserva como refactorización si el conjunto de acciones creciera.
+En la **implementación actual**, por simplicidad, esas tres acciones se resuelven con una estructura condicional dentro de **`ServicioResolucionDenuncia`** (método `aplicarEfecto`), ya que su número es fijo y acotado. El patrón se reserva como refactorización si el conjunto de acciones creciera.
 
 ### **3.2.3 Patrón Observador (Observer) — candidato** {#3.2.3-patrón-observador-(observer)}
 
-Patrón **candidato** (no implementado en el código actual). Sería aplicable a los **efectos secundarios** que se disparan al resolver un reporte: registrar la auditoría y notificar a los usuarios. Con un Observador, el servicio publicaría un **evento de dominio** (`ReporteResueltoEvent`) y distintos *listeners* reaccionarían de forma **desacoplada**, permitiendo agregar efectos nuevos (p. ej. enviar un email) sin modificar el servicio principal.
+Patrón **candidato** (no implementado en el código actual). Sería aplicable a los **efectos secundarios** que se disparan al resolver un denuncia: registrar la auditoría y notificar a los usuarios. Con un Observador, el servicio publicaría un **evento de dominio** (`ReporteResueltoEvent`) y distintos *listeners* reaccionarían de forma **desacoplada**, permitiendo agregar efectos nuevos (p. ej. enviar un email) sin modificar el servicio principal.
 
-En la **implementación actual**, por simplicidad, esos efectos se ejecutan como **llamadas directas** del servicio a los repositorios correspondientes (métodos `notificar` y `auditar` de **`ServicioResolucionReporte`**). El patrón se reserva como refactorización si los efectos se volvieran numerosos o variables.
+En la **implementación actual**, por simplicidad, esos efectos se ejecutan como **llamadas directas** del servicio a los repositorios correspondientes (métodos `notificar` y `auditar` de **`ServicioResolucionDenuncia`**). El patrón se reserva como refactorización si los efectos se volvieran numerosos o variables.
 
 ### **3.2.4 Patrón Repositorio** {#3.2.4-patrón-repositorio}
 
-El Patrón Repositorio (patrón **auxiliar** de la arquitectura en capas) tiene como fin **aislar** la capa de dominio de los detalles de persistencia, permitiendo que el dominio pida operaciones de alto nivel (obtener, guardar) **sin escribir SQL ni conocer Supabase**. Para ello, en src/infrastructure/repositorios/ se encuentran las clases concretas como **ReporteRepositorio**, **UsuarioRepositorio**, **AuditoriaRepositorio**, **NotificacionRepositorio** y **ComisionRepositorio**. Estas implementaciones reciben el cliente de Supabase por inyección de dependencias y devuelven objetos del dominio en lugar de estructuras de datos propias del proveedor, facilitando que los tests unitarios puedan sustituirlos por implementaciones en memoria sin necesidad de modificar la lógica de negocio.
+El Patrón Repositorio (patrón **auxiliar** de la arquitectura en capas) tiene como fin **aislar** la capa de dominio de los detalles de persistencia, permitiendo que el dominio pida operaciones de alto nivel (obtener, guardar) **sin escribir SQL ni conocer Supabase**. Para ello, en src/infrastructure/repositorios/ se encuentran las clases concretas como **DenunciaRepositorio**, **UsuarioRepositorio**, **AuditoriaRepositorio**, **NotificacionRepositorio** y **ComisionRepositorio**. Estas implementaciones reciben el cliente de Supabase por inyección de dependencias y devuelven objetos del dominio en lugar de estructuras de datos propias del proveedor, facilitando que los tests unitarios puedan sustituirlos por implementaciones en memoria sin necesidad de modificar la lógica de negocio.
 
 ### **3.2.5 Patrón Singleton** {#3.2.5-patrón-singleton}
 
@@ -860,7 +860,7 @@ Para garantizar que el cliente de Supabase con privilegios de servidor se constr
 
 **React** es una **biblioteca** de JavaScript de código abierto desarrollada por Meta, diseñada para construir interfaces de usuario mediante componentes **reutilizables** e **independientes**. Su modelo de programación declarativo permite describir cómo debe verse la interfaz en función del estado de la aplicación, delegando al framework la actualización eficiente del DOM cuando ese estado cambia.
 
-La elección de React responde a la naturaleza interactiva del módulo administrativo. El panel gestiona entidades con múltiples relaciones (Comisiones, Reportes, Estructura Académica) y requiere que los cambios aplicados por el administrador (como la resolución de un reporte o la creación de una comisión) se reflejen de forma inmediata sin recargar la página completa. 
+La elección de React responde a la naturaleza interactiva del módulo administrativo. El panel gestiona entidades con múltiples relaciones (Comisiones, Denuncias, Estructura Académica) y requiere que los cambios aplicados por el administrador (como la resolución de un denuncia o la creación de una comisión) se reflejen de forma inmediata sin recargar la página completa. 
 
 React también posibilita la **modularidad** de la interfaz mediante componentes **aislados** (tablas, modales, formularios), lo que facilita el mantenimiento y la incorporación de nuevas funcionalidades sin impactar componentes existentes.
 
@@ -872,8 +872,8 @@ React también posibilita la **modularidad** de la interfaz mediante componentes
 
 | Ruta | Método | Funcionalidad |
 | :---- | :---- | :---- |
-| **/api/reportes** | GET | Listar todos los reportes con datos de emisor y receptor |
-| **/api/reportes/\[id\]** | PATCH | Resolver o desestimar un reporte (C-01) |
+| **/api/denuncias** | GET | Listar todos los denuncias con datos de emisor y receptor |
+| **/api/denuncias/\[id\]** | PATCH | Resolver o desestimar un denuncia (C-01) |
 | **/api/comisiones** | POST | Crear una nueva comisión con validación completa (C-02) |
 
 ###### Tabla 13
@@ -882,9 +882,9 @@ El uso de **API Routes** permite mantener la clave **service\_role** de Supabase
 
 ### **3.4.3 Supabase (PostgreSQL \+ Autenticación)** {#3.4.3-supabase-(postgresql-+-autenticación)}
 
-**Supabase** es una **plataforma** de infraestructura de código abierto que provee, en este proyecto, **dos servicios** específicos: **motor de base de datos PostgreSQL** y **gestión de autenticación**. A diferencia de un enfoque Backend-as-a-Service completo, no se delega en Supabase la lógica de negocio de las operaciones críticas (Comisiones y Reportes) ni se usan Edge Functions; la capa de aplicación es propia y reside en **src/pages/api/**. Las consultas de catálogo (períodos, edificios, etc.) sí usan el acceso directo de Supabase desde el cliente, protegido por políticas RLS.
+**Supabase** es una **plataforma** de infraestructura de código abierto que provee, en este proyecto, **dos servicios** específicos: **motor de base de datos PostgreSQL** y **gestión de autenticación**. A diferencia de un enfoque Backend-as-a-Service completo, no se delega en Supabase la lógica de negocio de las operaciones críticas (Comisiones y Denuncias) ni se usan Edge Functions; la capa de aplicación es propia y reside en **src/pages/api/**. Las consultas de catálogo (períodos, edificios, etc.) sí usan el acceso directo de Supabase desde el cliente, protegido por políticas RLS.
 
-* **Base de Datos PostgreSQL:** Aloja el motor relacional que almacena la estructura académica del SIC-UNNE (Edificios, Facultades, Carreras, Comisiones, Asignaturas) y los registros transaccionales (Reportes, Auditoría, Notificaciones). Se aprovechan las restricciones de integridad nativas de PostgreSQL (claves foráneas, restricciones CHECK, valores NOT NULL) para garantizar la **consistencia** de los datos en la fuente. El acceso desde el servidor se realiza mediante el cliente con clave **service\_role**, que opera con privilegios completos desde las API Routes y los repositorios de infraestructura.  
+* **Base de Datos PostgreSQL:** Aloja el motor relacional que almacena la estructura académica del SIC-UNNE (Edificios, Facultades, Carreras, Comisiones, Asignaturas) y los registros transaccionales (Denuncias, Auditoría, Notificaciones). Se aprovechan las restricciones de integridad nativas de PostgreSQL (claves foráneas, restricciones CHECK, valores NOT NULL) para garantizar la **consistencia** de los datos en la fuente. El acceso desde el servidor se realiza mediante el cliente con clave **service\_role**, que opera con privilegios completos desde las API Routes y los repositorios de infraestructura.  
 * **Gestión de Autenticación:** Provee el sistema de identidades basado en tokens JWT para la sesión del administrador. El panel **valida** estos tokens en las API Routes para identificar al usuario antes de ejecutar cualquier operación de escritura.
 
 ### **3.4.4. Vitest** {#3.4.4.-vitest}
@@ -895,15 +895,15 @@ En el contexto **SIC-UNNE** se utiliza para **verificar** la correctitud de la c
 
 | Archivo de tests | Qué verifica |
 | :---- | :---- |
-| **tests/domain/reporte/** | Dominio C-01: máquina de estados del reporte (patrón Estado) y el servicio de resolución completo (resolver/desestimar, con sus efectos delegados a los repositorios). |
+| **tests/domain/denuncia/** | Dominio C-01: máquina de estados del denuncia (patrón Estado) y el servicio de resolución completo (resolver/desestimar, con sus efectos delegados a los repositorios). |
 | **tests/domain/comision/** | Reglas de la entidad Comisión (validación) y el servicio de comisiones (crear, actualizar e importación masiva — C-02/C-03). |
 | **src/services/utils/csvParser.test.js** | Validación del parser de CSV: esquema de columnas, detección de duplicados, campos incompletos y formatos inválidos (fechas, letras, documentos). |
 
 ###### Tabla 14
 
-La configuración (vitest.config.ts) define el alias @ apuntando a la raíz del proyecto, lo que permite que los tests **importen** el código de dominio con las mismas rutas absolutas que usa la aplicación, sin rutas relativas frágiles. Los tests se ejecutan con npm test y producen un reporte detallado de cada caso verificado.
+La configuración (vitest.config.ts) define el alias @ apuntando a la raíz del proyecto, lo que permite que los tests **importen** el código de dominio con las mismas rutas absolutas que usa la aplicación, sin rutas relativas frágiles. Los tests se ejecutan con npm test y producen un denuncia detallado de cada caso verificado.
 
-La presencia de una suite de tests automatizados sobre el dominio **garantiza** que el patrón de diseño implementado (Estado) funcione **correctamente** ante todos los escenarios posibles (incluyendo casos borde como intentar resolver un reporte ya gestionado) y que futuras modificaciones no introduzcan regresiones en los flujos críticos del sistema.
+La presencia de una suite de tests automatizados sobre el dominio **garantiza** que el patrón de diseño implementado (Estado) funcione **correctamente** ante todos los escenarios posibles (incluyendo casos borde como intentar resolver un denuncia ya gestionado) y que futuras modificaciones no introduzcan regresiones en los flujos críticos del sistema.
 
 ### **3.4.5. Otras herramientas**
 
@@ -970,7 +970,7 @@ La implementación del módulo de administración mediante una arquitectura BaaS
 
 ## **5.2. Futuros trabajos**
 
-\[Describimos luego posibles extensiones o mejoras del módulo: integración con sistemas académicos oficiales, módulo de apelaciones, reportes automáticos, entre otros.\]
+\[Describimos luego posibles extensiones o mejoras del módulo: integración con sistemas académicos oficiales, módulo de apelaciones, denuncias automáticos, entre otros.\]
 
 # **Referencias**
 

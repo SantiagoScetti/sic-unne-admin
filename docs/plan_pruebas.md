@@ -1,108 +1,108 @@
 # Plan de Pruebas — SIC-UNNE (Módulo de Administración)
 
-> **Asignatura:** Ingeniería del Software II — **Fecha:** 2026-05-28
-> Cubre la rúbrica *"Pruebas de Funcionalidad: diseña las pruebas y registra ejecución de funcionalidad crítica"*.
+---
+
+## C-01 — Gestionar Reporte y Resolución de Conflictos
+
+
+|                                        |     |                                                                      |     |
+| -------------------------------------- | --- | -------------------------------------------------------------------- | --- |
+| **Id-nombre del sistema:** SIC-UNNE    |     | **Caso de uso:** C-01 – Gestionar Reporte y Resolución de Conflictos |     |
+| **Versión del caso de prueba:** 1      |     | **Nombre del probador:** Grupo 50                                    |     |
+| **Autor del caso de prueba:** Grupo 50 |     | **Fecha de ejecución:** 2026-05-28                                   |     |
+| **Fecha de creación:** 2026-05-28      |     |                                                                      |     |
+
+
+### Patrón Estado — `Reporte.ts`
+
+
+| CP  | Objetivo                                                      | Datos de entrada                                                     | Resultado esperado                                                                             |
+| --- | ------------------------------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| 1   | Resolver un reporte pendiente aplicando una acción            | Reporte en estado `Pendiente`; acción: `'Suspender Temporalmente'`   | El estado cambia a `Resuelto`; el campo `accionTomada` queda registrado con el valor ingresado |
+| 2   | Desestimar un reporte pendiente                               | Reporte en estado `Pendiente`; llamada a `desestimar()`              | El estado cambia a `Desestimado`                                                               |
+| 3   | Intentar resolver un reporte ya resuelto                      | Reporte en estado `Resuelto`; acción: `'Enviar aviso'`               | Se lanza `ReporteYaProcesadoError`; el estado no cambia                                        |
+| 4   | Verificar el código de error de un reporte ya procesado       | Reporte en estado `Resuelto`; se captura el error de `resolver(...)` | El error contiene el código `'CONFLICT_ALREADY_PROCESSED'`                                     |
+| 5   | Intentar desestimar un reporte ya desestimado                 | Reporte en estado `Desestimado`; llamada a `desestimar()`            | Se lanza `ReporteYaProcesadoError`                                                             |
+| 6   | Verificar si el emisor es el Sistema (null) o un usuario real | `emisor_id = null` y `emisor_id = 5`                                 | `emisorEsSistema()` retorna `true` para `null` y `false` para `5`                              |
+| 7   | Obtener la fila persistible tras resolver el reporte          | Reporte `Pendiente` resuelto con acción y admin asignado             | `aFilaPersistible()` retorna `{ estado: 'Resuelto', accion_tomada, admin_id }`                 |
+
+
+### Orquestación del Servicio — `ServicioResolucionReporte.ts`
+
+
+| CP  | Objetivo                                                              | Datos de entrada                                                               | Resultado esperado                                                                      |
+| --- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| 8   | Resolver un reporte en flujo completo con admin explícito             | Reporte `Pendiente`; acción `'Suspender Temporalmente'`; fecha; `admin_id = 2` | Estado cambia a `Resuelto`; se persiste; se suspende al usuario; se notifica; se audita |
+| 9   | Resolver usando el admin por defecto cuando no se provee uno          | Reporte `Pendiente`; acción `'Enviar aviso'`; sin `admin_id`                   | Usa el admin por defecto; la auditoría registra `id_admin = 1`                          |
+| 10  | Resolver un reporte ya procesado no debe producir efectos secundarios | Reporte `Resuelto`; cualquier acción                                           | Se lanza error de conflicto; no se llama a guardar, suspender, notificar ni auditar     |
+| 11  | Desestimar un reporte en flujo completo                               | Reporte `Pendiente`; llamada a `desestimar()`                                  | Estado cambia a `Desestimado`; sin sanción al usuario; la acción queda auditada         |
+
 
 ---
 
-## 1. Estrategia de pruebas
+## C-02 — Crear Comisión
 
-| Aspecto | Decisión |
-|---|---|
-| **Tipo** | Pruebas **unitarias** sobre la capa de **dominio** y los **servicios de aplicación**. |
-| **Framework** | [Vitest](https://vitest.dev) 4.x (corre sobre Node + esbuild, soporte TypeScript nativo). |
-| **Aislamiento de la BD** | Los servicios reciben sus repositorios por **inyección de dependencias**; en las pruebas se inyectan **dobles de prueba (mocks)**. **No se toca Supabase**: las pruebas son rápidas, deterministas y no requieren conexión. |
-| **Ubicación** | Carpeta `tests/` que **espeja** la estructura de `src/`. |
-| **Ejecución** | `npm test` (una corrida) · `npm run test:watch` (modo interactivo). |
 
-### Organización de carpetas
+|                                        |     |                                        |     |
+| -------------------------------------- | --- | -------------------------------------- | --- |
+| **Id-nombre del sistema:** SIC-UNNE    |     | **Caso de uso:** C-02 – Crear Comisión |     |
+| **Versión del caso de prueba:** 1      |     | **Nombre del probador:** Grupo 50      |     |
+| **Autor del caso de prueba:** Grupo 50 |     | **Fecha de ejecución:** 2026-05-28     |     |
+| **Fecha de creación:** 2026-05-28      |     |                                        |     |
 
-```
-tests/
-└── domain/
-    ├── reporte/
-    │   ├── Reporte.test.ts                      ← Patrón ESTADO
-    │   ├── acciones/seleccionarAccion.test.ts   ← Patrón ESTRATEGIA
-    │   ├── eventos/DispatcherEventos.test.ts     ← Patrón OBSERVADOR (sujeto)
-    │   ├── eventos/listeners.test.ts             ← Patrón OBSERVADOR (listeners)
-    │   └── ServicioResolucionReporte.test.ts     ← Orquestación C-01 (3 patrones)
-    └── comision/
-        ├── Comision.test.ts                      ← Reglas de negocio (validación)
-        └── ServicioComision.test.ts              ← Casos de uso C-02 / C-03
-```
 
----
+### Entidad de Dominio — `Comision.ts`
 
-## 2. Casos de prueba diseñados
 
-> **Funcionalidades cubiertas:** C-01 Gestionar Reporte (principal) y C-02/C-03 Crear/Importar Comisión.
-> Estado de la última ejecución: ✅ = pasó.
+| CP  | Objetivo                                                    | Datos de entrada                                                                     | Resultado esperado                                                                          |
+| --- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| 1   | Validar una comisión con datos correctos                    | Nombre: `'Comisión A'`; letraDesde: `' a '`; letraHasta: `' m '`; id_asignatura: `1` | `validar()` no lanza error; los datos se normalizan a `A` / `M` y el nombre queda recortado |
+| 2   | Rechazar una comisión con nombre vacío                      | Nombre: `''`; resto de campos válidos                                                | Se lanza `ComisionInvalidaError` con mensaje de nombre obligatorio                          |
+| 3   | Rechazar letras fuera del rango A-Z o de más de un carácter | letraDesde: `'AA'`; letraHasta: `'1'`                                                | Se lanza `ComisionInvalidaError`                                                            |
+| 4   | Rechazar cuando letraDesde es mayor o igual a letraHasta    | letraDesde: `'M'`, letraHasta: `'A'`; y caso `'A'`, `'A'`                            | Se lanza `ComisionInvalidaError` (violación del CHECK de rango)                             |
+| 5   | Rechazar id_asignatura inválido                             | `id_asignatura = 0`                                                                  | Se lanza `ComisionInvalidaError`                                                            |
+| 6   | Serializar la comisión para persistencia                    | Comisión válida ya creada                                                            | `aFilaPersistible()` retorna el objeto en la forma exacta de la tabla `comision` de la BD   |
 
-### 2.1 C-01 — Patrón Estado (`Reporte.test.ts`)
 
-| ID | Precondición | Entrada / Acción | Resultado esperado | Result. |
-|----|--------------|------------------|--------------------|:------:|
-| RP-01 | Reporte `Pendiente` | `resolver('Suspender Temporalmente')` | estado → `Resuelto`; `accionTomada` guardada | ✅ |
-| RP-02 | Reporte `Pendiente` | `desestimar()` | estado → `Desestimado` | ✅ |
-| RP-03 | Reporte `Resuelto` | `resolver('Enviar aviso')` | lanza `ReporteYaProcesadoError` | ✅ |
-| RP-04 | Reporte `Resuelto` | `resolver(...)` y se inspecciona el error | `codigo === 'CONFLIC_ALREADY_PROCESSED'` | ✅ |
-| RP-05 | Reporte `Desestimado` | `desestimar()` | lanza `ReporteYaProcesadoError` | ✅ |
-| RP-06 | `emisor_id = null` / `= 5` | `emisorEsSistema()` | `true` / `false` | ✅ |
-| RP-07 | Reporte `Pendiente` resuelto + admin | `aFilaPersistible()` | `{ estado:'Resuelto', accion_tomada, admin_id }` | ✅ |
+### Servicio de Aplicación — `ServicioComision.ts`
 
-### 2.2 C-01 — Patrón Estrategia (`seleccionarAccion.test.ts`)
 
-| ID | Precondición | Entrada / Acción | Resultado esperado | Result. |
-|----|--------------|------------------|--------------------|:------:|
-| ES-01 | — | `seleccionarAccion(<cada acción>)` | devuelve la estrategia concreta correcta | ✅ |
-| ES-02 | — | `EnviarAviso.aplicar()` | NO suspende; notificación tipo `Aviso` | ✅ |
-| ES-03 | `fechaHasta` provista | `SuspenderTemporalmente.aplicar()` | `usuarioRepo.suspender(receptor, fecha)`; tipo `Bloqueo` | ✅ |
-| ES-04 | sin `fechaHasta` | `SuspenderTemporalmente.aplicar()` | lanza error | ✅ |
-| ES-05 | — | `SuspenderIndefinidamente.aplicar()` | `suspender(receptor, null)`; tipo `Bloqueo` | ✅ |
+| CP  | Objetivo                                            | Datos de entrada                                              | Resultado esperado                                                |
+| --- | --------------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------- |
+| 7   | Crear una comisión válida con profesores asignados  | Datos válidos; asignatura existente; `profesores_ids: [1, 2]` | La comisión se crea y se llama a `vincularProfesores(id, [1, 2])` |
+| 8   | No crear una comisión si las letras son inválidas   | letraDesde: `'Z'`; letraHasta: `'A'`                          | Se lanza error antes de llamar al repositorio; nada se persiste   |
+| 9   | No crear una comisión si la asignatura no existe    | `id_asignatura` que no existe en la BD                        | Se lanza `ComisionInvalidaError`; no se crea la comisión          |
+| 10  | Actualizar los profesores de una comisión existente | `id_comision = 99`; `profesores_ids: [3]`                     | Se llama a `reemplazarProfesores(99, [3])` correctamente          |
+| 11  | Rechazar la actualización con letras inválidas      | letraDesde: `'Z'`; letraHasta: `'A'`                          | Se lanza `ComisionInvalidaError`                                  |
 
-### 2.3 C-01 — Patrón Observador (`DispatcherEventos.test.ts`, `listeners.test.ts`)
-
-| ID | Precondición | Entrada / Acción | Resultado esperado | Result. |
-|----|--------------|------------------|--------------------|:------:|
-| OB-01 | 2 observadores suscritos | `publicar(evento)` | ambos reciben el evento, en orden | ✅ |
-| OB-02 | sin observadores | `publicar(evento)` | no falla | ✅ |
-| OB-03 | emisor real (≠ Sistema) | `NotificarUsuariosListener.manejar()` | 2 notificaciones (receptor + emisor) | ✅ |
-| OB-04 | emisor = Sistema (`null`) | `NotificarUsuariosListener.manejar()` | 1 notificación (solo receptor) | ✅ |
-| OB-05 | evento resuelto | `RegistrarAuditoriaListener.manejar()` | auditoría con admin, afectado y observaciones | ✅ |
-
-### 2.4 C-01 — Orquestación (`ServicioResolucionReporte.test.ts`)
-
-| ID | Precondición | Entrada / Acción | Resultado esperado | Result. |
-|----|--------------|------------------|--------------------|:------:|
-| SR-01 | Reporte `Pendiente` | `resolver(Suspender Temporal, fecha, admin=2)` | estado `Resuelto`; guarda; suspende; notifica; audita | ✅ |
-| SR-02 | sin `admin_id` | `resolver('Enviar aviso')` | usa admin por defecto; auditoría con `id_admin=1` | ✅ |
-| SR-03 | Reporte `Resuelto` | `resolver(...)` | lanza conflicto y **no escribe nada** (ni guardar/suspender/notif/auditoría) | ✅ |
-| SR-04 | Reporte `Pendiente` | `desestimar()` | estado `Desestimado`; sin sanción; auditado | ✅ |
-
-### 2.5 C-02/C-03 — Comisión (`Comision.test.ts`, `ServicioComision.test.ts`)
-
-| ID | Precondición | Entrada / Acción | Resultado esperado | Result. |
-|----|--------------|------------------|--------------------|:------:|
-| CO-01 | — | `validar()` con datos válidos (` a `,` m `) | OK; normaliza a `A`/`M` y recorta nombre | ✅ |
-| CO-02 | — | `validar()` con nombre vacío | lanza `ComisionInvalidaError` | ✅ |
-| CO-03 | — | `validar()` con letras no `[A-Z]` o de 2 chars | lanza `ComisionInvalidaError` | ✅ |
-| CO-04 | — | `validar()` con `Desde >= Hasta` (M,A / A,A) | lanza `ComisionInvalidaError` (CHECK estricto) | ✅ |
-| CO-05 | — | `validar()` con `id_asignatura = 0` | lanza `ComisionInvalidaError` | ✅ |
-| CO-06 | — | `aFilaPersistible()` | forma exacta de la tabla `comision` | ✅ |
-| SC-01 | asignatura existe | `crear()` válido con 2 profesores | crea comisión + `vincularProfesores(99,[1,2])` | ✅ |
-| SC-02 | — | `crear()` con letras inválidas | lanza error; **no llama** al repositorio | ✅ |
-| SC-03 | asignatura inexistente | `crear()` | lanza `ComisionInvalidaError`; no crea | ✅ |
-| SC-04 | — | `actualizar()` con `profesores_ids` | `reemplazarProfesores(99,[3])` | ✅ |
-| SC-05 | — | `actualizar()` con letras inválidas | lanza `ComisionInvalidaError` | ✅ |
-| SC-06 | 2 filas (1 ok, 1 con asignatura inexistente) | `importarMasivo()` | `insertadas=1`, `errores=1` con detalle | ✅ |
 
 ---
 
-## 3. Registro de ejecución
+## C-03 — Importación Masiva de Comisiones por CSV
+
+
+|                                        |     |                                                     |     |
+| -------------------------------------- | --- | --------------------------------------------------- | --- |
+| **Id-nombre del sistema:** SIC-UNNE    |     | **Caso de uso:** C-03 – Importar Comisiones por CSV |     |
+| **Versión del caso de prueba:** 1      |     | **Nombre del probador:** Grupo 50                   |     |
+| **Autor del caso de prueba:** Grupo 50 |     | **Fecha de ejecución:** 2026-05-28                  |     |
+| **Fecha de creación:** 2026-05-28      |     |                                                     |     |
+
+
+### Servicio de Aplicación — `ServicioComision.ts` (importarMasivo)
+
+
+| CP  | Objetivo                                      | Datos de entrada                                                   | Resultado esperado                                                |
+| --- | --------------------------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| 1   | Importar un CSV con filas válidas e inválidas | 2 filas: 1 con asignatura existente y 1 con asignatura inexistente | `insertadas = 1`; `errores = 1` con el detalle de la fila fallida |
+
+
+---
+
+## Registro de ejecución
 
 **Comando:** `npm test`
 **Fecha de corrida:** 2026-05-28
-**Resultado global:**
 
 ```
  Test Files  7 passed (7)
@@ -110,35 +110,13 @@ tests/
    Duration  ~0.8 s
 ```
 
-| Archivo | Tests | Estado |
-|---|:---:|:---:|
-| `Reporte.test.ts` | 7 | ✅ |
-| `acciones/seleccionarAccion.test.ts` | 5 | ✅ |
-| `eventos/DispatcherEventos.test.ts` | 2 | ✅ |
-| `eventos/listeners.test.ts` | 3 | ✅ |
-| `ServicioResolucionReporte.test.ts` | 4 | ✅ |
-| `comision/Comision.test.ts` | 6 | ✅ |
-| `comision/ServicioComision.test.ts` | 6 | ✅ |
-| **Total** | **33** | **✅ 33/33** |
 
-> Para regenerar este registro: `npm test` y pegar la salida. Para volver a correr ante cada cambio: `npm run test:watch`.
+| Archivo de test                             | Tests  | Estado      |
+| ------------------------------------------- | ------ | ----------- |
+| `reporte/Reporte.test.ts`                   | 7      | ✅           |
+| `reporte/ServicioResolucionReporte.test.ts` | 4      | ✅           |
+| `comision/Comision.test.ts`                 | 6      | ✅           |
+| `comision/ServicioComision.test.ts`         | 6      | ✅           |
+| **Total**                                   | **33** | **✅ 33/33** |
 
----
 
-## 4. Trazabilidad pruebas ↔ diseño
-
-| Caso de uso | Patrón / Clase probada | Archivo de test | Diagrama |
-|---|---|---|---|
-| C-01 | Estado (`Reporte`, `EstadoPendiente/Resuelto/Desestimado`) | `Reporte.test.ts` | `docs/puml/actualizacion_claude/C-01 *` |
-| C-01 | Estrategia (`AccionResolucion` y concretas) | `seleccionarAccion.test.ts` | idem |
-| C-01 | Observador (`DispatcherEventos`, listeners) | `DispatcherEventos.test.ts`, `listeners.test.ts` | idem |
-| C-01 | Orquestación (`ServicioResolucionReporte`) | `ServicioResolucionReporte.test.ts` | `C-01 (Caso Normal)` / `(ya gestionado)` |
-| C-02 / C-03 | `Comision`, `ServicioComision` | `Comision.test.ts`, `ServicioComision.test.ts` | `C-02 *`, `C-03 *` |
-
----
-
-## 5. Pruebas pendientes (trabajo futuro)
-
-- **Integración de API Routes** (`/api/reportes/[id]`, `/api/comisiones`): requieren mock de Supabase o una BD de prueba; quedan fuera del alcance actual.
-- **Pruebas E2E** de la UI (Playwright) sobre los flujos "Crear Comisión" y "Gestionar Reporte".
-- **Repositorios** contra una base de datos de test (hoy se prueban indirectamente vía mocks en los servicios).

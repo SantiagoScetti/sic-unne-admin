@@ -22,7 +22,7 @@ export default function NotFound() {
           Lo sentimos, la página de administración a la que intentas acceder no existe, la dirección es incorrecta o fue movida a otra ubicación.
         </p>
         <Link 
-          href="/admin/reportes" 
+          href="/admin/denuncias" 
           style={{ 
             display: 'inline-block',
             padding: '12px 28px', 

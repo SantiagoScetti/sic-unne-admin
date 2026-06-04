@@ -1,0 +1,261 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Arial
+skinparam linetype ortho
+skinparam class {
+  BackgroundColor White
+  BorderColor #444
+  ArrowColor #555
+  FontSize 12
+}
+skinparam package {
+  BackgroundColor #F8F8F8
+  BorderColor #AAAAAA
+  FontSize 13
+  FontStyle bold
+}
+skinparam note {
+  BackgroundColor #FFFDE7
+  BorderColor #BBAA00
+  FontSize 11
+}
+
+title Diagrama de Clases del Dominio (Puro DOO) — SIC-UNNE
+
+' ══════════════════════════════════════════════════════════════════════
+' BLOQUE 1 — Jerarquía Académica (columna izquierda)
+' ══════════════════════════════════════════════════════════════════════
+
+package "Organización Académica" #EEF4FF {
+
+  class Edificio {
+    + id_edificio: int
+    + nombre: string
+    + direccion: string
+    + estado: boolean
+  }
+
+  class Facultad {
+    + id_facultad: int
+    + nombre: string
+    + ciudad: string
+    + estado: boolean
+  }
+
+  class Carrera {
+    + id_carrera: int
+    + nombre: string
+    + estado: boolean
+  }
+
+  class Periodo {
+    + id_periodo: int
+    + nombre: string
+    + fecha_inicio: date
+    + fecha_fin: date
+    + estado: boolean
+  }
+
+  class Asignatura {
+    + id_asignatura: int
+    + nombre: string
+    + anio_dictado: string
+    + estado: boolean
+  }
+
+  class Comision {
+    + id_comision: int?
+    + nombre: string
+    + letraDesde: char
+    + letraHasta: char
+    + estado: boolean
+    + profesoresIds: int[]
+    + validar(): void
+    + aFilaPersistible(): object
+  }
+
+  ' Jerarquía vertical: fuerza el orden top-to-bottom dentro del paquete
+  Edificio  -down-> Facultad
+  Facultad  -down-> Carrera
+  Carrera   -down-> Asignatura
+  Periodo   -right[hidden]-> Asignatura
+  Asignatura -down-> Comision
+}
+
+' ══════════════════════════════════════════════════════════════════════
+' BLOQUE 2 — Profesores, Aulas y Horarios (columna central-derecha)
+' ══════════════════════════════════════════════════════════════════════
+
+package "Profesores, Aulas y Horarios" #F0FFF0 {
+
+  class Profesor {
+    + id_profesor: int
+    + nombre: string
+    + apellido: string
+    + documento: int
+    + correo: string
+    + estado: boolean
+  }
+
+  class Aula {
+    + id_aula: int
+    + nombre: string
+  }
+
+  class Horario {
+    + id_horario: int
+    + dia: string
+    + hora_inicio: time
+    + hora_fin: time
+    + modalidad: string
+  }
+
+  class HorarioComision {
+    ' Asignación ternaria:\nHorario + Comision + Aula
+  }
+
+  ' Posicionamiento interno
+  Profesor -down[hidden]-> Aula
+  Aula -down[hidden]-> Horario
+  Horario -down[hidden]-> HorarioComision
+}
+
+' ══════════════════════════════════════════════════════════════════════
+' BLOQUE 3 — Usuarios e Inscripciones (columna izquierda-baja)
+' ══════════════════════════════════════════════════════════════════════
+
+package "Usuarios e Inscripciones" #FFF8EE {
+
+  class Usuario {
+    + id_usuario: int
+    + auth_id: uuid
+    + nombre: string
+    + apellido: string
+    + rol: string
+    + estado: string
+    + fecha_suspension_hasta: date?
+    + suspender(fechaHasta: date?): void
+  }
+
+  class Inscripcion {
+    + id_inscripcion: int
+    + fecha_alta: date
+    + estado: boolean
+  }
+
+  Usuario -right[hidden]-> Inscripcion
+}
+
+' ══════════════════════════════════════════════════════════════════════
+' BLOQUE 4 — Denuncias con Patrón Estado (columna derecha-baja)
+' ══════════════════════════════════════════════════════════════════════
+
+package "Denuncias — Patrón Estado" #FFF0FF {
+
+  class Denuncia {
+    + id_denuncia: int
+    + motivo: string
+    + fecha_alta: string?
+    - _estado: EstadoDenuncia
+    - _accionTomada: AccionTomada?
+    - _adminId: int?
+    + get estado(): EstadoDenunciaNombre
+    + get accionTomada(): AccionTomada?
+    + get adminId(): int?
+    + esPendiente(): boolean
+    + emisorEsSistema(): boolean
+    + resolver(accion: AccionTomada): void
+    + desestimar(): void
+    + asignarAdmin(adminId: int): void
+    + transicionarA(e: EstadoDenuncia): void
+    + registrarAccion(a: AccionTomada): void
+    + aFilaPersistible(): object
+  }
+
+  abstract class EstadoDenuncia {
+    + {abstract} get nombre(): EstadoDenunciaNombre
+    + resolver(r: Denuncia, a: AccionTomada): void
+    + desestimar(r: Denuncia): void
+  }
+
+  class EstadoPendiente {
+    + get nombre(): EstadoDenunciaNombre
+    + resolver(r: Denuncia, a: AccionTomada): void
+    + desestimar(r: Denuncia): void
+  }
+
+  class EstadoResuelto {
+    + get nombre(): EstadoDenunciaNombre
+  }
+
+  class EstadoDesestimado {
+    + get nombre(): EstadoDenunciaNombre
+  }
+
+  ' Herencia del patrón Estado
+  EstadoDenuncia <|-- EstadoPendiente
+  EstadoDenuncia <|-- EstadoResuelto
+  EstadoDenuncia <|-- EstadoDesestimado
+
+  ' Posicionamiento: estados debajo de EstadoDenuncia
+  Denuncia -right[hidden]-> EstadoDenuncia
+  EstadoPendiente -right[hidden]-> EstadoResuelto
+  EstadoResuelto  -right[hidden]-> EstadoDesestimado
+}
+
+' ══════════════════════════════════════════════════════════════════════
+' RELACIONES ENTRE PAQUETES
+' ══════════════════════════════════════════════════════════════════════
+
+' — Organización Académica —
+Facultad   "many" -up-> "1" Edificio          : "ubicada en"
+Carrera    "many" -up-> "1" Facultad           : "pertenece a"
+Asignatura "many" -up-> "1" Carrera            : "pertenece a"
+Asignatura "many" --> "1" Periodo              : "dictada en"
+Comision   "many" -up-> "1" Asignatura         : "pertenece a"
+
+' — Aula y Profesores —
+Aula "many" --> "1" Edificio                   : "ubicada en"
+Comision "many" <--> "many" Profesor           : "dictada por"
+
+' — HorarioComision (ternaria) —
+HorarioComision "many" --> "1" Horario         : "tiene horario"
+HorarioComision "many" --> "1" Comision        : "de comisión"
+HorarioComision "many" --> "1" Aula            : "en aula"
+
+' — Inscripciones —
+Inscripcion "many" --> "1" Usuario             : "realizada por"
+Inscripcion "many" --> "1" Comision            : "en comisión"
+
+' — Denuncia —
+Denuncia "1" o--> "1" EstadoDenuncia             : "estado actual\n«Patrón Estado»"
+Denuncia "many" --> "1" Periodo                 : "ocurre en"
+Denuncia "many" --> "1" Usuario                 : "emisor\n(null = Sistema)"
+Denuncia "many" --> "1" Usuario                 : "receptor"
+Denuncia "many" --> "1" Usuario                 : "gestiona (admin)"
+
+' ══════════════════════════════════════════════════════════════════════
+' NOTAS ACLARATORIAS
+' ══════════════════════════════════════════════════════════════════════
+
+note bottom of Comision
+  <b>Reglas de negocio:</b>
+  • nombre obligatorio (≤ 50 chars)
+  • letraDesde < letraHasta (A-Z)
+  • id_asignatura existente y válido
+end note
+
+note right of EstadoPendiente
+  <b>Único estado no-terminal.</b>
+  Solo este estado permite
+  resolver() y desestimar().
+end note
+
+note bottom of Denuncia
+  <b>AccionTomada (enum):</b>
+  Enviar aviso |
+  Suspender Temporalmente |
+  Suspender Indefinidamente
+end note
+
+@enduml

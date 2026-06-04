@@ -7,36 +7,36 @@
 skinparam classAttributeIconSize 0
 title Diagrama de Clases del Dominio (Puro DOO) - SIC-UNNE
 
-' ─── Entidad Reporte y su Maquina de Estados ───
-class Reporte {
-  + id_reporte: int
+' ─── Entidad Denuncia y su Maquina de Estados ───
+class Denuncia {
+  + id_denuncia: int
   + emisor_id: int?
   + receptor_id: int
   + id_periodo: int?
   + motivo: string
   + fecha_alta: string?
-  - _estado: EstadoReporte
+  - _estado: EstadoDenuncia
   - _accionTomada: AccionTomada?
   - _adminId: int?
   + resolver(accion: AccionTomada): void
   + desestimar(): void
   + asignarAdmin(id: int): void
   + registrarAccion(a: AccionTomada): void
-  + transicionarA(e: EstadoReporte): void
+  + transicionarA(e: EstadoDenuncia): void
   + esPendiente(): boolean
   + emisorEsSistema(): boolean
 }
 
-abstract class EstadoReporte {
+abstract class EstadoDenuncia {
   + {abstract} nombre: string
-  + resolver(r: Reporte, a: AccionTomada): void
-  + desestimar(r: Reporte): void
+  + resolver(r: Denuncia, a: AccionTomada): void
+  + desestimar(r: Denuncia): void
 }
 
 class EstadoPendiente {
   + nombre: string
-  + resolver(r: Reporte, a: AccionTomada): void
-  + desestimar(r: Reporte): void
+  + resolver(r: Denuncia, a: AccionTomada): void
+  + desestimar(r: Denuncia): void
 }
 
 class EstadoResuelto {
@@ -47,10 +47,10 @@ class EstadoDesestimado {
   + nombre: string
 }
 
-EstadoReporte <|-- EstadoPendiente
-EstadoReporte <|-- EstadoResuelto
-EstadoReporte <|-- EstadoDesestimado
-Reporte "1" o--> "1" EstadoReporte : estado actual
+EstadoDenuncia <|-- EstadoPendiente
+EstadoDenuncia <|-- EstadoResuelto
+EstadoDenuncia <|-- EstadoDesestimado
+Denuncia "1" o--> "1" EstadoDenuncia : estado actual
 
 ' ─── Entidades de Usuario ───
 class Usuario {
@@ -64,10 +64,10 @@ class Usuario {
   + suspender(fechaHasta: date?): void
 }
 
-' Relaciones conceptuales de Reporte y Usuario
-Reporte "many" --> "1" Usuario : "reporta a (receptor)"
-Reporte "many" --> "1" Usuario : "creado por (emisor)"
-Reporte "many" --> "1" Usuario : "gestionado por (admin)"
+' Relaciones conceptuales de Denuncia y Usuario
+Denuncia "many" --> "1" Usuario : "reporta a (receptor)"
+Denuncia "many" --> "1" Usuario : "creado por (emisor)"
+Denuncia "many" --> "1" Usuario : "gestionado por (admin)"
 
 ' ─── Entidades del Dominio Academico (Comision) ───
 class Comision {
@@ -104,4 +104,4 @@ Comision "many" <--> "many" Profesor : "dictada por"
 @enduml
 ```
 
-1. **Diagrama de Clases del Dominio (Sección 1):** Es la vista conceptual abstracta (DOO Puro). Representa las entidades de negocio, sus atributos y sus colaboraciones conceptuales directas (por ejemplo, que un `Reporte` se asocia con un `Usuario` emisor y receptor, y delega su comportamiento de estado en un `EstadoReporte`). No sabe nada de bases de datos, APIs de Next.js, ni de cómo se persisten los objetos.
+1. **Diagrama de Clases del Dominio (Sección 1):** Es la vista conceptual abstracta (DOO Puro). Representa las entidades de negocio, sus atributos y sus colaboraciones conceptuales directas (por ejemplo, que un `Denuncia` se asocia con un `Usuario` emisor y receptor, y delega su comportamiento de estado en un `EstadoDenuncia`). No sabe nada de bases de datos, APIs de Next.js, ni de cómo se persisten los objetos.

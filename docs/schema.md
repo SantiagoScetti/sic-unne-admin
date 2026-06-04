@@ -198,10 +198,10 @@ Foreign Keys
 
 id_listaespera_1 → lista_espera.id_lista_espera (constraint: propuesta_id_listaespera_1_fkey)
 id_listaespera_2 → lista_espera.id_lista_espera (constraint: propuesta_id_listaespera_2_fkey)
-reporte
+denuncia
 Columnas
 
-id_reporte (integer)
+id_denuncia (integer)
 emisor_id (integer)
 receptor_id (integer)
 id_periodo (integer)
@@ -213,10 +213,10 @@ accion_tomada (character varying)
 admin_id (integer)
 Foreign Keys
 
-admin_id → usuario.id_usuario (constraint: reporte_admin_id_fkey)
-emisor_id → usuario.id_usuario (constraint: reporte_emisor_id_fkey)
-receptor_id → usuario.id_usuario (constraint: reporte_receptor_id_fkey)
-id_periodo → periodo.id_periodo (constraint: reporte_id_periodo_fkey)
+admin_id → usuario.id_usuario (constraint: denuncia_admin_id_fkey)
+emisor_id → usuario.id_usuario (constraint: denuncia_emisor_id_fkey)
+receptor_id → usuario.id_usuario (constraint: denuncia_receptor_id_fkey)
+id_periodo → periodo.id_periodo (constraint: denuncia_id_periodo_fkey)
 respuesta_propuesta
 Columnas
 
@@ -281,7 +281,7 @@ id_usuario → usuario.id_usuario
 propuesta
 id_listaespera_1 → lista_espera.id_lista_espera
 id_listaespera_2 → lista_espera.id_lista_espera
-reporte
+denuncia
 admin_id → usuario.id_usuario
 emisor_id → usuario.id_usuario
 receptor_id → usuario.id_usuario
@@ -307,7 +307,7 @@ propuesta → lista_espera (dos referencias)
 respuesta_propuesta → propuesta, usuario
 comprobante → propuesta, usuario (dos usuarios)
 constancia → usuario
-Auditoría / comunicación / reportes
+Auditoría / comunicación / denuncias
 auditoria_administrativa → usuario (admin + afectado)
 notificacion → usuario
-reporte → usuario (admin/emisor/receptor) + periodo
+denuncia → usuario (admin/emisor/receptor) + periodo

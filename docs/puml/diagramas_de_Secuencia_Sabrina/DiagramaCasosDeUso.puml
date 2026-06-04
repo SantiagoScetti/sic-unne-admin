@@ -56,7 +56,7 @@ rectangle "SISTEMA DE GESTIÓN ACADÉMICA" {
   ADM --> C03
 
   ' ───────────────────────────────────────
-  ' C-01 Gestionar Reporte
+  ' C-01 Gestionar Denuncia
   ' ───────────────────────────────────────
   C01     ..> C01_SEL : <<include>>
   C01_SEL ..> C01_MED : <<include>>

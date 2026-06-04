@@ -1,4 +1,4 @@
-# SIC-UNNE | Módulo de Administración y Reportes
+# SIC-UNNE | Módulo de Administración y Denuncias
 
 Este repositorio contiene el frontend del Panel de Administración para el Sistema de Intercambio de Comisiones (SIC-UNNE). Está construido para permitir al personal de la facultad gestionar la estructura académica, auditar acciones y resolver conflictos de matching.
 
@@ -14,7 +14,7 @@ Los componentes visuales (React/Next.js) **nunca** deben comunicarse directament
 * `src/app/`: Define las rutas de la aplicación (App Router). Aquí viven las páginas (`page.tsx`) y los layouts (`layout.tsx`).
 * `src/components/`: Componentes puros de interfaz de usuario.
   * `ui/`: Botones, inputs, modales, etc.
-* `src/services/`: **Capa de Datos.** Aquí reside toda la lógica de conexión con Supabase (`authClientService.js`, `reportesService.js`).
+* `src/services/`: **Capa de Datos.** Aquí reside toda la lógica de conexión con Supabase (`authClientService.js`, `denuncia.service.js`).
 * `src/lib/`: Utilidades y configuraciones generales del cliente.
 
 ## 🚀 Guía de Inicio Rápido (Setup)

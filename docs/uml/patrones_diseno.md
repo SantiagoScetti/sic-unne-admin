@@ -21,29 +21,29 @@ en el código** (`src/`). Criterio: **un** patrón de diseño (GoF) implementado
 ## 2. Patrón IMPLEMENTADO: ESTADO (State)
 
 ### Problema
-Un reporte tiene un **ciclo de vida**: nace `Pendiente` y pasa a `Resuelto` o
-`Desestimado` (terminales). La regla "un reporte ya procesado no puede volver a
+Un denuncia tiene un **ciclo de vida**: nace `Pendiente` y pasa a `Resuelto` o
+`Desestimado` (terminales). La regla "un denuncia ya procesado no puede volver a
 resolverse" estaba dispersa en `if`s, fácil de olvidar y duplicar.
 
 ### Solución
-Cada estado es una clase que decide qué transiciones son válidas. El `Reporte`
+Cada estado es una clase que decide qué transiciones son válidas. El `Denuncia`
 (contexto) **delega** en su estado actual. Una transición inválida lanza
-`ReporteYaProcesadoError` (HTTP 409). El estado `Pendiente` es el único que sobrescribe
+`DenunciaYaProcesadaError` (HTTP 409). El estado `Pendiente` es el único que sobrescribe
 `resolver()`/`desestimar()`; los terminales heredan el comportamiento que rechaza.
 
 ### Diagrama (marcado con recuadro en el Diagrama de Clases)
 ```plantuml
 @startuml
 skinparam classAttributeIconSize 0
-class Reporte <<Context>> {
-  - _estado: EstadoReporte
+class Denuncia <<Context>> {
+  - _estado: EstadoDenuncia
   + resolver(accion): void
   + desestimar(): void
   + transicionarA(e): void
   + registrarAccion(a): void
 }
 package "Patron Estado (State)" <<Rectangle>> #LightYellow {
-  abstract class EstadoReporte <<State>> {
+  abstract class EstadoDenuncia <<State>> {
     + {abstract} nombre
     + resolver(r, a): void
     + desestimar(r): void
@@ -55,21 +55,21 @@ package "Patron Estado (State)" <<Rectangle>> #LightYellow {
   }
   class EstadoResuelto { + nombre }
   class EstadoDesestimado { + nombre }
-  EstadoReporte <|-- EstadoPendiente
-  EstadoReporte <|-- EstadoResuelto
-  EstadoReporte <|-- EstadoDesestimado
+  EstadoDenuncia <|-- EstadoPendiente
+  EstadoDenuncia <|-- EstadoResuelto
+  EstadoDenuncia <|-- EstadoDesestimado
 }
-Reporte o--> EstadoReporte : estado actual
-note bottom of EstadoReporte
-  resolver()/desestimar() de la base lanzan ReporteYaProcesadoError (409).
+Denuncia o--> EstadoDenuncia : estado actual
+note bottom of EstadoDenuncia
+  resolver()/desestimar() de la base lanzan DenunciaYaProcesadaError (409).
   EstadoPendiente los sobrescribe; los terminales solo definen nombre.
 end note
 @enduml
 ```
 
 ### Archivos
-`src/domain/reporte/Reporte.ts` (contexto) y `src/domain/reporte/estados/`
-(`EstadoReporte.ts` base, `EstadoPendiente.ts`, `EstadoResuelto.ts`,
+`src/domain/denuncia/Denuncia.ts` (contexto) y `src/domain/denuncia/estados/`
+(`EstadoDenuncia.ts` base, `EstadoPendiente.ts`, `EstadoResuelto.ts`,
 `EstadoDesestimado.ts`, `index.ts` fábrica `crearEstado`).
 
 ---
@@ -77,13 +77,13 @@ end note
 ## 3. Patrones CANDIDATOS (documentados, no implementados)
 
 ### 3.1. Estrategia (Strategy)
-**Dónde aplicaría:** las **tres acciones administrativas** al resolver un reporte
+**Dónde aplicaría:** las **tres acciones administrativas** al resolver un denuncia
 (*Enviar aviso*, *Suspender Temporalmente*, *Suspender Indefinidamente*). Cada una sería
 una estrategia intercambiable bajo una interfaz `AccionResolucion.aplicar(contexto)`,
 elegida en tiempo de ejecución (principio Abierto/Cerrado).
 
 **Por qué no está:** son tres acciones fijas y acotadas; se resuelven con un `switch`
-dentro de `ServicioResolucionReporte.aplicarEfecto()`. El patrón se reserva como
+dentro de `ServicioResolucionDenuncia.aplicarEfecto()`. El patrón se reserva como
 refactorización si el conjunto de acciones creciera.
 
 ### 3.2. Observador (Observer)
@@ -101,7 +101,7 @@ volvieran numerosos o variables.
 
 No son patrones que el proyecto "luzca", sino que sostienen la separación de capas:
 
-- **Repositorio** — `src/infrastructure/repositorios/` (`ReporteRepositorio`,
+- **Repositorio** — `src/infrastructure/repositorios/` (`DenunciaRepositorio`,
   `UsuarioRepositorio`, `NotificacionRepositorio`, `AuditoriaRepositorio`,
   `ComisionRepositorio`). Encapsulan todo el SQL/Supabase: el dominio pide operaciones de
   alto nivel sin conocer la base. Permiten testear el dominio sin base de datos
