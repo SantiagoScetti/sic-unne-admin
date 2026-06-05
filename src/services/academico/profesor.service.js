@@ -1,112 +1,164 @@
 import { createClient } from '@/lib/supabase/client';
 
-const supabase = createClient();
+// =============================================================================
+// :Profesor — Service (Cliente HTTP puro hacia /api/profesores)
+//
+// Este archivo ya NO accede directamente a Supabase para las operaciones
+// de ABM (listar, crear, actualizar, cambiarEstado). Todas esas operaciones
+// pasan por la API Route /api/profesores, que a su vez usa el servidor.
+//
+// Excepción: insertar() sigue usando el cliente Supabase directamente ya que
+// es parte del flujo C-03 (importación masiva desde CSV), que se ejecuta
+// completamente en el cliente.
+//
+// Trazabilidad:
+//   obtenerProfesores → GET  /api/profesores?filtroEstado=...
+//   contarActivos     → GET  /api/profesores?filtroEstado=Activos (count)
+//   crear             → POST /api/profesores
+//   actualizar        → PUT  /api/profesores/:id
+//   cambiarEstado     → PATCH /api/profesores/:id
+//   insertar          → Supabase cliente (C-03, importación masiva)
+// =============================================================================
 
-const applyEstadoFilter = (query, filtroEstado) => {
-  if (filtroEstado === 'Activos') return query.eq('estado', true);
-  if (filtroEstado === 'Inactivos') return query.eq('estado', false);
-  return query;
+const ENDPOINT = '/api/profesores';
+
+const jsonFetch = async (url, options = {}) => {
+  const res = await fetch(url, {
+    headers: { 'Content-Type': 'application/json', ...(options.headers ?? {}) },
+    ...options,
+  });
+  let payload = null;
+  try { payload = await res.json(); } catch { /* respuesta sin cuerpo */ }
+  return { res, payload };
 };
 
-// =============================================================================
-// :Profesor — Objeto del dominio (C-02, C-03)
-// Métodos trazables con los diagramas de secuencia C-02 y C-03.
-// =============================================================================
-
+/**
+ * obtenerProfesores — Listado de profesores con total de asignaciones.
+ * @param {string} filtroEstado - 'Activos' | 'Inactivos' | 'Todos'
+ */
 export const obtenerProfesores = async (filtroEstado = 'Activos') => {
   try {
-    const { data, error } = await applyEstadoFilter(
-      supabase.from('profesor').select('*, comision_profesor(count)'),
-      filtroEstado
+    const { res, payload } = await jsonFetch(
+      `${ENDPOINT}?filtroEstado=${encodeURIComponent(filtroEstado)}`
     );
-    if (error) throw error;
-    const planas = data.map(p => ({
-      ...p,
-      totalAsignaciones: p.comision_profesor?.[0]?.count || 0
-    }));
-    return { data: planas, error: null };
-  } catch (error) {
-    console.error('Error obteniendo profesores:', error.message);
-    return { data: null, error: error.message };
+    if (!res.ok) {
+      const msg = payload?.error ?? `HTTP ${res.status}`;
+      console.error('[obtenerProfesores] Error API:', msg);
+      return { data: null, error: msg };
+    }
+    return { data: payload?.data ?? [], error: payload?.error ?? null };
+  } catch (err) {
+    console.error('[obtenerProfesores] Error de red:', err);
+    return { data: null, error: err.message };
   }
 };
 
+/**
+ * contarActivos — Cantidad de profesores activos (para StatCards).
+ */
 export const contarActivos = async () => {
   try {
-    const { count, error } = await supabase
-      .from('profesor')
-      .select('*', { count: 'exact', head: true })
-      .eq('estado', true);
-    if (error) throw error;
-    return count || 0;
-  } catch (error) {
-    console.error('Error contando profesores:', error.message);
+    const { res, payload } = await jsonFetch(
+      `${ENDPOINT}?filtroEstado=Activos`
+    );
+    if (!res.ok) {
+      console.error('[contarActivos] Error API:', payload?.error ?? res.status);
+      return 0;
+    }
+    return (payload?.data ?? []).length;
+  } catch (err) {
+    console.error('[contarActivos] Error de red:', err);
     return 0;
   }
 };
 
+/**
+ * crear — Alta de un nuevo profesor.
+ * @param {{ nombre, apellido, documento, correo }} data
+ */
 export const crear = async (data) => {
   try {
-    const { data: result, error } = await supabase
-      .from('profesor')
-      .insert([{
-        nombre: data.nombre,
-        apellido: data.apellido,
+    const { res, payload } = await jsonFetch(ENDPOINT, {
+      method: 'POST',
+      body: JSON.stringify({
+        nombre:    data.nombre,
+        apellido:  data.apellido,
         documento: Number(data.documento),
-        correo: data.correo,
-        estado: true,
-      }])
-      .select();
-    if (error) throw error;
-    return { data: result ? result[0] : null, error: null };
-  } catch (error) {
-    console.error('Error creando profesor:', error.message);
-    return { data: null, error: error.message };
+        correo:    data.correo ?? null,
+      }),
+    });
+    if (!res.ok) {
+      const msg = payload?.error ?? `HTTP ${res.status}`;
+      console.error('[crear] Error API:', msg);
+      return { data: null, error: msg };
+    }
+    return { data: payload?.data ?? null, error: null };
+  } catch (err) {
+    console.error('[crear] Error de red:', err);
+    return { data: null, error: err.message };
   }
 };
 
+/**
+ * actualizar — Actualiza datos de un profesor existente.
+ * @param {number} id
+ * @param {{ nombre, apellido, documento, correo }} data
+ */
 export const actualizar = async (id, data) => {
   try {
-    const { data: result, error } = await supabase
-      .from('profesor')
-      .update({
-        nombre: data.nombre,
-        apellido: data.apellido,
+    const { res, payload } = await jsonFetch(`${ENDPOINT}/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        nombre:    data.nombre,
+        apellido:  data.apellido,
         documento: Number(data.documento),
-        correo: data.correo,
-      })
-      .eq('id_profesor', id)
-      .select();
-    if (error) throw error;
-    return { data: result ? result[0] : null, error: null };
-  } catch (error) {
-    console.error('Error actualizando profesor id=' + id + ':', error.message);
-    return { data: null, error: error.message };
+        correo:    data.correo ?? null,
+      }),
+    });
+    if (!res.ok) {
+      const msg = payload?.error ?? `HTTP ${res.status}`;
+      console.error('[actualizar] Error API:', msg);
+      return { data: null, error: msg };
+    }
+    return { data: payload?.data ?? null, error: null };
+  } catch (err) {
+    console.error('[actualizar] Error de red:', err);
+    return { data: null, error: err.message };
   }
 };
 
+/**
+ * cambiarEstado — Activa o desactiva un profesor.
+ * @param {number}  id
+ * @param {boolean} estado
+ */
 export const cambiarEstado = async (id, estado) => {
   try {
-    const { error } = await supabase
-      .from('profesor')
-      .update({ estado })
-      .eq('id_profesor', id);
-    if (error) throw error;
+    const { res, payload } = await jsonFetch(`${ENDPOINT}/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ estado }),
+    });
+    if (!res.ok) {
+      const msg = payload?.error ?? `HTTP ${res.status}`;
+      console.error('[cambiarEstado] Error API:', msg);
+      return { error: msg };
+    }
     return { error: null };
-  } catch (error) {
-    console.error('Error cambiando estado profesor id=' + id + ':', error.message);
-    return { error: error.message };
+  } catch (err) {
+    console.error('[cambiarEstado] Error de red:', err);
+    return { error: err.message };
   }
 };
 
 /**
  * asignar — C-02, paso 3.
- * Inserta las relaciones N:M en comision_profesor para la comisión recién creada.
- * @param {number}   id_comision     - ID de la comisión a la que se asignan los profesores
- * @param {number[]} profesores_ids  - Array de IDs de profesores a vincular
+ * Vincula profesores a una comisión recién creada.
+ * Sigue usando Supabase cliente porque es una operación auxiliar dentro del
+ * flujo de creación de comisiones (orquestado en comision.service.js).
  */
 export const asignar = async (id_comision, profesores_ids) => {
   if (!profesores_ids || profesores_ids.length === 0) return;
+  const supabase = createClient();
   const relaciones = profesores_ids.map((id_profesor) => ({ id_comision, id_profesor }));
   const { error } = await supabase.from('comision_profesor').insert(relaciones);
   if (error) {
@@ -116,13 +168,12 @@ export const asignar = async (id_comision, profesores_ids) => {
 };
 
 /**
- * insertar — C-03, paso 6.
- * Upsert masivo de profesores desde un array de filas parseadas del CSV.
- * Deduplica por documento antes de hacer el upsert.
- * @param {Object[]} filas - Filas parseadas del CSV
+ * insertar — C-03, importación masiva desde CSV.
+ * Upsert masivo de profesores. Usa Supabase cliente directamente porque
+ * el flujo C-03 completo se ejecuta en el cliente (no pasa por API Route).
  */
 export const insertar = async (filas) => {
-  // Deduplicar por documento
+  const supabase = createClient();
   const vistas = new Set();
   const unicos = filas.filter((f) => {
     if (vistas.has(f.profesor_documento)) return false;

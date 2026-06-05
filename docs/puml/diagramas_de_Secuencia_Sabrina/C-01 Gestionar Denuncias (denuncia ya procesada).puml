@@ -1,6 +1,6 @@
 @startuml
 
-title Diagrama de Secuencia: C-01 Gestionar Denuncia (Alt: Denuncia ya gestionado)
+title Diagrama de Secuencia: C-01 Gestionar Denuncia (Alt: Denuncia ya gestionada)
 
 skinparam style strictuml
 skinparam ParticipantPadding 30
@@ -17,11 +17,13 @@ activate Interfaz
 Interfaz -> Denuncia: Solicita lista de Denuncias
 activate Denuncia
 Denuncia -> Denuncia: obtenerDenuncias()
-Denuncia -> Usuario: Solicita datos de receptor_id
-activate Usuario
-Usuario -> Usuario: obtenerPorId(receptor_id)
-Usuario --> Denuncia: Devuelve datos de receptor_id
-deactivate Usuario
+loop por cada denuncia de la lista
+  Denuncia -> Usuario: Solicita datos del receptor_id
+  activate Usuario
+  Usuario -> Usuario: obtenerPorId(receptor_id)
+  Usuario --> Denuncia: Devuelve datos del receptor_id
+  deactivate Usuario
+end
 Denuncia --> Interfaz: Devuelve lista de Denuncias
 deactivate Denuncia
 Interfaz --> Administrador: Muestra listado de Denuncias
@@ -31,10 +33,13 @@ activate Interfaz
 Interfaz -> Denuncia: Solicita detalle de la Denuncia
 activate Denuncia
 Denuncia -> Denuncia: obtenerDetalleDenuncia(id_denuncia)
-Denuncia -> Usuario: Solicita datos del emisor
-activate Usuario
-Usuario -> Usuario: obtenerPorId(emisor_id)
-Usuario --> Denuncia: Devuelve datos del emisor
+opt emisor_id != null
+  Denuncia -> Usuario: Solicita datos del emisor_id
+  activate Usuario
+  Usuario -> Usuario: obtenerPorId(emisor_id)
+  Usuario --> Denuncia: Devuelve datos de emisor_id
+  deactivate Usuario
+end
 Denuncia -> Usuario: Solicita datos del receptor
 Usuario -> Usuario: obtenerPorId(receptor_id)
 Usuario --> Denuncia: Devuelve datos del receptor
@@ -49,6 +54,11 @@ Administrador -> Interfaz: Selecciona acción y hace click en "Confirmar"
 activate Interfaz
 Interfaz -> Denuncia: Solicita resolver Denuncia
 activate Denuncia
+Denuncia -> Usuario: Solicita id_admin de la sesión
+activate Usuario
+Usuario -> Usuario: obtenerAdminPorDefecto()
+Usuario --> Denuncia: Devuelve admin_id
+deactivate Usuario
 Denuncia -> Denuncia: resolverDenuncia(id_denuncia, {estado="Resuelto", accion, fechaHasta, observaciones, admin_id})
 Denuncia --> Interfaz: Error: Denuncia ya gestionada
 deactivate Denuncia

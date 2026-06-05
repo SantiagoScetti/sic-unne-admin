@@ -1,4 +1,6 @@
 import { getSupabaseServer } from '../supabaseServer';
+import { Usuario } from '../../domain/usuario/Usuario';
+import type { UsuarioData } from '../../domain/usuario/tipos';
 
 // =============================================================================
 // UsuarioRepositorio — Capa de persistencia (acceso a datos).
@@ -7,6 +9,26 @@ import { getSupabaseServer } from '../supabaseServer';
 // =============================================================================
 
 export class UsuarioRepositorio {
+  /**
+   * Busca un usuario por su id primario.
+   * Devuelve null si no existe ningún registro con ese id.
+   * Trazabilidad: Diagrama de Secuencia C-01, pasos 5 / 13 / 16.
+   *
+   * @param id  id_usuario de la tabla `usuario`
+   */
+  async buscarPorId(id: number): Promise<Usuario | null> {
+    const supabase = getSupabaseServer();
+    const { data, error } = await supabase
+      .from('usuario')
+      .select('id_usuario, nombre, apellido, documento, correo, rol, estado, fecha_suspension_hasta')
+      .eq('id_usuario', id)
+      .maybeSingle();
+
+    if (error) throw new Error(error.message);
+    if (!data)  return null;
+    return new Usuario(data as UsuarioData);
+  }
+
   /**
    * Suspende un usuario. Estado de DB: 'Suspendido'.
    * @param idUsuario  id del usuario a suspender

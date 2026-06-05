@@ -4,85 +4,134 @@
 
 ### Figura 3 — Caso Normal
 
-1: Selecciona denuncia y elige accion --> DenunciasPage.jsx
-2: resolverDenuncia(id, { estado, accion, fechaHasta, observaciones }) --> Linea 70 denuncia.service.js
-3: PATCH /api/denuncias/:id --> Linea 74 denuncia.service.js
-4: resolver({ id, accion, fechaHasta, observaciones }) --> Linea 85 /api/denuncias/[id].js
-5: obtenerPorId(id) --> Linea 126 ServicioResolucionDenuncia.ts / Linea 12 DenunciaRepositorio.ts
-6: Denuncia (estado = 'Pendiente') --> Linea 25 DenunciaRepositorio.ts
-7: resolver(accion) --> Linea 71 ServicioResolucionDenuncia.ts / Linea 50 Denuncia.ts
-8: Denuncia resuelto --> Linea 50 Denuncia.ts
-9: guardar() --> Linea 73 ServicioResolucionDenuncia.ts / Linea 28 DenunciaRepositorio.ts
-10: Denuncia guardado --> Linea 35 DenunciaRepositorio.ts
-11: suspender(receptor_id, fechaHasta) --> Linea 77 ServicioResolucionDenuncia.ts / Linea 15 UsuarioRepositorio.ts
-12: Suspension aplicada --> Linea 22 UsuarioRepositorio.ts
-13: crearVarias(emisor_id, receptor_id, mensaje) --> Linea 84 ServicioResolucionDenuncia.ts / Linea 26 NotificacionRepositorio.ts
-14: Notificaciones creadas --> Linea 38 NotificacionRepositorio.ts
-15: registrar(admin_id, accion, id_denuncia) --> Linea 84 ServicioResolucionDenuncia.ts / Linea 17 AuditoriaRepositorio.ts
-16: Auditoria registrada --> Linea 27 AuditoriaRepositorio.ts
-17: Denuncia resuelto --> Linea 96 ServicioResolucionDenuncia.ts
-18: 200 { data: { estado:'Resuelto', accion_tomada } } --> Linea 87 /api/denuncias/[id].js
-19: Denuncia resuelto --> Linea 90 denuncia.service.js
-20: "Accion aplicada con exito" --> DenunciasPage.jsx
-
-### Figura 4 — Caso Alternativo: Denuncia ya gestionado
-
-1: Intenta resolver un denuncia ya gestionado --> DenunciasPage.jsx
-2: resolverDenuncia(id, { estado:'Resuelto', accion }) --> Linea 70 denuncia.service.js
-3: PATCH /api/denuncias/:id --> Linea 74 denuncia.service.js
-4: resolver({ id, accion }) --> Linea 85 /api/denuncias/[id].js
-5: obtenerPorId(id) --> Linea 126 ServicioResolucionDenuncia.ts / Linea 12 DenunciaRepositorio.ts
-6: Denuncia (estado = 'Resuelto') --> Linea 25 DenunciaRepositorio.ts
-7: resolver(accion) --> Linea 71 ServicioResolucionDenuncia.ts / Linea 50 Denuncia.ts
-8: throw DenunciaYaProcesadaError --> errores.ts (lanzado por EstadoResuelto)
-9: propaga DenunciaYaProcesadaError --> ServicioResolucionDenuncia.ts (error no capturado)
-10: 409 Conflict { error, estadoActual } --> Linea 34 /api/denuncias/[id].js
-11: throw error (409) --> Linea 82 denuncia.service.js
-12: "Este denuncia ya fue procesado por otro administrador" --> DenunciasPage.jsx
+1: Ingresa al panel administrativo y hace click en "Denuncias" --> (acción implícita del usuario, sin correspondencia directa en el código)
+2: Solicita lista de Denuncias --> DenunciasPage.jsx Linea 65 (llamada a obtenerDenuncias())
+3: obtenerDenuncias() --> denuncia.service.js Linea 10 (fetch GET /api/denuncias) / api/denuncias/index.js Linea 34 (query plana a tabla `denuncia`)
+4: Solicita datos de receptor_id --> api/denuncias/index.js Linea 51-52 (recopila receptor_ids únicos e instancia ServicioConsultaUsuario)
+5: obtenerPorId(receptor_id) --> ServicioConsultaUsuario.ts Linea 42 (buscarPorId) / UsuarioRepositorio.ts Linea 19 (query a tabla `usuario`)
+6: Devuelve datos de receptor_id --> UsuarioRepositorio.ts Linea 29 (retorna entidad Usuario)
+7: Devuelve lista de Denuncias --> api/denuncias/index.js Linea 78 (200 { data: denuncias enriquecidas con receptor })
+8: Muestra listado de Denuncias --> (render implícito de React en DenunciasPage.jsx)
+9: Hace click en "Abrir" de un Denuncia --> (acción implícita del usuario, sin correspondencia directa en el código)
+10: Solicita detalle de la Denuncia --> DenunciasPage.jsx Linea 93 (handleAbrirModal — setDenunciaSeleccionada + setIsModalOpen)
+11: obtenerDetalleDenuncia(id_denuncia) --> denuncia.service.js Linea 38 (fetch GET /api/denuncias/${id}) / api/denuncias/[id].js Linea 63 (query plana a tabla `denuncia`)
+12: Solicita datos del emisor --> api/denuncias/[id].js Linea 75-84 (bloque emisor — instancia ServicioConsultaUsuario)
+13: obtenerPorId(emisor_id) --> ServicioConsultaUsuario.ts Linea 42 (buscarPorId) / UsuarioRepositorio.ts Linea 19 (query a tabla `usuario`)
+14: Devuelve datos del emisor --> UsuarioRepositorio.ts Linea 29 (retorna entidad Usuario)
+15: Solicita datos del receptor --> api/denuncias/[id].js Linea 86-93 (bloque receptor — reutiliza ServicioConsultaUsuario)
+16: obtenerPorId(receptor_id) --> ServicioConsultaUsuario.ts Linea 42 (buscarPorId) / UsuarioRepositorio.ts Linea 19 (query a tabla `usuario`)
+17: Devuelve datos del receptor --> UsuarioRepositorio.ts Linea 29 (retorna entidad Usuario)
+18: Devuelve detalle del Denuncia --> api/denuncias/[id].js Linea 95 (200 { data: { ...denuncia, emisor, receptor } })
+19: setIsDenunciaModalOpen(true) --> DenunciasPage.jsx Linea 95 (setIsModalOpen(true) dentro de handleAbrirModal)
+20: Muestra modal para resolver el Denuncia --> (render implícito de React — AccionDenunciaModal con isOpen=true)
+21: Selecciona acción y hace click en "Confirmar" --> (acción implícita del usuario, sin correspondencia directa en el código)
+22: Solicita resolver Denuncia --> DenunciasPage.jsx Linea 105 (handleGuardarAccion — llama a resolverDenuncia)
+23: resolverDenuncia(id_denuncia, {estado, accion, fechaHasta, observaciones, admin_id}) --> denuncia.service.js Linea 55 (fetch PATCH /api/denuncias/${id}) / api/denuncias/[id].js Linea 123 (delega en ServicioResolucionDenuncia.resolver)
+24: Solicita id_admin que resuelve la denuncia --> ServicioResolucionDenuncia.ts Linea 109 (resolverAdminId — invoca UsuarioRepositorio)
+25: obtenerAdminPorDefecto() --> UsuarioRepositorio.ts Linea 52 (query a tabla `usuario` filtrando por rol Administrador)
+26: Devuelve admin_id --> UsuarioRepositorio.ts Linea 63 (retorna id_usuario del primer administrador)
+27: [opt accion implica suspensión] Solicita suspender usuario --> ServicioResolucionDenuncia.ts Linea 78-101 (aplicarEfecto — switch por accion: 'Suspender Temporalmente' / 'Suspender Indefinidamente' invocan usuarioRepo.suspender)
+28: suspender(receptor_id, fechaHasta) --> UsuarioRepositorio.ts Linea 37 (update a tabla `usuario`: estado='Suspendido', fecha_suspension_hasta=fechaHasta)
+29: Usuario suspendido --> UsuarioRepositorio.ts Linea 44 (retorna void — suspensión aplicada correctamente)
+30: Denuncia resuelta --> ServicioResolucionDenuncia.ts Linea 63 (retorna entidad Denuncia resuelta) / api/denuncias/[id].js Linea 124 (200 { data: { estado, accion_tomada } })
+31: "Denuncia resuelta con éxito" --> DenunciasPage.jsx Linea 118 (setSuccessMsg)
 
 ---
+
+
+### Figura 4 — Caso Alternativo: Denuncia ya gestionada
+
+1: Ingresa al panel administrativo y hace click en "Denuncias" --> (acción implícita del usuario, sin correspondencia directa en el código)
+2: Solicita lista de Denuncias --> DenunciasPage.jsx Linea 65 (llamada a obtenerDenuncias())
+3: obtenerDenuncias() --> denuncia.service.js Linea 10 (fetch GET /api/denuncias) / api/denuncias/index.js Linea 34 (query plana a tabla `denuncia`)
+4: [loop] Solicita datos del receptor_id --> api/denuncias/index.js Linea 51-52 (recopila receptor_ids únicos e instancia ServicioConsultaUsuario)
+5: obtenerPorId(receptor_id) --> ServicioConsultaUsuario.ts Linea 42 (buscarPorId) / UsuarioRepositorio.ts Linea 19 (query a tabla `usuario`)
+6: Devuelve datos del receptor_id --> UsuarioRepositorio.ts Linea 29 (retorna entidad Usuario)
+7: Devuelve lista de Denuncias --> api/denuncias/index.js Linea 78 (200 { data: denuncias enriquecidas con receptor })
+8: Muestra listado de Denuncias --> (render implícito de React en DenunciasPage.jsx)
+9: Hace click en "Abrir" de un Denuncia --> (acción implícita del usuario, sin correspondencia directa en el código)
+10: Solicita detalle de la Denuncia --> DenunciasPage.jsx Linea 93 (handleAbrirModal — setDenunciaSeleccionada + setIsModalOpen)
+11: obtenerDetalleDenuncia(id_denuncia) --> denuncia.service.js Linea 38 (fetch GET /api/denuncias/${id}) / api/denuncias/[id].js Linea 63 (query plana a tabla `denuncia`)
+12: [opt emisor_id != null] Solicita datos del emisor_id --> api/denuncias/[id].js Linea 75-84 (bloque emisor — instancia ServicioConsultaUsuario)
+13: obtenerPorId(emisor_id) --> ServicioConsultaUsuario.ts Linea 42 (buscarPorId) / UsuarioRepositorio.ts Linea 19 (query a tabla `usuario`)
+14: Devuelve datos de emisor_id --> UsuarioRepositorio.ts Linea 29 (retorna entidad Usuario)
+15: Solicita datos del receptor --> api/denuncias/[id].js Linea 86-93 (bloque receptor — reutiliza ServicioConsultaUsuario)
+16: obtenerPorId(receptor_id) --> ServicioConsultaUsuario.ts Linea 42 (buscarPorId) / UsuarioRepositorio.ts Linea 19 (query a tabla `usuario`)
+17: Devuelve datos del receptor --> UsuarioRepositorio.ts Linea 29 (retorna entidad Usuario)
+18: Devuelve detalle del Denuncia --> api/denuncias/[id].js Linea 95 (200 { data: { ...denuncia, emisor, receptor } })
+19: setIsDenunciaModalOpen(true) --> DenunciasPage.jsx Linea 95 (setIsModalOpen(true) dentro de handleAbrirModal)
+20: Muestra modal para resolver el Denuncia --> (render implícito de React — AccionDenunciaModal con isOpen=true)
+21: Selecciona acción y hace click en "Confirmar" --> (acción implícita del usuario, sin correspondencia directa en el código)
+22: Solicita resolver Denuncia --> DenunciasPage.jsx Linea 105 (handleGuardarAccion — llama a resolverDenuncia)
+23: Solicita id_admin de la sesión --> ServicioResolucionDenuncia.ts Linea 109 (resolverAdminId — invoca UsuarioRepositorio)
+24: obtenerAdminPorDefecto() --> UsuarioRepositorio.ts Linea 52 (query a tabla `usuario` filtrando por rol Administrador)
+25: Devuelve admin_id --> UsuarioRepositorio.ts Linea 63 (retorna id_usuario del primer administrador)
+26: resolverDenuncia(id_denuncia, {estado="Resuelto", accion, fechaHasta, observaciones, admin_id}) --> denuncia.service.js Linea 55 (fetch PATCH) / api/denuncias/[id].js Linea 123 (ServicioResolucionDenuncia.resolver) / ServicioResolucionDenuncia.ts Linea 57 (denuncia.resolver) / Denuncia.ts Linea 50 (delega en estado actual) / EstadoDenuncia.ts Linea 19 (lanza DenunciaYaProcesadaError ya que el estado no es Pendiente)
+27: Error: Denuncia ya gestionada --> errores.ts Linea 10 (DenunciaYaProcesadaError) / api/denuncias/[id].js Linea 41-46 (captura y devuelve 409 Conflict) / denuncia.service.js Linea 68-70 (detecta status 409 y lanza 'CONFLIC_ALREADY_PROCESSED')
+28: "Hubo un error al resolver la denuncia. Denuncia ya gestionada." --> DenunciasPage.jsx Linea 122-129 (catch de handleGuardarAccion — setError con mensaje de conflicto)
+
+---
+
 
 ## C-02: Crear Comisión
 
 ### Figura 5 — Caso Normal
 
-1: Ingresa a estructura academica --> EstructuraPage.jsx
-2: Se muestran entidades existentes --> EstructuraPage.jsx (render de StatCards)
-3: Hace click en "Comisiones" --> EstructuraPage.jsx (onClickCard)
-4: obtenerComisiones("Activos") --> Linea 32 comision.service.js
-5: GET /api/comisiones?filtroEstado=Activos --> Linea 34 comision.service.js
-6: obtenerTodas(filtroEstado) --> /api/comisiones/index.js / Linea 35 ComisionRepositorio.ts
-7: lista de comisiones --> Linea 48 ComisionRepositorio.ts
-8: { data: [...], error: null } --> /api/comisiones/index.js
-9: lista normalizada --> Linea 42 comision.service.js
-10: Se muestra listado y botones --> EstructuraPage.jsx
-11: Hace click en "Crear Comision" --> EstructuraPage.jsx (onAdd)
-12: Se muestra addComisionModal --> addComisionModal.tsx
-13: Completa campos y confirma --> Linea 105 addComisionModal.tsx
-14: validarCampos() --> Linea 61 addComisionModal.tsx
-15: crear(nombre, letraDesde, letraHasta, id_asignatura, profesores_ids) --> Linea 74 comision.service.js
-16: POST /api/comisiones { nombre, letraDesde, letraHasta, id_asignatura, profesores_ids } --> Linea 75 comision.service.js
-17: validarCamposRequeridos() --> /api/comisiones/index.js (validacion interna)
-18: crear(nombre, letraDesde, letraHasta, id_asignatura) --> Linea 73 ComisionRepositorio.ts
-19: Comision creada --> Linea 81 ComisionRepositorio.ts
-20: vincular(id_comision, profesores_ids) [si hay profesores] --> Linea 84 ComisionRepositorio.ts
-21: Vinculos creados --> Linea 89 ComisionRepositorio.ts
-22: 201 { data: comision, error: null } --> /api/comisiones/index.js
-23: Comision creada --> Linea 91 comision.service.js
-24: "Comision creada con exito" --> EstructuraPage.jsx
+1: Ingresa a estructura academica --> EstructuraPage.jsx (implícito — carga del componente)
+2: [par] Solicita lista de Profesores --> EstructuraPage.jsx Linea 65 (Promise.all — profesorService.obtenerProfesores(filtroEstado))
+3: obtenerProfesores(filtroEstado) --> profesor.service.js Linea 39 (fetch GET /api/profesores?filtroEstado=...)
+4: GET /api/profesores?filtroEstado=Activos --> api/profesores/index.js Linea 30 (query a tabla `profesor` con filtro)
+5: Devuelve lista de Profesores --> api/profesores/index.js Linea 46 (200 { data: [...] }) / profesor.service.js Linea 49 (retorna { data, error })
+6: [par] Solicita lista de Comisiones --> EstructuraPage.jsx Linea 66 (Promise.all — comisionService.obtenerComisiones(filtroEstado))
+7: obtenerComisiones(filtroEstado) --> comision.service.js Linea 32 (fetch GET /api/comisiones?filtroEstado=...)
+8: GET /api/comisiones?filtroEstado=Activos --> api/comisiones/index.js Linea 25 / ServicioComision.ts Linea 58 (listar — ComisionRepositorio.listar sin JOIN a profesor)
+9: [loop por cada comision] listarPorComision(id_comision) --> ServicioComision.ts Linea 64 (profesorServicio.listarPorComision) / ServicioConsultaProfesor.ts Linea 53 (listarIdsPorComision + buscarPorId)
+10: listarIdsPorComision(id_comision) --> ProfesorRepositorio.ts Linea 38 (query a tabla `comision_profesor` filtrando por id_comision)
+11: buscarPorId(id_profesor) --> ProfesorRepositorio.ts Linea 19 (query a tabla `profesor` por id)
+12: Devuelve profesores de la comision --> ServicioConsultaProfesor.ts Linea 64 (retorna Profesor[] filtrado)
+13: Devuelve lista de Comisiones (con datos de profesores) --> ServicioComision.ts Linea 66-68 (profesoresNombresArray mapeado) / api/comisiones/index.js Linea 26 (200 { data }) / comision.service.js Linea 42 (retorna { data, error })
+14: Se muestran entidades existentes --> EstructuraPage.jsx Linea 77-78 (setProfesoresList / setComisionesList)
+15: Hace click en "Comisiones" --> EstructuraPage.jsx Linea 588 (onClickCard: setEntidadActiva('Comisiones'))
+16: Muestra lista de Comisiones --> EstructuraPage.jsx Linea 528-534 (renderRows — case 'Comisiones' consume comisionesList ya en estado)
+17: Hace click en '+' (crear comision) --> EstructuraPage.jsx Linea 588 (onAdd: setIsComisionModalOpen(true))
+18: setIsComisionModalOpen(true) --> EstructuraPage.jsx Linea 588 (profesoresDisponibles ya en estado desde paso 5 — sin nuevo fetch)
+19: Muestra modal de crear Comision --> addComisionModal.tsx (render con isOpen=true y profesoresDisponibles como prop)
+20: Completa correctamente los campos y hace click en crear --> addComisionModal.tsx Linea 107 (handleGuardar)
+21: validarCampos() --> addComisionModal.tsx Linea 62 (verifica nombre, letras, asignatura)
+22: Solicita crear Comision --> EstructuraPage.jsx Linea 140 (handleCrearComision → comisionService.crear) / comision.service.js Linea 74 (POST /api/comisiones)
+23: crear(nombre, letraDesde, letraHasta, id_asignatura, profesores_ids) --> api/comisiones/index.js Linea 48 / ServicioComision.ts Linea 78 (new Comision + validar + repo.crear)
+24: [opt profesores_ids no vacío] vincularProfesores(id_comision, profesores_ids) --> ServicioComision.ts Linea 95 / ComisionRepositorio.ts Linea 84 (INSERT en tabla `comision_profesor`)
+25: Comision creada --> api/comisiones/index.js Linea 49 (201 { data: comision }) / comision.service.js Linea 91 (retorna payload)
+26: "Comision creada con exito" --> EstructuraPage.jsx Linea 197-198 (setMensajeExito / setShowSuccessMessage)
 
 ### Figura 6 — Caso Alternativo: Datos de formulario inválidos
 
-1-10: (igual al caso normal — ingreso y listado de comisiones)
-11: Hace click en "Crear Comision" --> EstructuraPage.jsx
-12: Se muestra addComisionModal --> addComisionModal.tsx
-13: Completa campos y confirma --> Linea 105 addComisionModal.tsx
-14: validarCampos() --> Linea 61 addComisionModal.tsx
+1: Ingresa a estructura academica --> EstructuraPage.jsx (implícito — carga del componente)
+2: [par] Solicita lista de Profesores --> EstructuraPage.jsx Linea 65 (Promise.all — profesorService.obtenerProfesores(filtroEstado))
+3: obtenerProfesores(filtroEstado) --> profesor.service.js Linea 39 (fetch GET /api/profesores?filtroEstado=...)
+4: GET /api/profesores?filtroEstado=Activos --> api/profesores/index.js Linea 30 (query a tabla `profesor` con filtro)
+5: Devuelve lista de Profesores --> api/profesores/index.js Linea 46 (200 { data: [...] }) / profesor.service.js Linea 49 (retorna { data, error })
+6: [par] Solicita lista de Comisiones --> EstructuraPage.jsx Linea 66 (Promise.all — comisionService.obtenerComisiones(filtroEstado))
+7: obtenerComisiones(filtroEstado) --> comision.service.js Linea 32 (fetch GET /api/comisiones?filtroEstado=...)
+8: GET /api/comisiones?filtroEstado=Activos --> api/comisiones/index.js Linea 25 / ServicioComision.ts Linea 58 (listar — ComisionRepositorio.listar sin JOIN a profesor)
+9: [loop por cada comision] listarPorComision(id_comision) --> ServicioComision.ts Linea 64 / ServicioConsultaProfesor.ts Linea 53 (listarIdsPorComision + buscarPorId)
+10: Devuelve lista de Comisiones (con datos de profesores) --> ServicioComision.ts Linea 66-68 / api/comisiones/index.js Linea 26 / comision.service.js Linea 42
+11: Se muestran entidades existentes --> EstructuraPage.jsx Linea 77-78 (setProfesoresList / setComisionesList)
+12: Hace click en "Comisiones" --> EstructuraPage.jsx Linea 588 (onClickCard: setEntidadActiva('Comisiones'))
+13: Muestra lista de Comisiones --> EstructuraPage.jsx Linea 528-534 (renderRows — case 'Comisiones')
+14: Hace click en '+' (crear comision) --> EstructuraPage.jsx Linea 588 (onAdd: setIsComisionModalOpen(true))
+15: setIsComisionModalOpen(true) --> EstructuraPage.jsx Linea 588 (profesoresDisponibles ya en estado — sin nuevo fetch)
+16: Muestra modal de crear Comision --> addComisionModal.tsx (render con isOpen=true)
+17: Completa con campos incorrectos y hace click en crear --> addComisionModal.tsx Linea 107 (handleGuardar)
+18: validarCampos() --> addComisionModal.tsx Linea 62 (detecta campos vacíos o letraDesde >= letraHasta)
 SE DETECTAN CAMPOS VACIOS O FORMATOS INCORRECTOS
-15: Muestra avisos de validacion en los campos afectados --> Linea 89 addComisionModal.tsx (setErrores) / Linea 148 (render de mensajes)
-16: Corrige los datos y confirma --> Linea 105 addComisionModal.tsx
-17: validarCampos() --> Linea 61 addComisionModal.tsx
-A PARTIR DE AQUI EL FLUJO RETOMA EL CURSO NORMAL (ver paso 15 Figura 5)
+19: setErrores(erroresTemp) --> addComisionModal.tsx Linea 90 (actualiza estado de errores de validacion)
+20: Muestra avisos de validacion en los campos afectados --> addComisionModal.tsx Linea 148 (render condicional de mensajes de error por campo)
+21: Corrige los datos y hace click en crear --> addComisionModal.tsx Linea 107 (handleGuardar)
+22: validarCampos() --> addComisionModal.tsx Linea 62 (segunda validacion — ahora exitosa)
+23: Solicita crear Comision --> EstructuraPage.jsx Linea 140 / comision.service.js Linea 74 (POST /api/comisiones)
+24: crear(nombre, letraDesde, letraHasta, id_asignatura, profesores_ids) --> api/comisiones/index.js Linea 48 / ServicioComision.ts Linea 78
+25: Comision creada --> api/comisiones/index.js Linea 49 (201 { data: comision }) / EstructuraPage.jsx Linea 197-198 ("Comision creada con exito")
 
 ---
 

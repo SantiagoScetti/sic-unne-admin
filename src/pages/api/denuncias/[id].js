@@ -1,18 +1,26 @@
-import { getSupabaseServer } from '../_lib/supabaseServer';
+import { ServicioConsultaUsuario } from '../../../domain/usuario/ServicioConsultaUsuario';
 import {
   ServicioResolucionDenuncia,
   DenunciaNoEncontradaError,
 } from '../../../domain/denuncia/ServicioResolucionDenuncia';
 import { DenunciaYaProcesadaError } from '../../../domain/denuncia/errores';
+import { getSupabaseServer } from '../_lib/supabaseServer';
 
 // =============================================================================
 // API Route: /api/denuncias/[id]  (Capa de Controladores)
-// Trazabilidad: Diagrama de Secuencia C-01.
+// Trazabilidad: Diagrama de Secuencia C-01, pasos 10-27.
 //
-//   GET    /api/denuncias/[id]   → detalle de la denuncia (con emisor/receptor).
-//   PATCH  /api/denuncias/[id]   → resuelve o desestima la denuncia delegando en
-//                                 ServicioResolucionDenuncia. RN: si ya fue procesada → 409.
-//          body = { estado, accion?, fechaHasta?, observaciones?, admin_id? }
+//   GET   /api/denuncias/[id]  → detalle de la denuncia.
+//         Paso 11: obtenerDetalleDenuncia(id_denuncia) — query plana a `denuncia`.
+//         Pasos 12-14: ServicioConsultaUsuario.buscarPorId(emisor_id).
+//         Pasos 15-17: ServicioConsultaUsuario.buscarPorId(receptor_id).
+//
+//   PATCH /api/denuncias/[id]  → resuelve o desestima la denuncia.
+//         Paso 23: resolverDenuncia(...) → delega en ServicioResolucionDenuncia.
+//         Pasos 24-26: ServicioResolucionDenuncia obtiene admin_id via
+//                      UsuarioRepositorio.obtenerAdminPorDefecto().
+//         RN: si la denuncia ya fue procesada → 409 CONFLICT.
+//         body = { estado, accion?, fechaHasta?, observaciones?, admin_id? }
 // =============================================================================
 
 export default async function handler(req, res) {
@@ -45,25 +53,58 @@ export default async function handler(req, res) {
   }
 }
 
+// ── GET ───────────────────────────────────────────────────────────────────────
+
 async function handleGet(id_denuncia, res) {
   const supabase = getSupabaseServer();
+
+  // ── Paso 11: obtenerDetalleDenuncia(id_denuncia) ──────────────────────────
+  // Consulta plana sin JOIN: emisor y receptor se resuelven por separado.
   const { data, error } = await supabase
     .from('denuncia')
-    .select(`
-      *,
-      emisor:usuario!emisor_id (id_usuario, nombre, apellido),
-      receptor:usuario!receptor_id (id_usuario, nombre, apellido)
-    `)
+    .select('id_denuncia, emisor_id, receptor_id, id_periodo, motivo, estado, fecha_alta, accion_tomada, admin_id')
     .eq('id_denuncia', id_denuncia)
     .single();
 
   if (error) {
     return res.status(error.code === 'PGRST116' ? 404 : 500).json({ error: error.message });
   }
-  return res.status(200).json({ data, error: null });
+
+  const servicio = new ServicioConsultaUsuario();
+
+  // ── Pasos 12-14: Solicita datos del emisor ────────────────────────────────
+  let emisor = null;
+  if (data.emisor_id) {
+    try {
+      const u = await servicio.buscarPorId(data.emisor_id);
+      emisor = { id_usuario: u.id_usuario, nombre: u.nombre, apellido: u.apellido, documento: u.documento };
+    } catch {
+      // El emisor puede no existir si fue eliminado; se devuelve null.
+    }
+  }
+
+  // ── Pasos 15-17: Solicita datos del receptor ──────────────────────────────
+  let receptor = null;
+  try {
+    const u = await servicio.buscarPorId(data.receptor_id);
+    receptor = { id_usuario: u.id_usuario, nombre: u.nombre, apellido: u.apellido, documento: u.documento };
+  } catch {
+    // El receptor puede no existir en casos de datos corruptos/borrados.
+  }
+
+  return res.status(200).json({ data: { ...data, emisor, receptor }, error: null });
 }
 
+// ── PATCH ─────────────────────────────────────────────────────────────────────
+
 async function handlePatch(id_denuncia, req, res) {
+  // ── Paso 23: resolverDenuncia(id_denuncia, { estado, accion, ... }) ────────
+  // El ServicioResolucionDenuncia orquesta internamente:
+  //   - carga la Denuncia via DenunciaRepositorio
+  //   - aplica la transición de estado (patrón Estado)
+  //   - persiste el nuevo estado
+  //   - paso 24-26: obtiene admin_id via UsuarioRepositorio.obtenerAdminPorDefecto()
+  //   - aplica el efecto (suspender usuario si corresponde)
   const { estado, accion, fechaHasta, observaciones, admin_id } = req.body ?? {};
   const servicio = new ServicioResolucionDenuncia();
 

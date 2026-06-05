@@ -9,56 +9,65 @@ skinparam BoxPadding 12
 autonumber
 
 actor Administrador
-participant "Sistema\n(DenunciasPage)" as Interfaz
-participant "Comision"
-participant "Profesor"
+participant "Sistema\n(EstructuraPage)" as Interfaz
+participant "Comision"                   as Comision
+participant "Profesor"                   as Profesor
+
+' ─── Carga inicial ────────────────────────────────────────────────────────────
 
 Administrador -> Interfaz: Ingresa a estructura academica
 activate Interfaz
-Interfaz --> Administrador: Se muestran entidades existentes
-deactivate Interfaz
 
-Administrador -> Interfaz: Hace click en "Comisiones"
-activate Interfaz
-Interfaz -> Comision: Solicita lista de Comisiones
-activate Comision
-Comision -> Profesor: Solicita datos de profesores
-activate Profesor
-Profesor -> Profesor: obtenerProfesores(filtroEstado="Activos")
-Profesor --> Comision: Devuelve lista de Profesores
-deactivate Profesor
-Comision -> Comision: obtenerComisiones(filtroEstado="Todos")
-Comision --> Interfaz: Devuelve lista de Comisiones
-deactivate Comision
+
+  Interfaz -> Profesor: Solicita lista de Profesores
+  activate Profesor
+  Profesor -> Profesor: obtenerProfesores(filtroEstado="Activos")
+  Profesor --> Interfaz: Devuelve lista de Profesores
+  deactivate Profesor
+
+  Interfaz -> Comision: Solicita lista de Comisiones
+  activate Comision
+  Comision -> Comision: obtenerComisiones(filtroEstado="Activos")
+  loop por cada comision de la lista
+    Comision -> Profesor: Solicita listar profesores por comision
+    activate Profesor
+    Profesor -> Profesor: listarPorComision(id_comision)
+    Profesor --> Comision: Devuelve profesores de la comision
+    deactivate Profesor
+  end
+  Comision --> Interfaz: Devuelve lista de Comisiones (con datos de profesores)
+  deactivate Comision
+
+
 Interfaz --> Administrador: Muestra lista de Comisiones
 deactivate Interfaz
+
+' ─── Abrir modal de creacion ──────────────────────────────────────────────────
+
 Administrador -> Interfaz: Hace click en '+' (crear comision)
 activate Interfaz
-Interfaz -> Profesor: Solicita lista de Profesores
-activate Profesor
-Profesor -> Profesor: obtenerProfesores(filtroEstado="Activos")
-Profesor --> Interfaz: Devuelve lista de Profesores
-deactivate Profesor
 Interfaz -> Interfaz: setIsComisionModalOpen(true)
+note right
+  profesoresDisponibles ya en estado
+  (cargados en la fase inicial — no hay nuevo fetch)
+end note
 Interfaz --> Administrador: Muestra modal de crear Comision
 deactivate Interfaz
+
+' ─── Crear comision ───────────────────────────────────────────────────────────
+
 Administrador -> Interfaz: Completa correctamente los campos y hace click en crear
 activate Interfaz
 Interfaz -> Interfaz: validarCampos()
-Interfaz --> Administrador: Campos validados
 Interfaz -> Comision: Solicita crear Comision
 activate Comision
-Comision -> Comision: crear(nombre, letraDesde, letraHasta, id_asignatura, profesores_ids = [])
-Comision -> Profesor: Solicita vinculación de Profesores a la Comision
-activate Profesor
-Profesor -> Profesor: asignar(id_comision, profesores_ids)
-Profesor --> Comision: Profesores vinculados a la Comision
-deactivate Profesor
+Comision -> Comision: crear(nombre, letraDesde, letraHasta, id_asignatura, profesores_ids)
+
+  Comision -> Comision: vincularProfesores(id_comision, profesores_ids)
+
 Comision --> Interfaz: Comision creada
 deactivate Comision
-Interfaz --> Administrador: "Comisión creada con éxito"
-
-
-
+Interfaz --> Administrador: "Comision creada con exito"
+deactivate Interfaz
 
 @enduml

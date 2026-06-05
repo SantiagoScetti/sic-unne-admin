@@ -1,6 +1,4 @@
-
 @startuml
-
 title Diagrama de Secuencia: C-01 Gestionar Denuncia (Caso Normal)
 
 skinparam style strictuml
@@ -11,57 +9,86 @@ autonumber
 
 actor Administrador
 participant "Sistema\n(DenunciasPage)" as Interfaz
-participant "Denuncia"                   as Denuncia
-participant "Usuario"
+participant "Denuncia" as Denuncia
+participant "Usuario" as Usuario
 
-
-Administrador -> Interfaz: Ingresa al panel administrativo y hace click en "Denuncias"
+' ─── Listado ─────────────────────────────────────────────────────────────
+Administrador -> Interfaz: Ingresa al panel y hace clic en "Denuncias"
 activate Interfaz
-Interfaz -> Denuncia: Solicita lista de Denuncias
+Interfaz -> Denuncia: Solicita listado de Denuncias 
 activate Denuncia
 Denuncia -> Denuncia: obtenerDenuncias()
-Denuncia -> Usuario: Solicita datos de receptor_id
-activate Usuario
-Usuario -> Usuario: obtenerPorId(receptor_id)
-Usuario --> Denuncia: Devuelve datos de receptor_id
-deactivate Usuario
-Denuncia --> Interfaz: Devuelve lista de Denuncias
+
+loop por cada denuncia de la lista
+  Denuncia -> Usuario: Solicita datos del receptor_id
+  activate Usuario
+  Usuario -> Usuario: obtenerPorId(receptor_id)
+  Usuario --> Denuncia: Devuelve datos del receptor_id
+  deactivate Usuario
+end
+
+Denuncia --> Interfaz: Devuelve lista de denuncias (con datos del denunciado)
 deactivate Denuncia
-Interfaz --> Administrador: Muestra listado de Denuncias
+
+Interfaz --> Administrador: Muestra listado de denuncias
 deactivate Interfaz
-Administrador -> Interfaz: Hace click en "Abrir" de un Denuncia
+
+' ─── Detalle (modal) ─────────────────────────────────────────────────────
+Administrador -> Interfaz: Clic en "Abrir" de una denuncia
 activate Interfaz
+
 Interfaz -> Denuncia: Solicita detalle de la Denuncia
 activate Denuncia
 Denuncia -> Denuncia: obtenerDetalleDenuncia(id_denuncia)
-Denuncia -> Usuario: Solicita datos del emisor
+
+opt emisor_id != null
+  Denuncia -> Usuario: Solicita datos del emisor_id
+  activate Usuario
+  Usuario -> Usuario: obtenerPorId(emisor_id)
+  Usuario --> Denuncia: Devuelve datos de emisor_id
+  deactivate Usuario
+end
+
+Denuncia -> Usuario: Solicita datos del receptor_id
 activate Usuario
-Usuario -> Usuario: obtenerPorId(emisor_id)
-Usuario --> Denuncia: Devuelve datos del emisor
-Denuncia -> Usuario: Solicita datos del receptor
+
 Usuario -> Usuario: obtenerPorId(receptor_id)
-Usuario --> Denuncia: Devuelve datos del receptor
+Usuario --> Denuncia: Devuelve datos de receptor_id
 deactivate Usuario
 
-Denuncia --> Interfaz: Devuelve detalle del Denuncia
+Denuncia --> Interfaz: Devuelve detalle de la denuncia
 deactivate Denuncia
+
 Interfaz -> Interfaz: setIsDenunciaModalOpen(true)
-Interfaz --> Administrador: Muestra modal para resolver el Denuncia
+Interfaz --> Administrador: Muestra modal de detalle de la denuncia
 deactivate Interfaz
-Administrador -> Interfaz: Selecciona acción y hace click en "Confirmar"
+
+' ─── Resolver ────────────────────────────────────────────────────────────
+Administrador -> Interfaz: Selecciona acción y confirma
 activate Interfaz
+
 Interfaz -> Denuncia: Solicita resolver Denuncia
 activate Denuncia
-Denuncia -> Denuncia: resolverDenuncia(id_denuncia, {estado, accion, fechaHasta, observaciones, admin_id})
-Denuncia -> Usuario: Solicita id_admin que resuelve la denuncia
+
+Denuncia -> Usuario: Solicita id_admin de la sesión
 activate Usuario
 Usuario -> Usuario: obtenerAdminPorDefecto()
 Usuario --> Denuncia: Devuelve admin_id
 deactivate Usuario
+Denuncia -> Denuncia: resolverDenuncia(id_denuncia, {estado, accion, fechaHasta, observaciones, admin_id})
+
+
+opt accion implica suspensión
+  Denuncia -> Usuario: Solicita suspender usuario
+  activate Usuario
+  Usuario -> Usuario: suspender(receptor_id, fechaHasta)
+  Usuario --> Denuncia: Usuario suspendido
+  deactivate Usuario
+end
+
 Denuncia --> Interfaz: Denuncia resuelta
 deactivate Denuncia
-Interfaz --> Administrador: "Denuncia resuelta con éxito. Se ha notificado a los usuarios"
 
+Interfaz --> Administrador: "Denuncia resuelta con éxito"
 deactivate Interfaz
-
 @enduml

@@ -1,6 +1,7 @@
 import { Comision } from './Comision';
 import { ComisionInvalidaError } from './errores';
 import { ComisionRepositorio } from '../../infrastructure/repositorios/ComisionRepositorio';
+import { ServicioConsultaProfesor } from '../profesor/ServicioConsultaProfesor';
 
 // =============================================================================
 // ServicioComision — Servicio de Aplicación (Casos de Uso C-02 y C-03).
@@ -44,11 +45,29 @@ export interface ResultadoImportacion {
 export class ServicioComision {
   // Inyección de dependencias: el repositorio se recibe por constructor (con
   // default de producción), permitiendo testear sin base de datos.
-  constructor(private readonly repo: ComisionRepositorio = new ComisionRepositorio()) {}
+  constructor(
+    private readonly repo: ComisionRepositorio = new ComisionRepositorio(),
+    private readonly profesorServicio: ServicioConsultaProfesor = new ServicioConsultaProfesor(),
+  ) {}
 
   // ── Lecturas ──────────────────────────────────────────────────────────────
-  listar(filtroEstado: 'Activos' | 'Inactivos' | 'Todos') {
-    return this.repo.listar(filtroEstado);
+
+  // C-02, paso de listado.
+  // Obtiene las comisiones y luego, por cada una, solicita sus profesores
+  // al ServicioConsultaProfesor (loop por comision → loop por id_profesor).
+  async listar(filtroEstado: 'Activos' | 'Inactivos' | 'Todos') {
+    const comisiones = await this.repo.listar(filtroEstado);
+
+    return Promise.all(
+      comisiones.map(async (com) => {
+        const idComision = com.id_comision as number;
+        const profesores = await this.profesorServicio.listarPorComision(idComision);
+        return {
+          ...com,
+          profesoresNombresArray: profesores.map((p) => `${p.nombre} ${p.apellido}`),
+        };
+      })
+    );
   }
 
   contarActivas() {

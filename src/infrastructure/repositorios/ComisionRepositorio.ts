@@ -15,6 +15,8 @@ interface FilaComision {
 }
 
 // Aplana la fila con relaciones anidadas a la forma que espera el frontend.
+// Los datos de profesores ya NO se resuelven aquí: se obtienen por separado
+// via ServicioConsultaProfesor (ver ServicioComision.listar).
 function normalizar(com: Record<string, any>): Record<string, unknown> {
   return {
     ...com,
@@ -24,9 +26,6 @@ function normalizar(com: Record<string, any>): Record<string, unknown> {
     letraHasta: com.letra_hasta,
     nombreAsignatura: com.asignatura?.nombre ?? 'N/A',
     nombreFacultad: com.asignatura?.carrera?.facultad?.nombre ?? 'N/A',
-    profesoresNombresArray: (com.comision_profesor ?? []).map(
-      (cp: Record<string, any>) => `${cp.profesor?.nombre} ${cp.profesor?.apellido}`
-    ),
   };
 }
 
@@ -34,10 +33,11 @@ export class ComisionRepositorio {
   // ── Lecturas ──────────────────────────────────────────────────────────────
   async listar(filtroEstado: FiltroEstado): Promise<Record<string, unknown>[]> {
     const supabase = getSupabaseServer();
+    // Query plana sin JOIN a profesor: los datos de profesores se resuelven
+    // en ServicioComision.listar() via ServicioConsultaProfesor.
     let query = supabase.from('comision').select(`
       *,
-      asignatura ( *, carrera ( *, facultad (*) ) ),
-      comision_profesor ( profesor (*) )
+      asignatura ( *, carrera ( *, facultad (*) ) )
     `);
 
     if (filtroEstado === 'Activos')   query = query.eq('estado', true);
