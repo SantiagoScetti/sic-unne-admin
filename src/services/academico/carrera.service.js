@@ -15,11 +15,15 @@ const applyEstadoFilter = (query, filtroEstado) => {
 export const obtenerCarreras = async (filtroEstado = 'Activos') => {
   try {
     const { data, error } = await applyEstadoFilter(
-      supabase.from('carrera').select('*, facultad(nombre)'),
+      supabase.from('carrera').select('*, facultad(nombre), asignatura(count)'),
       filtroEstado
     );
     if (error) throw error;
-    const planas = data.map(c => ({ ...c, nombreFacultad: c.facultad?.nombre || 'Sin Asignar' }));
+    const planas = data.map(c => ({
+      ...c,
+      nombreFacultad: c.facultad?.nombre || 'Sin Asignar',
+      totalAsignaturas: c.asignatura?.[0]?.count ?? 0,
+    }));
     return { data: planas, error: null };
   } catch (error) {
     console.error('Error obteniendo carreras:', error.message);

@@ -42,7 +42,7 @@ export const crear = async (data) => {
   try {
     const { data: result, error } = await supabase
       .from('edificio')
-      .insert([{ nombre: data.nombre, direccion: data.direccion, estado: true }])
+      .insert([{ nombre: data.nombre, direccion: data.direccion, ciudad: data.ciudad, estado: true }])
       .select();
     if (error) throw error;
     return { data: result ? result[0] : null, error: null };
@@ -56,7 +56,7 @@ export const actualizar = async (id, data) => {
   try {
     const { data: result, error } = await supabase
       .from('edificio')
-      .update({ nombre: data.nombre, direccion: data.direccion })
+      .update({ nombre: data.nombre, direccion: data.direccion, ciudad: data.ciudad })
       .eq('id_edificio', id)
       .select();
     if (error) throw error;
@@ -99,6 +99,7 @@ export const insertar = async (filas) => {
   const registros = unicos.map((f) => ({
     nombre:    f.edificio_nombre,
     direccion: f.edificio_direccion || 'Sin especificar',
+    ciudad:    f.edificio_ciudad   || 'Sin especificar',
     estado:    true,
   }));
 

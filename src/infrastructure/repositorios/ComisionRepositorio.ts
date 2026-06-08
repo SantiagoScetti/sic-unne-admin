@@ -26,6 +26,7 @@ function normalizar(com: Record<string, any>): Record<string, unknown> {
     letraHasta: com.letra_hasta,
     nombreAsignatura: com.asignatura?.nombre ?? 'N/A',
     nombreFacultad: com.asignatura?.carrera?.facultad?.nombre ?? 'N/A',
+    totalInscriptos: com.inscripcion?.[0]?.count ?? 0,
   };
 }
 
@@ -37,9 +38,9 @@ export class ComisionRepositorio {
     // en ServicioComision.listar() via ServicioConsultaProfesor.
     let query = supabase.from('comision').select(`
       *,
-      asignatura ( *, carrera ( *, facultad (*) ) )
+      asignatura ( *, carrera ( *, facultad (*) ) ),
+      inscripcion ( count )
     `);
-
     if (filtroEstado === 'Activos')   query = query.eq('estado', true);
     if (filtroEstado === 'Inactivos') query = query.eq('estado', false);
 

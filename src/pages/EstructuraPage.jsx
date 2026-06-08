@@ -17,11 +17,14 @@ import AddPeriodoModal from '../components/features/modals/addPeriodoModal';
 import AddProfesorModal from '../components/features/modals/addProfesorModal';
 import AddComisionModal from '../components/features/modals/addComisionModal';
 
+const ITEMS_POR_PAGINA = 10;
+
 const EstructuraPage = () => {
   const [entidadActiva, setEntidadActiva] = useState('Comisiones');
   const [editingTipo, setEditingTipo] = useState(null);
   const [filtroEstado, setFiltroEstado] = useState('Activos');
   const [terminoBusqueda, setTerminoBusqueda] = useState('');
+  const [paginaActual, setPaginaActual] = useState(1);
 
   const [comisionesList, setComisionesList] = useState([]);
   const [estadisticasReales, setEstadisticasReales] = useState({});
@@ -448,7 +451,7 @@ const EstructuraPage = () => {
     switch (entidadActiva) {
       case 'Periodos': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Fecha Inicio</th><th style={headerStyle}>Fecha Fin</th></>);
       case 'Edificios': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Dirección</th><th style={headerStyle}>Ciudad</th></>);
-      case 'Facultades': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Ciudad</th><th style={headerStyle}>Edificio Asociado</th><th style={headerStyle}>Carreras</th></>);
+      case 'Facultades': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Edificio Asociado</th><th style={headerStyle}>Carreras</th></>);
       case 'Carreras': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Facultad</th><th style={headerStyle}>Asignaturas</th></>);
       case 'Asignaturas': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Año</th><th style={headerStyle}>Periodo</th><th style={headerStyle}>Carrera</th></>);
       case 'Profesores': return (<><th style={headerStyle}>ID</th><th style={headerStyle}>Nombre</th><th style={headerStyle}>Apellido</th><th style={headerStyle}>Documento</th><th style={headerStyle}>Correo</th><th style={headerStyle}>Telefono</th><th style={headerStyle}>Estado</th><th style={headerStyle}>Asignaciones</th></>);
@@ -488,6 +491,14 @@ const EstructuraPage = () => {
     );
   };
 
+  const obtenerPaginaActual = (listaFiltrada) => {
+    const inicio = (paginaActual - 1) * ITEMS_POR_PAGINA;
+    return listaFiltrada.slice(inicio, inicio + ITEMS_POR_PAGINA);
+  };
+
+  // Resetear página al cambiar entidad, filtro o búsqueda
+  useEffect(() => { setPaginaActual(1); }, [entidadActiva, filtroEstado, terminoBusqueda]);
+
   const renderRows = () => {
     if (isLoading) {
       return <tr><td colSpan={7} style={{textAlign:'center', padding:'20px'}}>Cargando datos reales...</td></tr>;
@@ -496,41 +507,48 @@ const EstructuraPage = () => {
     const rowStyle = { borderBottom: '1px solid #e2e8f0' };
     switch (entidadActiva) {
       case 'Periodos': {
-        const lista = aplicarFiltro(periodosList);
-        if (lista.length === 0) return (<tr style={rowStyle}><td colSpan={5} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
+        const listaFiltrada = aplicarFiltro(periodosList);
+        const lista = obtenerPaginaActual(listaFiltrada);
+        if (listaFiltrada.length === 0) return (<tr style={rowStyle}><td colSpan={5} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
         return lista.map(p => (<tr className="table-row-hover" key={p.id_periodo} style={rowStyle}><td style={cellStyle}>{p.id_periodo}</td><td style={{...cellStyle, fontWeight:'600'}}>{p.nombre}</td><td style={cellStyle}>{p.fecha_inicio}</td><td style={cellStyle}>{p.fecha_fin}</td><ActionsCell tipo="Periodos" item={p} estadoRegistro={p.estado} /></tr>));
       }
       case 'Edificios': {
-        const lista = aplicarFiltro(edificiosList);
-        if (lista.length === 0) return (<tr style={rowStyle}><td colSpan={5} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
-        return lista.map(e => (<tr className="table-row-hover" key={e.id_edificio} style={rowStyle}><td style={cellStyle}>{e.id_edificio}</td><td style={{...cellStyle, fontWeight:'600'}}>{e.nombre}</td><td style={cellStyle}>{e.direccion}</td><td style={cellStyle}>-</td><ActionsCell tipo="Edificios" item={e} estadoRegistro={e.estado} /></tr>));
+        const listaFiltrada = aplicarFiltro(edificiosList);
+        const lista = obtenerPaginaActual(listaFiltrada);
+        if (listaFiltrada.length === 0) return (<tr style={rowStyle}><td colSpan={5} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
+        return lista.map(e => (<tr className="table-row-hover" key={e.id_edificio} style={rowStyle}><td style={cellStyle}>{e.id_edificio}</td><td style={{...cellStyle, fontWeight:'600'}}>{e.nombre}</td><td style={cellStyle}>{e.direccion}</td><td style={cellStyle}>{e.ciudad || '-'}</td><ActionsCell tipo="Edificios" item={e} estadoRegistro={e.estado} /></tr>));
       }
       case 'Facultades': {
-        const lista = aplicarFiltro(facultadesList);
-        if (lista.length === 0) return (<tr style={rowStyle}><td colSpan={5} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
-        return lista.map(f => (<tr className="table-row-hover" key={f.id_facultad} style={rowStyle}><td style={cellStyle}>{f.id_facultad}</td><td style={{...cellStyle, fontWeight:'600'}}>{f.nombre}</td><td style={cellStyle}>{f.ciudad}</td><td style={cellStyle}>{f.nombreEdificio}</td><td style={cellStyle}><button style={{ padding: '4px 12px', backgroundColor: '#ebf8ff', color: '#2b6cb0', border: '1px solid #90cdf4', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer' }}>Ver Carreras</button></td><ActionsCell tipo="Facultades" item={f} estadoRegistro={f.estado} /></tr>));
+        const listaFiltrada = aplicarFiltro(facultadesList);
+        const lista = obtenerPaginaActual(listaFiltrada);
+        if (listaFiltrada.length === 0) return (<tr style={rowStyle}><td colSpan={5} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
+        return lista.map(f => (<tr className="table-row-hover" key={f.id_facultad} style={rowStyle}><td style={cellStyle}>{f.id_facultad}</td><td style={{...cellStyle, fontWeight:'600'}}>{f.nombre}</td><td style={cellStyle}>{f.nombreEdificio}</td><td style={cellStyle}><button style={{ padding: '4px 12px', backgroundColor: '#ebf8ff', color: '#2b6cb0', border: '1px solid #90cdf4', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer' }}>Ver Carreras</button></td><ActionsCell tipo="Facultades" item={f} estadoRegistro={f.estado} /></tr>));
       }
       case 'Carreras': {
-        const lista = aplicarFiltro(carrerasList);
-        if (lista.length === 0) return (<tr style={rowStyle}><td colSpan={5} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
-        return lista.map(c => (<tr className="table-row-hover" key={c.id_carrera} style={rowStyle}><td style={cellStyle}>{c.id_carrera}</td><td style={{...cellStyle, fontWeight:'600'}}>{c.nombre}</td><td style={cellStyle}>{c.nombreFacultad}</td><td style={cellStyle}>-</td><ActionsCell tipo="Carreras" item={c} estadoRegistro={c.estado} /></tr>));
+        const listaFiltrada = aplicarFiltro(carrerasList);
+        const lista = obtenerPaginaActual(listaFiltrada);
+        if (listaFiltrada.length === 0) return (<tr style={rowStyle}><td colSpan={5} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
+        return lista.map(c => (<tr className="table-row-hover" key={c.id_carrera} style={rowStyle}><td style={cellStyle}>{c.id_carrera}</td><td style={{...cellStyle, fontWeight:'600'}}>{c.nombre}</td><td style={cellStyle}>{c.nombreFacultad}</td><td style={{...cellStyle, fontWeight:'700', color:'#319795'}}>{c.totalAsignaturas ?? 0}</td><ActionsCell tipo="Carreras" item={c} estadoRegistro={c.estado} /></tr>));
       }
       case 'Asignaturas': {
-        const lista = aplicarFiltro(asignaturasList);
-        if (lista.length === 0) return (<tr style={rowStyle}><td colSpan={7} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
+        const listaFiltrada = aplicarFiltro(asignaturasList);
+        const lista = obtenerPaginaActual(listaFiltrada);
+        if (listaFiltrada.length === 0) return (<tr style={rowStyle}><td colSpan={7} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
         return lista.map(a => (<tr className="table-row-hover" key={a.id_asignatura} style={rowStyle}><td style={cellStyle}>{a.id_asignatura}</td><td style={{...cellStyle, fontWeight:'600'}}>{a.nombre}</td><td style={cellStyle}>{a.anio_dictado}</td><td style={cellStyle}>{a.nombrePeriodo}</td><td style={cellStyle}>{a.nombreCarrera}</td><ActionsCell tipo="Asignaturas" item={a} estadoRegistro={a.estado} /></tr>));
       }
       case 'Profesores': {
-        const lista = aplicarFiltro(profesoresList);
-        if (lista.length === 0) return (<tr style={rowStyle}><td colSpan={9} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
+        const listaFiltrada = aplicarFiltro(profesoresList);
+        const lista = obtenerPaginaActual(listaFiltrada);
+        if (listaFiltrada.length === 0) return (<tr style={rowStyle}><td colSpan={9} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
         return lista.map(prof => (<tr className="table-row-hover" key={prof.id_profesor} style={rowStyle}><td style={cellStyle}>{prof.id_profesor}</td><td style={cellStyle}>{prof.nombre}</td><td style={{...cellStyle, fontWeight:'600'}}>{prof.apellido}</td><td style={cellStyle}>{prof.documento}</td><td style={cellStyle}>{prof.correo}</td><td style={cellStyle}>-</td><td style={cellStyle}><span style={{padding:'2px 8px', backgroundColor: prof.estado ? '#c6f6d5' : '#fed7d7', color: prof.estado ? '#22543d' : '#9b2c2c', borderRadius:'10px', fontSize:'0.75rem', fontWeight:'700'}}>{prof.estado ? 'Activo' : 'Inactivo'}</span></td><td style={{...cellStyle, fontWeight:'700', color:'#2b6cb0'}}>{prof.totalAsignaciones || 0}</td><ActionsCell tipo="Profesores" item={prof} estadoRegistro={prof.estado} /></tr>));
       }
       case 'Comisiones': {
-        const lista = aplicarFiltro(comisionesList);
-        if (lista.length === 0) return (<tr style={rowStyle}><td colSpan={8} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
+        const listaFiltrada = aplicarFiltro(comisionesList);
+        const lista = obtenerPaginaActual(listaFiltrada);
+        if (listaFiltrada.length === 0) return (<tr style={rowStyle}><td colSpan={8} style={{...cellStyle, padding:'20px'}}>Sin registros</td></tr>);
         return lista.map(com => {
           const profesoresStr = Array.isArray(com.profesoresNombresArray) ? com.profesoresNombresArray.join(', ') : (com.profesoresNombresArray || 'Sin Asignar');
-          return (<tr className="table-row-hover" key={com.id_comision} style={rowStyle}><td style={cellStyle}>{com.id_comision}</td><td style={{...cellStyle, fontWeight:'600'}}>{com.nombreComision}</td><td style={cellStyle}>{com.letraDesde} - {com.letraHasta}</td><td style={cellStyle}>{com.nombreAsignatura}</td><td style={cellStyle}>{com.nombreFacultad}</td><td style={cellStyle}>{profesoresStr}</td><td style={{...cellStyle, fontWeight:'700', color:'#2b6cb0'}}>0</td><ActionsCell tipo="Comisiones" item={com} estadoRegistro={com.estado} /></tr>);
+          return (<tr className="table-row-hover" key={com.id_comision} style={rowStyle}><td style={cellStyle}>{com.id_comision}</td><td style={{...cellStyle, fontWeight:'600'}}>{com.nombreComision}</td><td style={cellStyle}>{com.letraDesde} - {com.letraHasta}</td><td style={cellStyle}>{com.nombreAsignatura}</td><td style={cellStyle}>{com.nombreFacultad}</td><td style={cellStyle}>{profesoresStr}</td><td style={{...cellStyle, fontWeight:'700', color:'#2b6cb0'}}>{com.totalInscriptos ?? 0}</td><ActionsCell tipo="Comisiones" item={com} estadoRegistro={com.estado} /></tr>);
         });
       }
       default: return (<tr><td colSpan={7} style={{textAlign:'center', padding:'20px'}}>Seleccione una entidad para ver datos.</td></tr>);
@@ -538,6 +556,70 @@ const EstructuraPage = () => {
   };
 
   const currentActiveColor = entidadActiva === 'Periodos' ? colores.Periodo : (colores[entidadActiva] || '#3182ce');
+
+  // Calcula el total de registros filtrados para la entidad activa (para el paginador)
+  const getTotalFiltrado = () => {
+    switch (entidadActiva) {
+      case 'Periodos':    return aplicarFiltro(periodosList).length;
+      case 'Edificios':   return aplicarFiltro(edificiosList).length;
+      case 'Facultades':  return aplicarFiltro(facultadesList).length;
+      case 'Carreras':    return aplicarFiltro(carrerasList).length;
+      case 'Asignaturas': return aplicarFiltro(asignaturasList).length;
+      case 'Profesores':  return aplicarFiltro(profesoresList).length;
+      case 'Comisiones':  return aplicarFiltro(comisionesList).length;
+      default: return 0;
+    }
+  };
+
+  const totalFiltrado = getTotalFiltrado();
+  const totalPaginas = Math.max(1, Math.ceil(totalFiltrado / ITEMS_POR_PAGINA));
+
+  const Paginacion = () => {
+    if (totalPaginas <= 1) return null;
+    const MAX_BOTONES = 5;
+    let inicio = Math.max(1, paginaActual - Math.floor(MAX_BOTONES / 2));
+    let fin = Math.min(totalPaginas, inicio + MAX_BOTONES - 1);
+    if (fin - inicio + 1 < MAX_BOTONES) inicio = Math.max(1, fin - MAX_BOTONES + 1);
+    const paginas = [];
+    for (let i = inicio; i <= fin; i++) paginas.push(i);
+
+    const btnBase = { padding: '6px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '600', transition: 'all 0.15s ease' };
+    const btnActivo = { ...btnBase, backgroundColor: currentActiveColor, color: '#fff', borderColor: currentActiveColor };
+    const btnNormal = { ...btnBase, backgroundColor: '#fff', color: '#4a5568' };
+    const btnDisabled = { ...btnBase, backgroundColor: '#f7fafc', color: '#cbd5e0', cursor: 'not-allowed' };
+
+    const inicio_registro = (paginaActual - 1) * ITEMS_POR_PAGINA + 1;
+    const fin_registro = Math.min(paginaActual * ITEMS_POR_PAGINA, totalFiltrado);
+
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', backgroundColor: '#ffffff', borderTop: '1px solid #e2e8f0', borderRadius: '0 0 8px 8px' }}>
+        <span style={{ fontSize: '0.85rem', color: '#718096' }}>
+          Mostrando <strong>{inicio_registro}–{fin_registro}</strong> de <strong>{totalFiltrado}</strong> registros
+        </span>
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          <button
+            onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
+            disabled={paginaActual === 1}
+            style={paginaActual === 1 ? btnDisabled : btnNormal}
+          >‹ Anterior</button>
+          {inicio > 1 && <span style={{ color: '#a0aec0', padding: '0 4px' }}>…</span>}
+          {paginas.map(p => (
+            <button
+              key={p}
+              onClick={() => setPaginaActual(p)}
+              style={p === paginaActual ? btnActivo : btnNormal}
+            >{p}</button>
+          ))}
+          {fin < totalPaginas && <span style={{ color: '#a0aec0', padding: '0 4px' }}>…</span>}
+          <button
+            onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
+            disabled={paginaActual === totalPaginas}
+            style={paginaActual === totalPaginas ? btnDisabled : btnNormal}
+          >Siguiente ›</button>
+        </div>
+      </div>
+    );
+  };
 
   const formatearProfesores = (asignatura) => {
     const profesoresSet = new Map();
@@ -632,6 +714,7 @@ const EstructuraPage = () => {
           <thead><tr style={{ backgroundColor: `${currentActiveColor}1A`, borderBottom: '2px solid #e2e8f0', transition: 'background-color 0.3s ease' }}>{renderHeaders()}<th style={headerStyle}>Acciones</th></tr></thead>
           <tbody>{renderRows()}</tbody>
         </table>
+        <Paginacion />
       </div>
 
       <AddPeriodoModal    isOpen={isPeriodoModalOpen}    onClose={() => setIsPeriodoModalOpen(false)}    onSave={(d) => handleSave(d, 'Periodo')}    initialData={editingTipo === 'Periodos'    ? itemSeleccionado : null} isEditMode={editingTipo === 'Periodos'}    onDelete={() => handleDelete('Periodo')}    isSaving={isLoading} />

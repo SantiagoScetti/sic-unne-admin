@@ -46,7 +46,7 @@ export const crear = async (data) => {
   try {
     const { data: result, error } = await supabase
       .from('facultad')
-      .insert([{ nombre: data.nombre, ciudad: data.ciudad, id_edificio: Number(data.id_edificio), estado: true }])
+      .insert([{ nombre: data.nombre, id_edificio: Number(data.id_edificio), estado: true }])
       .select();
     if (error) throw error;
     return { data: result ? result[0] : null, error: null };
@@ -60,7 +60,7 @@ export const actualizar = async (id, data) => {
   try {
     const { data: result, error } = await supabase
       .from('facultad')
-      .update({ nombre: data.nombre, ciudad: data.ciudad, id_edificio: Number(data.id_edificio) })
+      .update({ nombre: data.nombre, id_edificio: Number(data.id_edificio) })
       .eq('id_facultad', id)
       .select();
     if (error) throw error;
@@ -112,7 +112,6 @@ export const insertar = async (filas) => {
       .from('facultad')
       .upsert({
         nombre: f.facultad_nombre,
-        ciudad: f.facultad_ciudad || 'Sin especificar',
         id_edificio: edificio.id_edificio,
         estado: true,
       }, { onConflict: 'nombre', ignoreDuplicates: false })
