@@ -1,6 +1,6 @@
 @startuml
 
-title Diagrama de Secuencia: C-02 Crear Comision (Caso Normal)
+title Diagrama de Secuencia: C-02 Crear Comision (Alt: Datos de formulario inválidos)
 
 skinparam style strictuml
 skinparam ParticipantPadding 30
@@ -18,24 +18,17 @@ participant "Profesor"                   as Profesor
 Administrador -> Interfaz: Ingresa a estructura academica
 activate Interfaz
 
-
-  Interfaz -> Profesor: Solicita lista de Profesores
-  activate Profesor
-  Profesor -> Profesor: obtenerProfesores(filtroEstado="Activos")
-  Profesor --> Interfaz: Devuelve lista de Profesores
-  deactivate Profesor
-
   Interfaz -> Comision: Solicita lista de Comisiones
   activate Comision
   Comision -> Comision: obtenerComisiones(filtroEstado="Activos")
   loop por cada comision de la lista
-    Comision -> Profesor: Solicita lista de profesores por comision
+    Comision -> Profesor: Solicita datos de profesores
     activate Profesor
-    Profesor -> Profesor: listarPorComision(id_comision)
-    Profesor --> Comision: Devuelve profesores de la comision
+    Profesor -> Profesor: obtenerPorId(id_profesor)
+    Profesor --> Comision: Devuelve datos del profeosr
     deactivate Profesor
   end
-  Comision --> Interfaz: Devuelve lista de Comisiones (con datos de profesores)
+  Comision --> Interfaz: Devuelve lista de Comisiones 
   deactivate Comision
 
 
@@ -47,10 +40,6 @@ deactivate Interfaz
 Administrador -> Interfaz: Hace click en '+' (crear comision)
 activate Interfaz
 Interfaz -> Interfaz: setIsComisionModalOpen(true)
-note right
-  profesoresDisponibles ya en estado
-  (cargados en la fase inicial — no hay nuevo fetch)
-end note
 Interfaz --> Administrador: Muestra modal de crear Comision
 deactivate Interfaz
 
