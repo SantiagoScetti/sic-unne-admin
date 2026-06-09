@@ -130,7 +130,6 @@ const AccionDenunciaModal = ({
   // ── Badge de estado ──
   const badgeColor: Record<string, { bg: string; color: string }> = {
     'Pendiente':   { bg: '#fefcbf', color: '#975a16' },
-    'En Revision': { bg: '#bee3f8', color: '#2b6cb0' },
     'Resuelto':    { bg: '#c6f6d5', color: '#22543d' },
     'Desestimado': { bg: '#e2e8f0', color: '#4a5568' },
   };

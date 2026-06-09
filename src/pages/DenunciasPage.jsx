@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { obtenerDenuncias, obtenerDenunciasFiltradas, resolverDenuncia } from '../services/denuncias/denuncia.service';
+import { obtenerDenuncias, obtenerDenunciasFiltradas, resolverDenuncia, obtenerEstadisticas } from '../services/denuncias/denuncia.service';
 import AccionDenunciaModal from '../components/features/modals/accionDenunciaModal';
 
 const getEstadoBadgeStyle = (estado) => {
@@ -19,8 +19,6 @@ const getEstadoBadgeStyle = (estado) => {
       return { ...baseStyle, backgroundColor: '#c6f6d5', color: '#22543d' };
     case 'Desestimado':
       return { ...baseStyle, backgroundColor: '#e2e8f0', color: '#4a5568' };
-    case 'En Revision':
-      return { ...baseStyle, backgroundColor: '#bee3f8', color: '#2b6cb0' };
     default:
       return { ...baseStyle, backgroundColor: '#e2e8f0', color: '#4a5568' };
   }
@@ -56,6 +54,17 @@ const DenunciasPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [estadisticas, setEstadisticas] = useState([]);
+
+  // Carga las tarjetas desde la función almacenada fn_contar_denuncias_por_estado.
+  const cargarEstadisticas = async () => {
+    try {
+      const stats = await obtenerEstadisticas();
+      setEstadisticas(stats || []);
+    } catch (err) {
+      console.error("Failed to load estadisticas", err);
+    }
+  };
 
   useEffect(() => {
     const fetchDenuncias = async () => {
@@ -64,6 +73,7 @@ const DenunciasPage = () => {
         setLoading(true);
         const data = await obtenerDenuncias();
         setDenuncias(data || []);
+        await cargarEstadisticas();
       } catch (err) {
         console.error("Failed to load denuncias", err);
         setError("Ocurrió un error al cargar las denuncias. Por favor, intenta de nuevo.");
@@ -75,9 +85,13 @@ const DenunciasPage = () => {
     fetchDenuncias();
   }, []);
 
-  const totalDenuncias = denuncias.length;
-  const pendientesCount = denuncias.filter(r => r.estado === 'Pendiente').length;
-  const resueltosCount = denuncias.filter(r => r.estado === 'Resuelto').length;
+  // Las tarjetas se calculan con el stored procedure (cuenta el total real en la
+  // base, sin importar el filtro aplicado a la tabla).
+  const cantidadPorEstado = (estado) =>
+    estadisticas.find((e) => e.estado === estado)?.cantidad ?? 0;
+  const totalDenuncias = estadisticas.reduce((suma, e) => suma + e.cantidad, 0);
+  const pendientesCount = cantidadPorEstado('Pendiente');
+  const resueltosCount = cantidadPorEstado('Resuelto');
 
   const handleCambioFiltro = async (estado) => {
     setFiltroEstado(estado);
@@ -100,6 +114,7 @@ const DenunciasPage = () => {
       ? await obtenerDenuncias()
       : await obtenerDenunciasFiltradas(filtroEstado);
     setDenuncias(data || []);
+    await cargarEstadisticas();
   };
 
   const handleGuardarAccion = async ({ accion, fechaHasta, observaciones }) => {

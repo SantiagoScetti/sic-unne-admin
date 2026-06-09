@@ -16,7 +16,7 @@ export class UsuarioRepositorio {
    *
    * @param id  id_usuario de la tabla `usuario`
    */
-  async buscarPorId(id: number): Promise<Usuario | null> {
+  async obtenerPorId(id: number): Promise<Usuario | null> {
     const supabase = getSupabaseServer();
     const { data, error } = await supabase
       .from('usuario')
@@ -36,10 +36,12 @@ export class UsuarioRepositorio {
    */
   async suspender(idUsuario: number, fechaHasta: string | null): Promise<void> {
     const supabase = getSupabaseServer();
-    const { error } = await supabase
-      .from('usuario')
-      .update({ estado: 'Suspendido', fecha_suspension_hasta: fechaHasta })
-      .eq('id_usuario', idUsuario);
+    // Persistencia vía STORED PROCEDURE (actualización en BD): sp_suspender_usuario.
+    // La función PL/pgSQL hace el UPDATE de estado y fecha en el servidor de Postgres.
+    const { error } = await supabase.rpc('sp_suspender_usuario', {
+      p_id_usuario: idUsuario,
+      p_fecha_hasta: fechaHasta,
+    });
 
     if (error) throw new Error(error.message);
   }

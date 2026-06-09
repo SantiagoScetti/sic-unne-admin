@@ -16,7 +16,7 @@ export class ProfesorRepositorio {
    *
    * @param id  id_profesor de la tabla `profesor`
    */
-  async buscarPorId(id: number): Promise<Profesor | null> {
+  async obtenerPorId(id: number): Promise<Profesor | null> {
     const supabase = getSupabaseServer();
     const { data, error } = await supabase
       .from('profesor')

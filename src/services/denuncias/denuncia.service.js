@@ -33,6 +33,22 @@ export const obtenerDenunciasFiltradas = async (estado) => {
 };
 
 /**
+ * obtenerEstadisticas — C-01, tarjetas del panel.
+ * Invoca la FUNCIÓN ALMACENADA fn_contar_denuncias_por_estado a través de
+ * /api/denuncias/estadisticas. Devuelve un array [{ estado, cantidad }].
+ */
+export const obtenerEstadisticas = async () => {
+  const res = await fetch('/api/denuncias/estadisticas');
+  const result = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    console.error('Error fetching estadisticas:', result.error);
+    throw new Error(result.error || 'Fallo al obtener estadísticas');
+  }
+  return result.data || [];
+};
+
+/**
  * obtenerDetalleDenuncia — C-01, paso de detalle.
  */
 export const obtenerDetalleDenuncia = async (id_denuncia) => {

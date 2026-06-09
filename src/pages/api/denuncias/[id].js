@@ -12,8 +12,8 @@ import { getSupabaseServer } from '../_lib/supabaseServer';
 //
 //   GET   /api/denuncias/[id]  → detalle de la denuncia.
 //         Paso 11: obtenerDetalleDenuncia(id_denuncia) — query plana a `denuncia`.
-//         Pasos 12-14: ServicioConsultaUsuario.buscarPorId(emisor_id).
-//         Pasos 15-17: ServicioConsultaUsuario.buscarPorId(receptor_id).
+//         Pasos 12-14: ServicioConsultaUsuario.obtenerPorId(emisor_id).
+//         Pasos 15-17: ServicioConsultaUsuario.obtenerPorId(receptor_id).
 //
 //   PATCH /api/denuncias/[id]  → resuelve o desestima la denuncia.
 //         Paso 23: resolverDenuncia(...) → delega en ServicioResolucionDenuncia.
@@ -76,7 +76,7 @@ async function handleGet(id_denuncia, res) {
   let emisor = null;
   if (data.emisor_id) {
     try {
-      const u = await servicio.buscarPorId(data.emisor_id);
+      const u = await servicio.obtenerPorId(data.emisor_id);
       emisor = { id_usuario: u.id_usuario, nombre: u.nombre, apellido: u.apellido, documento: u.documento };
     } catch {
       // El emisor puede no existir si fue eliminado; se devuelve null.
@@ -86,7 +86,7 @@ async function handleGet(id_denuncia, res) {
   // ── Pasos 15-17: Solicita datos del receptor ──────────────────────────────
   let receptor = null;
   try {
-    const u = await servicio.buscarPorId(data.receptor_id);
+    const u = await servicio.obtenerPorId(data.receptor_id);
     receptor = { id_usuario: u.id_usuario, nombre: u.nombre, apellido: u.apellido, documento: u.documento };
   } catch {
     // El receptor puede no existir en casos de datos corruptos/borrados.

@@ -31,15 +31,15 @@ export class ServicioConsultaUsuario {
   ) {}
 
   /**
-   * buscarPorId — C-01, pasos 5 / 13 / 16.
+   * obtenerPorId — C-01, pasos 5 / 13 / 16.
    *
    * Devuelve la entidad Usuario correspondiente al id recibido.
    * Lanza UsuarioNoEncontradoError si no existe ningún usuario con ese id.
    *
    * @param id  id_usuario de la tabla `usuario`
    */
-  async buscarPorId(id: number): Promise<Usuario> {
-    const usuario = await this.usuarioRepo.buscarPorId(id);
+  async obtenerPorId(id: number): Promise<Usuario> {
+    const usuario = await this.usuarioRepo.obtenerPorId(id);
     if (!usuario) throw new UsuarioNoEncontradoError(id);
     return usuario;
   }

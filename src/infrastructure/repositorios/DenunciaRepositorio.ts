@@ -34,4 +34,20 @@ export class DenunciaRepositorio {
 
     if (error) throw new Error(error.message);
   }
+
+  /**
+   * Estadísticas de denuncias agrupadas por estado.
+   * CONSULTA vía STORED PROCEDURE: fn_contar_denuncias_por_estado().
+   * La función SQL devuelve filas { estado, cantidad } calculadas en Postgres.
+   */
+  async contarPorEstado(): Promise<{ estado: string; cantidad: number }[]> {
+    const supabase = getSupabaseServer();
+    const { data, error } = await supabase.rpc('fn_contar_denuncias_por_estado');
+
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((fila: { estado: string; cantidad: number }) => ({
+      estado: fila.estado,
+      cantidad: Number(fila.cantidad),
+    }));
+  }
 }

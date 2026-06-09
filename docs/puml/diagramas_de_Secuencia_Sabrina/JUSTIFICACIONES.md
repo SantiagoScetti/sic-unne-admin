@@ -29,7 +29,7 @@ const receptoresMap = {};
 await Promise.all(
   receptorIds.map(async (id) => {           // ← iteración sobre los receptores
     try {
-      const usuario = await servicio.buscarPorId(id);   // paso 5: obtenerPorId(receptor_id)
+      const usuario = await servicio.obtenerPorId(id);   // paso 5: obtenerPorId(receptor_id)
       receptoresMap[id] = {
         id_usuario: usuario.id_usuario,
         nombre:     usuario.nombre,
