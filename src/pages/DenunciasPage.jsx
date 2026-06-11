@@ -92,6 +92,7 @@ const DenunciasPage = ({ adminAuthId }) => {
   const totalDenuncias = estadisticas.reduce((suma, e) => suma + e.cantidad, 0);
   const pendientesCount = cantidadPorEstado('Pendiente');
   const resueltosCount = cantidadPorEstado('Resuelto');
+  const desestimadosCount = cantidadPorEstado('Desestimado');
 
   const handleCambioFiltro = async (estado) => {
     setFiltroEstado(estado);
@@ -204,6 +205,10 @@ const DenunciasPage = ({ adminAuthId }) => {
           <div style={{ flex: 1, backgroundColor: '#ffffff', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', borderLeft: '4px solid #38a169' }}>
             <p style={{ margin: 0, color: '#718096', fontSize: '0.875rem', fontWeight: '600', textTransform: 'uppercase' }}>Resueltas</p>
             <p style={{ margin: '8px 0 0 0', fontSize: '1.5rem', fontWeight: 'bold', color: '#2d3748' }}>{resueltosCount}</p>
+          </div>
+          <div style={{ flex: 1, backgroundColor: '#ffffff', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', borderLeft: '4px solid #a0aec0' }}>
+            <p style={{ margin: 0, color: '#718096', fontSize: '0.875rem', fontWeight: '600', textTransform: 'uppercase' }}>Desestimadas</p>
+            <p style={{ margin: '8px 0 0 0', fontSize: '1.5rem', fontWeight: 'bold', color: '#2d3748' }}>{desestimadosCount}</p>
           </div>
         </div>
       )}

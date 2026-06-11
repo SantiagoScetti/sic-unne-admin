@@ -47,9 +47,7 @@ export class UsuarioRepositorio {
   }
 
   /**
-   * Resuelve el administrador de la sesión actual.
-   * (TODO: MOCK ACTUAL - recuperar el admin real usando supabase.auth.getUser()
-   * con las cookies de sesión una vez implementada la autenticación en las rutas).
+   * Resuelve el administrador de la sesión actual. 
    */
   async obtenerAdminSesion(authId?: string | null): Promise<number | null> {
     const supabase = getSupabaseServer();
