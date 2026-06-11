@@ -105,11 +105,11 @@ async function handlePatch(id_denuncia, req, res) {
   //   - persiste el nuevo estado
   //   - paso 24-26: obtiene admin_id via ServicioConsultaUsuario.obtenerAdminSesion()
   //   - aplica el efecto (suspender usuario si corresponde)
-  const { estado, accion, fechaHasta, observaciones, admin_id } = req.body ?? {};
+  const { estado, accion, fechaHasta, observaciones, auth_id } = req.body ?? {};
   const servicio = new ServicioResolucionDenuncia();
 
   if (estado === 'Desestimado') {
-    const denuncia = await servicio.desestimar({ id_denuncia, observaciones, admin_id });
+    const denuncia = await servicio.desestimar({ id_denuncia, observaciones, auth_id });
     return res.status(200).json({
       data: { id_denuncia, estado: denuncia.estado },
       error: null,
@@ -120,7 +120,7 @@ async function handlePatch(id_denuncia, req, res) {
     if (!accion) {
       return res.status(400).json({ error: "Para resolver la denuncia se requiere 'accion'." });
     }
-    const denuncia = await servicio.resolver({ id_denuncia, accion, fechaHasta, observaciones, admin_id });
+    const denuncia = await servicio.resolver({ id_denuncia, accion, fechaHasta, observaciones, auth_id });
     return res.status(200).json({
       data: { id_denuncia, estado: denuncia.estado, accion_tomada: denuncia.accionTomada },
       error: null,

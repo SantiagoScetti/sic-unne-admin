@@ -36,13 +36,13 @@ export interface ParamsResolver {
   accion: AccionTomada;
   fechaHasta?: string | null;
   observaciones?: string;
-  admin_id?: number | null;
+  auth_id?: string | null;
 }
 
 export interface ParamsDesestimar {
   id_denuncia: number;
   observaciones?: string;
-  admin_id?: number | null;
+  auth_id?: string | null;
 }
 
 export class ServicioResolucionDenuncia {
@@ -55,7 +55,7 @@ export class ServicioResolucionDenuncia {
   /** Resuelve una denuncia aplicando una acción administrativa. */
   async resolver(params: ParamsResolver): Promise<Denuncia> {
     const denuncia = await this.cargar(params.id_denuncia);
-    const adminId = await this.resolverAdminId(params.admin_id);
+    const adminId = await this.resolverAdminId(params.auth_id);
 
     denuncia.resolver(params.accion);
     denuncia.asignarAdmin(adminId);
@@ -69,7 +69,7 @@ export class ServicioResolucionDenuncia {
   /** Desestima una denuncia (sin sanción). */
   async desestimar(params: ParamsDesestimar): Promise<Denuncia> {
     const denuncia = await this.cargar(params.id_denuncia);
-    const adminId = await this.resolverAdminId(params.admin_id);
+    const adminId = await this.resolverAdminId(params.auth_id);
 
     denuncia.desestimar();
     denuncia.asignarAdmin(adminId);
@@ -109,8 +109,7 @@ export class ServicioResolucionDenuncia {
     return denuncia;
   }
 
-  private async resolverAdminId(adminId?: number | null): Promise<number> {
-    if (adminId) return adminId;
-    return this.servicioConsultaUsuario.obtenerAdminSesion();
+  private async resolverAdminId(authId?: string | null): Promise<number> {
+    return this.servicioConsultaUsuario.obtenerAdminSesion(authId);
   }
 }

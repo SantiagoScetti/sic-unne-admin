@@ -28,10 +28,10 @@
 20: Muestra modal de detalle de la Denuncia --> (render implícito de React — AccionDenunciaModal con isOpen=true)
 21: Selecciona acción y hace click en "Confirmar" --> (acción implícita del usuario — sin correspondencia directa en el código)
 22: Solicita resolver Denuncia --> DenunciasPage.jsx Linea 105 (handleGuardarAccion — llama a resolverDenuncia)
-23: resolverDenuncia(id_denuncia, {estado, accion, fechaHasta, observaciones, admin_id}) --> denuncia.service.js Linea 55 (fetch PATCH /api/denuncias/${id}) / api/denuncias/[id].js Linea 123 (delega en ServicioResolucionDenuncia.resolver)
+23: resolverDenuncia(id_denuncia, {estado, accion, fechaHasta, observaciones, auth_id}) --> denuncia.service.js Linea 55 (fetch PATCH /api/denuncias/${id}) / api/denuncias/[id].js Linea 123 (delega en ServicioResolucionDenuncia.resolver)
 24: Solicita id_admin que resuelve la denuncia --> ServicioResolucionDenuncia.ts Linea 109 (resolverAdminId — invoca UsuarioRepositorio)
-25: obtenerAdminSesion() --> UsuarioRepositorio.ts Linea 52 (query a tabla `usuario` filtrando por rol Administrador)
-26: Devuelve admin_id --> UsuarioRepositorio.ts Linea 63 (retorna id_usuario del primer administrador)
+25: obtenerAdminSesion() --> src/domain/usuario/ServicioConsultaUsuario.ts
+26: Devuelve admin_id --> UsuarioRepositorio.ts Linea 63 (retorna id_usuario real de la base de datos vinculado al token de sesión)
 27: [opt accion implica suspensión] Solicita suspender usuario --> ServicioResolucionDenuncia.ts Linea 78-101 (aplicarEfecto — switch por accion: 'Suspender Temporalmente' / 'Suspender Indefinidamente' invocan usuarioRepo.suspender)
 28: suspender(receptor_id, fechaHasta) --> UsuarioRepositorio.ts Linea 37 (UPDATE tabla `usuario`: estado='Suspendido', fecha_suspension_hasta=fechaHasta)
 29: Usuario suspendido --> UsuarioRepositorio.ts Linea 44 (retorna void — suspensión aplicada correctamente)
@@ -65,9 +65,9 @@
 21: Selecciona acción y hace click en "Confirmar" --> (acción implícita del usuario — sin correspondencia directa en el código)
 22: Solicita resolver Denuncia --> DenunciasPage.jsx Linea 105 (handleGuardarAccion — llama a resolverDenuncia)
 23: Solicita id_admin de la sesión --> ServicioResolucionDenuncia.ts Linea 109 (resolverAdminId — invoca UsuarioRepositorio)
-24: obtenerAdminSesion() --> UsuarioRepositorio.ts Linea 52 (query a tabla `usuario` filtrando por rol Administrador)
-25: Devuelve admin_id --> UsuarioRepositorio.ts Linea 63 (retorna id_usuario del primer administrador)
-26: resolverDenuncia(id_denuncia, {estado="Resuelto", accion, fechaHasta, observaciones, admin_id}) --> denuncia.service.js Linea 55 (fetch PATCH) / api/denuncias/[id].js Linea 123 (ServicioResolucionDenuncia.resolver) / ServicioResolucionDenuncia.ts Linea 57 (denuncia.resolver) / Denuncia.ts Linea 50 (delega en estado actual) / EstadoDenuncia.ts Linea 19 (lanza DenunciaYaProcesadaError — estado no es Pendiente)
+24: obtenerAdminSesion() --> src/domain/usuario/ServicioConsultaUsuario.ts
+25: Devuelve admin_id --> UsuarioRepositorio.ts Linea 63 (retorna id_usuario real de la base de datos vinculado al token de sesión)
+26: resolverDenuncia(id_denuncia, {estado="Resuelto", accion, fechaHasta, observaciones, auth_id}) --> denuncia.service.js Linea 55 (fetch PATCH) / api/denuncias/[id].js Linea 123 (ServicioResolucionDenuncia.resolver) / ServicioResolucionDenuncia.ts Linea 57 (denuncia.resolver) / Denuncia.ts Linea 50 (delega en estado actual) / EstadoDenuncia.ts Linea 19 (lanza DenunciaYaProcesadaError — estado no es Pendiente)
 27: Error: Denuncia ya gestionada --> errores.ts Linea 10 (DenunciaYaProcesadaError) / api/denuncias/[id].js Linea 41-46 (captura y devuelve 409 Conflict) / denuncia.service.js Linea 68-70 (detecta status 409 y lanza 'CONFLICT_ALREADY_PROCESSED')
 28: "Hubo un error al resolver la denuncia. Denuncia ya gestionada." --> DenunciasPage.jsx Linea 122-129 (catch de handleGuardarAccion — setError con mensaje de conflicto)
 

@@ -47,19 +47,19 @@ export class UsuarioRepositorio {
   }
 
   /**
-   * Resuelve un administrador por defecto para atribuir la auditoría cuando el
-   * cliente no envía admin_id. (TODO: reemplazar por el admin de la sesión real
-   * cuando se cablee la autenticación en las API Routes.)
+   * Resuelve el administrador de la sesión actual.
+   * (TODO: MOCK ACTUAL - recuperar el admin real usando supabase.auth.getUser()
+   * con las cookies de sesión una vez implementada la autenticación en las rutas).
    */
-  async obtenerAdminPorDefecto(): Promise<number | null> {
+  async obtenerAdminSesion(authId?: string | null): Promise<number | null> {
     const supabase = getSupabaseServer();
-    const { data, error } = await supabase
-      .from('usuario')
-      .select('id_usuario')
-      .eq('rol', 'Administrador')
-      .order('id_usuario', { ascending: true })
-      .limit(1)
-      .maybeSingle();
+    
+    let query = supabase.from('usuario').select('id_usuario').eq('rol', 'Administrador');
+    if (authId) {
+      query = query.eq('auth_id', authId);
+    }
+
+    const { data, error } = await query.order('id_usuario', { ascending: true }).limit(1).maybeSingle();
 
     if (error) throw new Error(error.message);
     return data?.id_usuario ?? null;

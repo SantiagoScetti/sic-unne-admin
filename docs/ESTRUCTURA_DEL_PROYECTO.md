@@ -69,7 +69,7 @@ matchinggrupo50/
 │   ├── infrastructure/         [Capa 3] PERSISTENCIA — único lugar con acceso a Supabase
 │   │   ├── repositorios/
 │   │   │   ├── DenunciaRepositorio.ts        obtenerPorId / guardar
-│   │   │   ├── UsuarioRepositorio.ts        suspender / obtenerAdminPorDefecto
+│   │   │   ├── UsuarioRepositorio.ts        suspender / obtenerAdminSesion
 │   │   │   ├── NotificacionRepositorio.ts   crearVarias
 │   │   │   ├── AuditoriaRepositorio.ts      registrar
 │   │   │   └── ComisionRepositorio.ts       crear / buscar... / vincular...

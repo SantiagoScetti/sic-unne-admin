@@ -4,7 +4,7 @@ import AdminLayout from "@/src/layouts/AdminLayout";
 import DenunciasPage from "@/src/pages/DenunciasPage";
 import { Suspense } from "react";
 
-async function AuthCheck({ children }: { children: React.ReactNode }) {
+async function AuthCheck() {
   try {
     const { user, rol, error } = await getServerUserWithRole();
 
@@ -18,7 +18,7 @@ async function AuthCheck({ children }: { children: React.ReactNode }) {
 
     return (
       <AdminLayout adminEmail={user?.email}>
-        {children}
+        <DenunciasPage adminAuthId={user.id} />
       </AdminLayout>
     );
   } catch (err: any) {
@@ -64,9 +64,7 @@ async function AuthCheck({ children }: { children: React.ReactNode }) {
 export default function AdminDenunciasRoute() {
   return (
     <Suspense fallback={<div style={{ padding: '20px', textAlign: 'center', fontFamily: 'sans-serif', color: '#4a5568' }}>Cargando sesión...</div>}>
-      <AuthCheck>
-        <DenunciasPage />
-      </AuthCheck>
+      <AuthCheck />
     </Suspense>
   );
 }

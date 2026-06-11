@@ -145,7 +145,7 @@ title Diagrama de Clases del Dominio (DOO) — SIC-UNNE — Vista general
     + fecha_suspension_hasta: date?
     --
     + {static} obtenerPorId(id: int): Usuario
-    + {static} obtenerAdminPorDefecto(): int
+    + {static} obtenerAdminSesion(): int
     + {static} suspender(id_usuario: int, fechaHasta: date?): void
     --
     + estaActivo(): boolean
@@ -306,7 +306,7 @@ secuencia, señalar un mensaje y mostrar exactamente la línea de código que lo
 | `Denuncia.obtenerDetalleDenuncia(id)` | `src/services/denuncias/denuncia.service.js` |
 | `Denuncia.resolverDenuncia(id, datos)` | `denuncia.service.js` → `api/denuncias/[id].js` → `ServicioResolucionDenuncia.resolver()` |
 | `Usuario.obtenerPorId(id)` | `ServicioConsultaUsuario.obtenerPorId` → `UsuarioRepositorio.obtenerPorId` |
-| `Usuario.obtenerAdminPorDefecto()` | `UsuarioRepositorio.obtenerAdminPorDefecto` |
+| `Usuario.obtenerAdminSesion()` | `ServicioConsultaUsuario.obtenerAdminSesion` |
 | `Usuario.suspender(id, fechaHasta)` | `UsuarioRepositorio.suspender` → **SP `sp_suspender_usuario`** |
 | `Comision.obtenerComisiones(filtro)` | `src/services/academico/comision.service.js` → `ServicioComision.listar` |
 | `Comision.crear(...)` | `comision.service.js` → `ServicioComision.crear` → `ComisionRepositorio.crear` |

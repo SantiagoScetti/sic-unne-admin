@@ -48,11 +48,9 @@ export class ServicioConsultaUsuario {
    * obtenerAdminSesion — C-01, paso 25.
    *
    * Devuelve el id del administrador de la sesión activa.
-   * Se usa cuando el cliente no envía admin_id en la resolución de una
-   * denuncia. (TODO: reemplazar por el admin de la sesión real.)
    */
-  async obtenerAdminSesion(): Promise<number> {
-    const adminId = await this.usuarioRepo.obtenerAdminPorDefecto();
+  async obtenerAdminSesion(authId?: string | null): Promise<number> {
+    const adminId = await this.usuarioRepo.obtenerAdminSesion(authId);
     if (!adminId) throw new Error('No hay administradores registrados en el sistema.');
     return adminId;
   }

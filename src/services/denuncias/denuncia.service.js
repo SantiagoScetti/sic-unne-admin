@@ -70,12 +70,12 @@ export const obtenerDetalleDenuncia = async (id_denuncia) => {
  */
 export const resolverDenuncia = async (
   id_denuncia,
-  { estado, accion, fechaHasta, observaciones, admin_id } = {}
+  { estado, accion, fechaHasta, observaciones, auth_id } = {}
 ) => {
   const res = await fetch(`/api/denuncias/${id_denuncia}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ estado, accion, fechaHasta, observaciones, admin_id }),
+    body: JSON.stringify({ estado, accion, fechaHasta, observaciones, auth_id }),
   });
 
   const result = await res.json().catch(() => ({}));

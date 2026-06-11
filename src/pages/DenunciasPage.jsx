@@ -45,7 +45,7 @@ const Spinner = () => (
   </div>
 );
 
-const DenunciasPage = () => {
+const DenunciasPage = ({ adminAuthId }) => {
   const [denuncias, setDenuncias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -126,6 +126,7 @@ const DenunciasPage = () => {
         accion,
         fechaHasta,
         observaciones,
+        auth_id: adminAuthId,
       });
 
       setIsModalOpen(false);
@@ -154,6 +155,7 @@ const DenunciasPage = () => {
       await resolverDenuncia(denunciaSeleccionada.id_denuncia, {
         estado: 'Desestimado',
         observaciones: '',
+        auth_id: adminAuthId,
       });
       setIsModalOpen(false);
       setDenunciaSeleccionada(null);
