@@ -10,8 +10,8 @@ import type { Profesor } from './Profesor';
 // esos datos se obtienen aquí en lugar de usar un JOIN directo de Supabase.
 //
 // Trazabilidad con el Diagrama de Secuencia C-02:
-//   obtenerPorId(id_profesor) → buscarPorId en el repositorio
-//   listarPorComision(id_comision) → listarIdsPorComision + buscarPorId por cada uno
+//   obtenerPorId(id_profesor) → obtenerPorId en el repositorio
+//   listarPorComision(id_comision) → listarIdsPorComision + obtenerPorId por cada uno
 // =============================================================================
 
 export class ProfesorNoEncontradoError extends Error {
@@ -35,8 +35,8 @@ export class ServicioConsultaProfesor {
    *
    * @param id  id_profesor de la tabla `profesor`
    */
-  async buscarPorId(id: number): Promise<Profesor> {
-    const profesor = await this.profesorRepo.buscarPorId(id);
+  async obtenerPorId(id: number): Promise<Profesor> {
+    const profesor = await this.profesorRepo.obtenerPorId(id);
     if (!profesor) throw new ProfesorNoEncontradoError(id);
     return profesor;
   }
@@ -46,7 +46,7 @@ export class ServicioConsultaProfesor {
    *
    * Devuelve todos los profesores vinculados a una comisión dada.
    * Primero obtiene los ids desde `comision_profesor`, luego resuelve
-   * cada uno via buscarPorId en paralelo.
+   * cada uno via obtenerPorId en paralelo.
    *
    * @param idComision  id de la comisión cuyos profesores se quieren obtener
    */
@@ -55,7 +55,7 @@ export class ServicioConsultaProfesor {
     const profesores = await Promise.all(
       ids.map(async (id) => {
         try {
-          return await this.buscarPorId(id);
+          return await this.obtenerPorId(id);
         } catch {
           return null;
         }

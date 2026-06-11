@@ -6,7 +6,7 @@ import { ServicioConsultaUsuario } from '../../../domain/usuario/ServicioConsult
 // Trazabilidad: Diagrama de Secuencia C-01, pasos 2-7.
 //
 // Métodos soportados:
-//   GET  /api/denuncias?filtroEstado=Todos|Pendiente|Resuelto|Desestimado|En Revision
+//   GET  /api/denuncias?filtroEstado=Todos|Pendiente|Resuelto|Desestimado
 //        → Devuelve el listado de denuncias.
 //          Paso 3: obtenerDenuncias() — consulta la tabla `denuncia`.
 //          Pasos 4-6: por cada receptor_id único, solicita datos al
@@ -55,7 +55,7 @@ async function handleGet(req, res) {
   await Promise.all(
     receptorIds.map(async (id) => {
       try {
-        const usuario = await servicio.buscarPorId(id);
+        const usuario = await servicio.obtenerPorId(id);
         receptoresMap[id] = {
           id_usuario:  usuario.id_usuario,
           nombre:      usuario.nombre,

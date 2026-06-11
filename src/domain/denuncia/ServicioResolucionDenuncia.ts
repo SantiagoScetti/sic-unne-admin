@@ -1,5 +1,6 @@
 import { DenunciaRepositorio } from '../../infrastructure/repositorios/DenunciaRepositorio';
 import { UsuarioRepositorio } from '../../infrastructure/repositorios/UsuarioRepositorio';
+import { ServicioConsultaUsuario } from '../usuario/ServicioConsultaUsuario';
 import type { Denuncia } from './Denuncia';
 import type { AccionTomada } from './tipos';
 
@@ -15,6 +16,7 @@ import type { AccionTomada } from './tipos';
 //                                              delegando en su objeto-estado
 //                                              (PATRÓN ESTADO, en estados/).
 //   denunciaRepo.guardar(denuncia)             → persiste el nuevo estado
+//   servicioConsultaUsuario.obtenerAdminSesion() → admin de la sesión (paso 25)
 //   usuarioRepo.suspender(...)                 → efecto de la acción (si corresponde)
 //
 // El único patrón de diseño implementado es ESTADO (src/domain/denuncia/estados/);
@@ -47,6 +49,7 @@ export class ServicioResolucionDenuncia {
   constructor(
     private readonly denunciaRepo: DenunciaRepositorio = new DenunciaRepositorio(),
     private readonly usuarioRepo: UsuarioRepositorio = new UsuarioRepositorio(),
+    private readonly servicioConsultaUsuario: ServicioConsultaUsuario = new ServicioConsultaUsuario(),
   ) {}
 
   /** Resuelve una denuncia aplicando una acción administrativa. */
@@ -108,10 +111,6 @@ export class ServicioResolucionDenuncia {
 
   private async resolverAdminId(adminId?: number | null): Promise<number> {
     if (adminId) return adminId;
-    const porDefecto = await this.usuarioRepo.obtenerAdminPorDefecto();
-    if (!porDefecto) {
-      throw new Error('No hay administradores registrados.');
-    }
-    return porDefecto;
+    return this.servicioConsultaUsuario.obtenerAdminSesion();
   }
 }

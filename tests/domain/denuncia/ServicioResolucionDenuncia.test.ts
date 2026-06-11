@@ -20,12 +20,14 @@ const mkDenuncia = (over: Partial<DenunciaData> = {}) =>
 
 function build(denunciaInicial: Denuncia) {
   const denunciaRepo = { obtenerPorId: vi.fn(async () => denunciaInicial), guardar: vi.fn() };
-  const usuarioRepo = { suspender: vi.fn(), obtenerAdminPorDefecto: vi.fn(async () => 1) };
+  const usuarioRepo = { suspender: vi.fn() };
+  const servicioConsultaUsuario = { obtenerAdminSesion: vi.fn(async () => 1) };
   const servicio = new ServicioResolucionDenuncia(
     denunciaRepo as any,
     usuarioRepo as any,
+    servicioConsultaUsuario as any,
   );
-  return { servicio, denunciaRepo, usuarioRepo };
+  return { servicio, denunciaRepo, usuarioRepo, servicioConsultaUsuario };
 }
 
 describe('ServicioResolucionDenuncia — resolver()', () => {

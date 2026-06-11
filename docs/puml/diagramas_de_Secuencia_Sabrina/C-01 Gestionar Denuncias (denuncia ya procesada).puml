@@ -56,7 +56,7 @@ Interfaz -> Denuncia: Solicita resolver Denuncia
 activate Denuncia
 Denuncia -> Usuario: Solicita id_admin de la sesión
 activate Usuario
-Usuario -> Usuario: obtenerAdminPorDefecto()
+Usuario -> Usuario: obtenerAdminSesion()
 Usuario --> Denuncia: Devuelve admin_id
 deactivate Usuario
 Denuncia -> Denuncia: resolverDenuncia(id_denuncia, {estado="Resuelto", accion, fechaHasta, observaciones, admin_id})
