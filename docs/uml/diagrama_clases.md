@@ -189,16 +189,11 @@ Comision   "0..*" --> "1" Asignatura : pertenece a
 Comision   "0..*" -- "1..*" Profesor : dictada por
 
 ' — Denuncia, Usuario y Periodo (puente entre las dos áreas) —
-Denuncia "0..*" --> "1"    Usuario  : "receptor (denunciado)"
-Denuncia "0..*" --> "0..1" Usuario  : "emisor (null = Sistema)"
-Denuncia "0..*" --> "0..1" Usuario  : "gestiona (admin)"
+Denuncia "0..*" --> "1"    Usuario  : "receptor(denunciado)"
+Denuncia "0..*" --> "0..1" Usuario  : "emisor"
+Denuncia "0..*" --> "0..1" Usuario  : "gestiona(admin)"
 Denuncia "0..*" --> "0..1" Periodo  : ocurre en
 
-note bottom of Denuncia
-  resolverDenuncia() resuelve o desestima la denuncia.
-  El ciclo de vida interno (Pendiente -> Resuelto/Desestimado)
-  se detalla en el Diagrama 2 (patron Estado): resolver()/desestimar().
-end note
 @enduml
 ```
 

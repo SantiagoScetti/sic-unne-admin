@@ -144,27 +144,44 @@ export const insertar = async (filas) => {
   const resultados = [];
 
   for (const f of unicos) {
-    const { data: carrera } = await supabase
-      .from('carrera').select('id_carrera').eq('nombre', f.carrera_nombre).single();
-    if (!carrera) throw new Error(`No se encontró la carrera "${f.carrera_nombre}".`);
+    const { data: carreraArray, error: errCarrera } = await supabase
+      .from('carrera').select('id_carrera').eq('nombre', f.carrera_nombre).limit(1);
+    const carrera = carreraArray && carreraArray.length > 0 ? carreraArray[0] : null;
+    if (!carrera) throw new Error(`No se encontró la carrera "${f.carrera_nombre}" (Error DB: ${errCarrera?.message || 'Ninguno'}).`);
 
-    const { data: periodo } = await supabase
-      .from('periodo').select('id_periodo').eq('nombre', f.periodo_nombre).single();
-    if (!periodo) throw new Error(`No se encontró el período "${f.periodo_nombre}".`);
+    const { data: periodoArray, error: errPeriodo } = await supabase
+      .from('periodo')
+      .select('id_periodo')
+      .eq('nombre', f.periodo_nombre)
+      .limit(1);
+    
+    const periodo = periodoArray && periodoArray.length > 0 ? periodoArray[0] : null;
+    if (!periodo) throw new Error(`No se encontró el período "${f.periodo_nombre}" (Error DB: ${errPeriodo?.message || 'Ninguno'}).`);
 
-    const { data, error } = await supabase
+    const { data: existente } = await supabase
       .from('asignatura')
-      .upsert({
-        nombre:       f.asignatura_nombre,
-        anio_dictado: f.asignatura_anio || '',
-        id_carrera:   carrera.id_carrera,
-        id_periodo:   periodo.id_periodo,
-        estado:       true,
-      }, { onConflict: 'nombre', ignoreDuplicates: false })
-      .select();
+      .select('*')
+      .eq('nombre', f.asignatura_nombre)
+      .eq('id_carrera', carrera.id_carrera)
+      .eq('id_periodo', periodo.id_periodo)
+      .maybeSingle();
 
-    if (error) throw error;
-    resultados.push(...(data || []));
+    if (existente) {
+      resultados.push(existente);
+    } else {
+      const { data, error } = await supabase
+        .from('asignatura')
+        .insert([{
+          nombre:       f.asignatura_nombre,
+          anio_dictado: f.asignatura_anio || '',
+          id_carrera:   carrera.id_carrera,
+          id_periodo:   periodo.id_periodo,
+          estado:       true,
+        }])
+        .select();
+      if (error) throw error;
+      if (data) resultados.push(data[0]);
+    }
   }
 
   return resultados;

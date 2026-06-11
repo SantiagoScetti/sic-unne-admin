@@ -96,21 +96,35 @@ export const insertar = async (filas) => {
     return true;
   });
 
-  const registros = unicos.map((f) => ({
-    nombre:    f.edificio_nombre,
-    direccion: f.edificio_direccion || 'Sin especificar',
-    ciudad:    f.edificio_ciudad   || 'Sin especificar',
-    estado:    true,
-  }));
+  const resultados = [];
+  for (const f of unicos) {
+    const nombre = f.edificio_nombre;
+    
+    const { data: existente } = await supabase
+      .from('edificio')
+      .select('*')
+      .eq('nombre', nombre)
+      .maybeSingle();
 
-  const { data, error } = await supabase
-    .from('edificio')
-    .upsert(registros, { onConflict: 'nombre', ignoreDuplicates: false })
-    .select();
-
-  if (error) {
-    console.error('Error insertando edificios:', error);
-    throw new Error(error.message);
+    if (existente) {
+      resultados.push(existente);
+    } else {
+      const { data, error } = await supabase
+        .from('edificio')
+        .insert([{
+          nombre:    nombre,
+          direccion: f.edificio_direccion || 'Sin especificar',
+          ciudad:    f.edificio_ciudad   || 'Sin especificar',
+          estado:    true,
+        }])
+        .select();
+      
+      if (error) {
+        console.error('Error insertando edificio:', error);
+        throw new Error(error.message);
+      }
+      if (data) resultados.push(data[0]);
+    }
   }
-  return data;
+  return resultados;
 };

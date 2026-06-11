@@ -94,21 +94,37 @@ export const insertar = async (filas) => {
     return true;
   });
 
-  const registros = unicos.map((f) => ({
-    nombre:       f.periodo_nombre,
-    fecha_inicio: f.periodo_fecha_inicio,
-    fecha_fin:    f.periodo_fecha_fin,
-    estado:       true,
-  }));
+  const resultados = [];
+  for (const f of unicos) {
+    const nombre = f.periodo_nombre;
+    const fecha_inicio = f.periodo_fecha_inicio;
+    
+    const { data: existente } = await supabase
+      .from('periodo')
+      .select('*')
+      .eq('nombre', nombre)
+      .eq('fecha_inicio', fecha_inicio)
+      .maybeSingle();
 
-  const { data, error } = await supabase
-    .from('periodo')
-    .upsert(registros, { onConflict: 'nombre', ignoreDuplicates: false })
-    .select();
-
-  if (error) {
-    console.error('Error insertando períodos:', error);
-    throw new Error(error.message);
+    if (existente) {
+      resultados.push(existente);
+    } else {
+      const { data, error } = await supabase
+        .from('periodo')
+        .insert([{
+          nombre: nombre,
+          fecha_inicio: fecha_inicio,
+          fecha_fin: f.periodo_fecha_fin,
+          estado: true
+        }])
+        .select();
+      
+      if (error) {
+        console.error('Error insertando período:', error);
+        throw new Error(error.message);
+      }
+      if (data) resultados.push(data[0]);
+    }
   }
-  return data;
+  return resultados;
 };

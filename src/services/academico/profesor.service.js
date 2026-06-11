@@ -181,22 +181,36 @@ export const insertar = async (filas) => {
     return true;
   });
 
-  const registros = unicos.map((f) => ({
-    nombre:    f.profesor_nombre,
-    apellido:  f.profesor_apellido,
-    documento: Number(f.profesor_documento),
-    correo:    f.profesor_correo || '',
-    estado:    true,
-  }));
+  const resultados = [];
+  for (const f of unicos) {
+    const documento = f.profesor_documento;
+    
+    const { data: existente } = await supabase
+      .from('profesor')
+      .select('*')
+      .eq('documento', documento)
+      .maybeSingle();
 
-  const { data, error } = await supabase
-    .from('profesor')
-    .upsert(registros, { onConflict: 'documento', ignoreDuplicates: false })
-    .select();
-
-  if (error) {
-    console.error('Error insertando profesores:', error);
-    throw new Error(error.message);
+    if (existente) {
+      resultados.push(existente);
+    } else {
+      const { data, error } = await supabase
+        .from('profesor')
+        .insert([{
+          nombre:    f.profesor_nombre,
+          apellido:  f.profesor_apellido,
+          documento: documento,
+          correo:    f.profesor_correo,
+          estado:    true,
+        }])
+        .select();
+      
+      if (error) {
+        console.error('Error insertando profesor:', error);
+        throw new Error(error.message);
+      }
+      if (data) resultados.push(data[0]);
+    }
   }
-  return data;
+  return resultados;
 };

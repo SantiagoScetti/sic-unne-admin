@@ -104,21 +104,31 @@ export const insertar = async (filas) => {
 
   for (const f of unicos) {
     // Resolver id_edificio por nombre
-    const { data: edificio } = await supabase
-      .from('edificio').select('id_edificio').eq('nombre', f.edificio_nombre).single();
-    if (!edificio) throw new Error(`No se encontró el edificio "${f.edificio_nombre}".`);
+    const { data: edificioArray, error: errEdificio } = await supabase
+      .from('edificio').select('id_edificio').eq('nombre', f.edificio_nombre).limit(1);
+    const edificio = edificioArray && edificioArray.length > 0 ? edificioArray[0] : null;
+    if (!edificio) throw new Error(`No se encontró el edificio "${f.edificio_nombre}" (Error DB: ${errEdificio?.message || 'Ninguno'}).`);
 
-    const { data, error } = await supabase
+    const { data: existente } = await supabase
       .from('facultad')
-      .upsert({
-        nombre: f.facultad_nombre,
-        id_edificio: edificio.id_edificio,
-        estado: true,
-      }, { onConflict: 'nombre', ignoreDuplicates: false })
-      .select();
+      .select('*')
+      .eq('nombre', f.facultad_nombre)
+      .maybeSingle();
 
-    if (error) throw error;
-    resultados.push(...(data || []));
+    if (existente) {
+      resultados.push(existente);
+    } else {
+      const { data, error } = await supabase
+        .from('facultad')
+        .insert([{
+          nombre: f.facultad_nombre,
+          id_edificio: edificio.id_edificio,
+          estado: true,
+        }])
+        .select();
+      if (error) throw error;
+      if (data) resultados.push(data[0]);
+    }
   }
 
   return resultados;

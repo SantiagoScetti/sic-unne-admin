@@ -103,17 +103,35 @@ export const insertar = async (filas) => {
 
   const resultados = [];
   for (const f of unicos) {
-    const { data: facultad } = await supabase
-      .from('facultad').select('id_facultad').eq('nombre', f.facultad_nombre).single();
-    if (!facultad) throw new Error(`No se encontró la facultad "${f.facultad_nombre}".`);
+    const { data: facultadArray, error: errFacultad } = await supabase
+      .from('facultad')
+      .select('id_facultad')
+      .eq('nombre', f.facultad_nombre)
+      .limit(1);
+    
+    const facultad = facultadArray && facultadArray.length > 0 ? facultadArray[0] : null;
+    if (!facultad) throw new Error(`No se encontró la facultad "${f.facultad_nombre}" (Error DB: ${errFacultad?.message || 'Ninguno'}).`);
 
-    const { data, error } = await supabase
+    const { data: existente } = await supabase
       .from('carrera')
-      .upsert({ nombre: f.carrera_nombre, id_facultad: facultad.id_facultad, estado: true },
-        { onConflict: 'nombre', ignoreDuplicates: false })
-      .select();
-    if (error) throw error;
-    resultados.push(...(data || []));
+      .select('*')
+      .eq('nombre', f.carrera_nombre)
+      .maybeSingle();
+
+    if (existente) {
+      resultados.push(existente);
+    } else {
+      const { data, error } = await supabase
+        .from('carrera')
+        .insert([{
+          nombre: f.carrera_nombre,
+          id_facultad: facultad.id_facultad,
+          estado: true,
+        }])
+        .select();
+      if (error) throw error;
+      if (data) resultados.push(data[0]);
+    }
   }
   return resultados;
 };
