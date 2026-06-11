@@ -56,6 +56,16 @@ const AccionDenunciaModal = ({
   const [observaciones, setObservaciones] = useState('');
   const [errores, setErrores] = useState({ accion: '', fechaHasta: '', observaciones: '' });
 
+  // Estado para el cuadro de confirmación personalizado
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    confirmText: string;
+    confirmColor: string;
+  } | null>(null);
+
   // Reset al abrir
   useEffect(() => {
     if (!isOpen) return;
@@ -112,19 +122,47 @@ const AccionDenunciaModal = ({
     const accionLabel = accion === 'Suspender Temporalmente' && fechaHasta
       ? `${accion} hasta ${fechaHasta}`
       : accion;
-    if (!window.confirm(`¿Desea aplicar "${accionLabel}" al estudiante ${receptor?.nombre} ${receptor?.apellido}?`)) return;
-    onSave({ accion, fechaHasta: accion === 'Suspender Temporalmente' ? fechaHasta : undefined, observaciones });
+      
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Confirmar Acción',
+      message: `¿Desea aplicar "${accionLabel}" al estudiante ${receptor?.nombre} ${receptor?.apellido}?`,
+      confirmText: 'Aplicar',
+      confirmColor: '#3182ce', // Azul
+      onConfirm: () => {
+        setConfirmDialog(null);
+        onSave({ accion, fechaHasta: accion === 'Suspender Temporalmente' ? fechaHasta : undefined, observaciones });
+      }
+    });
   };
 
   const confirmarEliminar = () => {
     if (!onEliminar) return;
-    if (!window.confirm(`¿Desea eliminar el denuncia #${denuncia.id_denuncia}? Esta acción no se puede deshacer.`)) return;
-    onEliminar();
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Desestimar Denuncia',
+      message: `¿Desea desestimar la denuncia #${denuncia.id_denuncia}? Esta acción no se puede deshacer.`,
+      confirmText: 'Desestimar',
+      confirmColor: '#e53e3e', // Rojo
+      onConfirm: () => {
+        setConfirmDialog(null);
+        onEliminar();
+      }
+    });
   };
 
   const confirmarCancelar = () => {
-    if (!window.confirm('¿Desea cancelar la operación?')) return;
-    onClose();
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Cancelar Operación',
+      message: '¿Desea cancelar la operación? Se perderán los datos no guardados.',
+      confirmText: 'Sí, cancelar',
+      confirmColor: '#718096', // Gris
+      onConfirm: () => {
+        setConfirmDialog(null);
+        onClose();
+      }
+    });
   };
 
   // ── Badge de estado ──
@@ -298,6 +336,35 @@ const AccionDenunciaModal = ({
           </button>
         </div>
       </div>
+
+      {/* ── Cuadro de Confirmación Personalizado ── */}
+      {confirmDialog?.isOpen && (
+        <div style={{ ...overlayStyle, zIndex: 1100, backgroundColor: 'rgba(0,0,0,0.6)' }}>
+          <div style={{ ...modalStyle, width: '400px', padding: '24px', textAlign: 'center', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#ebf8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: '1.5rem' }}>
+              ⚠️
+            </div>
+            <h3 style={{ margin: '0 0 12px 0', color: '#2d3748', fontSize: '1.25rem' }}>{confirmDialog.title}</h3>
+            <p style={{ color: '#4a5568', fontSize: '0.95rem', lineHeight: 1.5, marginBottom: '24px' }}>
+              {confirmDialog.message}
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                onClick={() => setConfirmDialog(null)}
+                style={{ ...btnCancelStyle, padding: '8px 16px', flex: 1 }}
+              >
+                Volver
+              </button>
+              <button
+                onClick={confirmDialog.onConfirm}
+                style={{ ...btnSaveStyle, backgroundColor: confirmDialog.confirmColor, padding: '8px 16px', flex: 1 }}
+              >
+                {confirmDialog.confirmText}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
